@@ -105,6 +105,45 @@ describe("Agent preference tools", () => {
     expect(service.listPreferences()).toEqual([preference()]);
   });
 
+  it("lets a durable preference override a developer soft hint", async () => {
+    await service.savePreference({
+      id: "preferred-label",
+      scope: "global",
+      targetStableId: "buyer",
+      operation: {
+        type: "setProps",
+        target: "buyer",
+        props: { label: "Preferred buyer" },
+      },
+    });
+    const store = new InMemorySurfaceStore(registry);
+    const surfaces = new AgentUIToolRuntime(registry, store, service);
+
+    const created = surfaces.createSurface({
+      surfaceId: "purchase",
+      schema,
+      data: {},
+      intent: "form",
+      developer: {
+        softHints: { fields: { buyer: { label: "Developer buyer" } } },
+      },
+    });
+
+    expect(created).toMatchObject({
+      ok: true,
+      value: {
+        tree: {
+          children: expect.arrayContaining([
+            expect.objectContaining({
+              stableId: "buyer",
+              props: expect.objectContaining({ label: "Preferred buyer" }),
+            }),
+          ]),
+        },
+      },
+    });
+  });
+
   it("rejects temporary operations and replacements that violate hard constraints", () => {
     const store = new InMemorySurfaceStore(registry);
     const surfaces = new AgentUIToolRuntime(registry, store, service);

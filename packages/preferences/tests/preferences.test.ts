@@ -289,4 +289,30 @@ describe("PreferenceRepository", () => {
     ).rejects.toThrow("backend unavailable");
     expect(repository.list()).toEqual([]);
   });
+
+  it("keeps the last valid runtime state when rehydration data is invalid", async () => {
+    let stored: unknown = {
+      version: 1,
+      patches: [propsPatch("valid", "global", "Valid")],
+    };
+    const repository = new PreferenceRepository({
+      load: async () => stored as PreferenceDocument,
+      save: async (value) => {
+        stored = value;
+      },
+      clear: async () => undefined,
+    });
+    await repository.hydrate();
+
+    for (const invalid of [
+      { version: 2, patches: [] },
+      { version: 1, patches: [{ id: "broken" }] },
+    ]) {
+      stored = invalid;
+      await expect(repository.hydrate()).rejects.toMatchObject({
+        code: "INVALID_PREFERENCE",
+      });
+      expect(repository.list().map((patch) => patch.id)).toEqual(["valid"]);
+    }
+  });
 });

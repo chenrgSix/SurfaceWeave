@@ -77,20 +77,23 @@ describe("storage adapters", () => {
     expect(transport.remove).toHaveBeenCalledWith("user-42");
   });
 
-  it("reports invalid persisted data with a stable error", async () => {
-    const localStorage: LocalStorageLike = {
-      getItem: () => '{"version":2}',
-      setItem: () => undefined,
-      removeItem: () => undefined,
-    };
-    const adapter = new LocalStorageAdapter(
-      "preferences",
-      parseDocument,
-      localStorage,
-    );
+  it.each(["not-json", '{"version":2}'])(
+    "reports corrupt or incompatible persisted data with a stable error",
+    async (persisted) => {
+      const localStorage: LocalStorageLike = {
+        getItem: () => persisted,
+        setItem: () => undefined,
+        removeItem: () => undefined,
+      };
+      const adapter = new LocalStorageAdapter(
+        "preferences",
+        parseDocument,
+        localStorage,
+      );
 
-    await expect(adapter.load()).rejects.toMatchObject({
-      code: "STORAGE_INVALID_DATA",
-    });
-  });
+      await expect(adapter.load()).rejects.toMatchObject({
+        code: "STORAGE_INVALID_DATA",
+      });
+    },
+  );
 });
