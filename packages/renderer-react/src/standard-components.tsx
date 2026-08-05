@@ -121,7 +121,7 @@ function TextInputComponent({
   value,
   onValueChange,
 }: RendererComponentProps) {
-  return (
+  const field = (
     <Field node={node}>
       <input
         aria-label={stringProp(node.props, "label", node.stableId ?? node.id)}
@@ -129,6 +129,16 @@ function TextInputComponent({
         onChange={(event) => onValueChange(event.currentTarget.value)}
       />
     </Field>
+  );
+  return node.props.collapsed === true ? (
+    <details>
+      <summary>
+        {stringProp(node.props, "label", node.stableId ?? node.id)}
+      </summary>
+      {field}
+    </details>
+  ) : (
+    field
   );
 }
 

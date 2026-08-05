@@ -123,4 +123,28 @@ describe("SurfaceRenderer", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
+
+  it("renders a field as collapsed after a semantic props operation", () => {
+    const runtime = createFormRuntime();
+    runtime.store.applyOperations("purchase", 0, [
+      {
+        type: "setProps",
+        target: "purchase.buyer",
+        props: { collapsed: true },
+      },
+    ]);
+    render(
+      <SurfaceRenderer
+        store={runtime.store}
+        componentRegistry={runtime.registry}
+        reactComponents={runtime.reactComponents}
+        surfaceId="purchase"
+      />,
+    );
+
+    expect(
+      screen.getByText("Buyer", { selector: "summary" }).closest("details")
+        ?.open,
+    ).toBe(false);
+  });
 });
