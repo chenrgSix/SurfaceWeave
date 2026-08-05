@@ -1,0 +1,24 @@
+{
+  "name": "@package-first/preferences",
+  "version": "0.2.0",
+  "description": "Structured preference repository and personalization engine",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@package-first/core": "workspace:*",
+    "@package-first/storage": "workspace:*"
+  }
+}

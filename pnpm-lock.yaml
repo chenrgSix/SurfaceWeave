@@ -84,6 +84,15 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/preferences:
+    dependencies:
+      '@package-first/core':
+        specifier: workspace:*
+        version: link:../core
+      '@package-first/storage':
+        specifier: workspace:*
+        version: link:../storage
+
   packages/renderer-react:
     dependencies:
       '@package-first/core':
