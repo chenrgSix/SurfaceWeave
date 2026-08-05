@@ -1,0 +1,20 @@
+{
+  "name": "@package-first/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic protocols and runtime for Package First Dynamic UI",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
