@@ -7,7 +7,10 @@ import {
   PreferenceRepository,
   PreferenceService,
 } from "@package-first/preferences";
-import { MemoryStorageAdapter } from "@package-first/storage";
+import {
+  MemoryStorageAdapter,
+  StorageAdapterError,
+} from "@package-first/storage";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -230,6 +233,41 @@ describe("Agent preference tools", () => {
     expect(result).toMatchObject({
       ok: false,
       error: { code: "INVALID_PREFERENCE" },
+    });
+  });
+
+  it("preserves hydration and storage error codes", async () => {
+    const unhydrated = new PreferenceService(
+      new PreferenceRepository(new MemoryStorageAdapter<PreferenceDocument>()),
+      registry,
+    );
+    const unhydratedTools = new PreferenceAgentToolRuntime(unhydrated);
+    expect(unhydratedTools.inspectPreferences({})).toMatchObject({
+      ok: false,
+      error: { code: "PREFERENCES_NOT_HYDRATED" },
+    });
+
+    const failingRepository = new PreferenceRepository({
+      load: async () => undefined,
+      save: async () => {
+        throw new StorageAdapterError(
+          "STORAGE_WRITE_FAILED",
+          "Backend is unavailable",
+        );
+      },
+      clear: async () => undefined,
+    });
+    const failingService = new PreferenceService(failingRepository, registry);
+    await failingService.hydrate();
+    const failingTools = new PreferenceAgentToolRuntime(failingService);
+    const result = await failingTools.savePreference({
+      confirmed: true,
+      preference: preference(),
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "STORAGE_WRITE_FAILED" },
     });
   });
 });

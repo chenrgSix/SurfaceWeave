@@ -1,5 +1,6 @@
 import { DynamicUIError, cloneValue } from "@package-first/core";
 import type { PreferenceService } from "@package-first/preferences";
+import { StorageAdapterError } from "@package-first/storage";
 
 import { preferenceToolDefinitions } from "./definitions.js";
 import {
@@ -17,35 +18,41 @@ import type {
 } from "./types.js";
 import { ToolInputError } from "./validation.js";
 
+function knownErrorResult<T>(error: unknown): ToolResult<T> | undefined {
+  if (error instanceof DynamicUIError || error instanceof StorageAdapterError) {
+    const result: ToolResult<T> = {
+      ok: false,
+      error: { code: error.code, message: error.message },
+    };
+    if (error instanceof DynamicUIError && error.details !== undefined) {
+      result.error.details = cloneValue(error.details);
+    }
+    return result;
+  }
+  if (error instanceof ToolInputError) {
+    return {
+      ok: false,
+      error: { code: error.code, message: error.message },
+    };
+  }
+  return undefined;
+}
+
 async function runTool<T>(
   operation: () => Promise<T> | T,
 ): Promise<ToolResult<T>> {
   try {
     return { ok: true, value: await operation() };
   } catch (error) {
-    if (error instanceof DynamicUIError) {
-      const result: ToolResult<T> = {
+    return (
+      knownErrorResult<T>(error) ?? {
         ok: false,
-        error: { code: error.code, message: error.message },
-      };
-      if (error.details !== undefined) {
-        result.error.details = cloneValue(error.details);
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "The preference tool failed unexpectedly",
+        },
       }
-      return result;
-    }
-    if (error instanceof ToolInputError) {
-      return {
-        ok: false,
-        error: { code: error.code, message: error.message },
-      };
-    }
-    return {
-      ok: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "The preference tool failed unexpectedly",
-      },
-    };
+    );
   }
 }
 
@@ -98,19 +105,15 @@ export class PreferenceAgentToolRuntime {
         },
       };
     } catch (error) {
-      if (error instanceof ToolInputError) {
-        return {
+      return (
+        knownErrorResult<PreferenceInspection>(error) ?? {
           ok: false,
-          error: { code: error.code, message: error.message },
-        };
-      }
-      return {
-        ok: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "The preference tool failed unexpectedly",
-        },
-      };
+          error: {
+            code: "INTERNAL_ERROR",
+            message: "The preference tool failed unexpectedly",
+          },
+        }
+      );
     }
   }
 

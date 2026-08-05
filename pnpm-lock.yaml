@@ -78,7 +78,6 @@ importers:
       '@package-first/preferences':
         specifier: workspace:*
         version: link:../preferences
-    devDependencies:
       '@package-first/storage':
         specifier: workspace:*
         version: link:../storage

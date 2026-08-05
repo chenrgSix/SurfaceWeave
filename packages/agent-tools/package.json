@@ -20,9 +20,7 @@
   "dependencies": {
     "@package-first/core": "workspace:*",
     "@package-first/generator": "workspace:*",
-    "@package-first/preferences": "workspace:*"
-  },
-  "devDependencies": {
+    "@package-first/preferences": "workspace:*",
     "@package-first/storage": "workspace:*"
   }
 }
