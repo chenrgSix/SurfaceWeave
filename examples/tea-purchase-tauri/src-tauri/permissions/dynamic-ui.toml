@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-dynamic-ui-commands"
+description = "Allows only the tea search and purchase draft commands used by the example."
+commands.allow = ["search_teas", "create_purchase"]

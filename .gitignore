@@ -1,6 +1,8 @@
 node_modules/
 .pnpm-store/
 dist/
+target/
+gen/
 coverage/
 .vite/
 *.tsbuildinfo

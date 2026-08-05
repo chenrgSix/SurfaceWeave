@@ -1,0 +1,33 @@
+{
+  "name": "@package-first/tea-purchase-tauri",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build",
+    "dev": "vite --host 127.0.0.1",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:check": "cargo check --manifest-path src-tauri/Cargo.toml",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@package-first/agent-tools": "workspace:*",
+    "@package-first/core": "workspace:*",
+    "@package-first/generator": "workspace:*",
+    "@package-first/preferences": "workspace:*",
+    "@package-first/renderer-react": "workspace:*",
+    "@package-first/storage": "workspace:*",
+    "@package-first/tauri": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "vite": "^8.2.0"
+  }
+}
