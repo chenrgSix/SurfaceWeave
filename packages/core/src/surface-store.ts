@@ -14,9 +14,9 @@ import type {
   DataBinding,
   DataChange,
   Surface,
+  SurfaceEvent,
   SurfaceListener,
   SurfaceStore,
-  UIEvent,
   UIOperation,
 } from "./types.js";
 
@@ -226,7 +226,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     return this.#sequence;
   }
 
-  #publish(surfaceId: string, event: UIEvent): void {
+  #publish(surfaceId: string, event: SurfaceEvent): void {
     const surface = this.#surfaces.get(surfaceId);
     if (surface === undefined) {
       return;

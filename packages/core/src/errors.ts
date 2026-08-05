@@ -6,7 +6,12 @@ export type DynamicUIErrorCode =
   | "INVALID_OPERATION"
   | "UNKNOWN_COMPONENT"
   | "UNKNOWN_ACTION"
-  | "INVALID_ACTION_INTENT";
+  | "INVALID_ACTION_INTENT"
+  | "INVALID_PREFERENCE"
+  | "PREFERENCE_NOT_FOUND"
+  | "PREFERENCE_CONFLICT_NOT_FOUND"
+  | "PREFERENCES_NOT_HYDRATED"
+  | "HARD_CONSTRAINT_VIOLATION";
 
 /** Stable SDK error suitable for mapping to Agent tool error results. */
 export class DynamicUIError extends Error {

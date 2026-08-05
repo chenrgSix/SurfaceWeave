@@ -113,6 +113,63 @@ export type UIOperation =
   | SetVisibilityOperation
   | GroupNodesOperation;
 
+/** Single-target semantic mutations that can be stored relative to a default UI. */
+export type PreferenceOperation = Exclude<UIOperation, GroupNodesOperation>;
+
+export type PreferenceScope = "global" | "intent" | "tool";
+
+/** Long-lived UI preference; it never stores session form data or a full Surface. */
+export interface PreferencePatch {
+  id: string;
+  scope: PreferenceScope;
+  targetStableId: string;
+  operation: PreferenceOperation;
+  schemaRef?: SchemaRef;
+  intent?: UIIntent;
+  toolId?: string;
+}
+
+export interface PreferenceDocument {
+  version: 1;
+  patches: PreferencePatch[];
+}
+
+export type SchemaFieldAliases = Record<string, string | string[]>;
+
+export type UIConstraintAspect =
+  "component" | "props" | "layout" | "visibility" | "position";
+
+export interface FieldHardConstraint {
+  component?: string;
+  visible?: boolean;
+  locked?: UIConstraintAspect[];
+}
+
+/** Non-negotiable developer rules enforced after every personalization layer. */
+export interface DeveloperHardConstraints {
+  rootComponent?: string;
+  allowedComponents?: string[];
+  fields?: Record<string, FieldHardConstraint>;
+}
+
+export type PreferenceConflictCode =
+  | "TARGET_MISSING"
+  | "SCHEMA_VERSION_MISMATCH"
+  | "ALIAS_AMBIGUOUS"
+  | "HARD_CONSTRAINT"
+  | "INVALID_OPERATION";
+
+export interface PreferenceConflict {
+  id: string;
+  patchId: string;
+  surfaceId: string;
+  code: PreferenceConflictCode;
+  targetStableId: string;
+  message: string;
+  schemaRef?: SchemaRef;
+  suggestedStableIds?: string[];
+}
+
 export interface SurfaceCreatedEvent {
   type: "surface.created";
   sequence: number;
@@ -151,12 +208,46 @@ export interface SurfaceDataChangedEvent {
   changes: DataChange[];
 }
 
+export interface PreferenceConflictedEvent {
+  type: "preference.conflicted";
+  sequence: number;
+  surfaceId: string;
+  conflict: PreferenceConflict;
+}
+
+export interface PreferenceSavedEvent {
+  type: "preference.saved";
+  sequence: number;
+  preference: PreferencePatch;
+}
+
+export interface PreferenceMigratedEvent {
+  type: "preference.migrated";
+  sequence: number;
+  preference: PreferencePatch;
+  previousTargetStableId: string;
+}
+
+export interface PreferenceDiscardedEvent {
+  type: "preference.discarded";
+  sequence: number;
+  preferenceId: string;
+}
+
+export type PreferenceEvent =
+  | PreferenceConflictedEvent
+  | PreferenceSavedEvent
+  | PreferenceMigratedEvent
+  | PreferenceDiscardedEvent;
+
 /** Deterministic events emitted by SurfaceStore in committed mutation order. */
-export type UIEvent =
+export type SurfaceEvent =
   | SurfaceCreatedEvent
   | SurfaceOperationsAppliedEvent
   | SurfaceReplacedEvent
   | SurfaceDataChangedEvent;
+
+export type UIEvent = SurfaceEvent | PreferenceEvent;
 
 /** Serializable request emitted by a component for execution by its host. */
 export interface ActionIntent {
@@ -217,7 +308,9 @@ export interface ComponentRegistry {
   assertAction(component: string, action: string): void;
 }
 
-export type SurfaceListener = (event: UIEvent, surface: Surface) => void;
+export type SurfaceListener = (event: SurfaceEvent, surface: Surface) => void;
+
+export type PreferenceListener = (event: PreferenceEvent) => void;
 
 export interface SurfaceStore {
   createSurface(
