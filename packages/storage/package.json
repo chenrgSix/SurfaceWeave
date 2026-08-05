@@ -1,0 +1,20 @@
+{
+  "name": "@package-first/storage",
+  "version": "0.2.0",
+  "description": "Pluggable JSON storage adapters for Package First Dynamic UI",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
