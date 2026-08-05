@@ -84,6 +84,9 @@ describe("generateSurface", () => {
       );
 
       expect(registry.has(surface.tree.component)).toBe(true);
+      expect(surface.tree.component).toBe(
+        intent === "browse" ? "Table" : "CardList",
+      );
       expect(surface.tree.props.items).toHaveLength(2);
       expect(surface.tree.binding?.path).toBe(
         intent === "browse" ? "teas" : "selection",

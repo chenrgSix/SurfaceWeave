@@ -273,7 +273,7 @@ function generateCollection(
   const component = requireComponent(
     registry,
     input.metadata?.rootComponent,
-    input.intent === "browse" ? ["CardList", "Table"] : ["CardList", "Select"],
+    input.intent === "browse" ? ["Table", "CardList"] : ["CardList", "Select"],
   );
   const items = jsonValue(
     readDataPath(input.data, itemsPath) ?? [],
