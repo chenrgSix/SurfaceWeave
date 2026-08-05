@@ -333,6 +333,10 @@ Tauri 前端运行在系统 WebView 中，React Renderer 可以直接使用；Ru
 
 必须使用动作白名单，并结合 [Tauri Capabilities](https://v2.tauri.app/security/capabilities/) 限制不同窗口可调用的能力。AI 不能直接指定任意 Command 名称。
 
+Milestone 3 将该边界落实为 `@package-first/tauri`：`TauriActionExecutor` 只执行宿主注册的语义动作，注册处理器再选择固定 Rust Command；`TauriPreferenceStorage` 通过官方 Store 插件保存现有版本化偏好文档；`TauriCapabilityProvider` 仅描述平台能力，不参与授权；`createTauriDynamicUIAdapter` 组合这些宿主适配器。
+
+动作白名单和 Tauri Capability 是两道独立边界。前者拒绝未知动作、可执行代码字段和 URL 注入，后者限制窗口实际可调用的 Command。示例只声明 `search_teas`、`create_purchase` 及必要的 Store 权限，不启用 shell、文件系统、HTTP 或任意命令能力；CSP 仅允许打包资源、IPC 和本地 Vite 开发端点。Store 只保存带 Schema 版本的长期偏好，不保存 Surface 表单数据和 Tool Result。
+
 Pretext 暂不作为核心依赖，只在虚拟列表或特殊文本排版组件中可选使用。
 
 ## 十三、落地阶段
@@ -359,7 +363,7 @@ Pretext 暂不作为核心依赖，只在虚拟列表或特殊文本排版组件
 
 ### 第三阶段：生态接入
 
-* Tauri Adapter；
+* Tauri Adapter（Milestone 3 已完成）；
 * 自定义业务组件 SDK；
 * DevTools；
 * Agent 框架适配示例；
@@ -389,4 +393,3 @@ Pretext 暂不作为核心依赖，只在虚拟列表或特殊文本排版组件
 13. 下次采购时，模块先生成最新默认 UI，再叠加个人修改。
 
 最先应该冻结的不是组件样式，而是三个协议对象：**Surface、UIOperation、ActionIntent**。这三者稳定后，Renderer、Agent Adapter、Storage 和 Tauri 接入都能独立推进。
-

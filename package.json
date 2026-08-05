@@ -10,7 +10,10 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
+    "build:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:build",
+    "check:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:check",
     "dev": "pnpm --filter @package-first/tea-purchase dev",
+    "dev:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:dev",
     "lint": "pnpm lint:code && pnpm lint:format",
     "lint:code": "eslint . --max-warnings 0",
     "lint:format": "prettier --check .",

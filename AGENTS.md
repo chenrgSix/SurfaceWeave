@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Architecture decisions live in `docs/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preference composition, and Agent tools are in `packages/generator`, `packages/storage`, `packages/preferences`, and `packages/agent-tools`. React stays in `packages/renderer-react`; the runnable Vite flow is `examples/tea-purchase`.
+Architecture decisions live in `docs/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preference composition, and Agent tools are in `packages/generator`, `packages/storage`, `packages/preferences`, and `packages/agent-tools`. React stays in `packages/renderer-react`, while the controlled desktop bridge is isolated in `packages/tauri`. Runnable acceptance flows are under `examples/tea-purchase` and `examples/tea-purchase-tauri`.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
 
@@ -15,6 +15,9 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm lint` — run ESLint and Prettier checks.
 - `pnpm test` — run Vitest across package tests.
 - `pnpm dev` — start the tea-purchase example.
+- `pnpm dev:tauri` — start the Tauri 2 desktop example.
+- `pnpm check:tauri` — compile-check the Rust host commands.
+- `pnpm build:tauri` — produce the desktop release binary without broad host capabilities.
 
 Update this guide and README when scripts or package boundaries change.
 
