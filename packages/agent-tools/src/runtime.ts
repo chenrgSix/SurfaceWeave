@@ -1,12 +1,18 @@
 import { DynamicUIError, cloneValue, walkNodes } from "@package-first/core";
 import type {
   ComponentRegistry,
+  DeveloperHardConstraints,
   Surface,
   SurfaceStore,
 } from "@package-first/core";
 import { generateSurface } from "@package-first/generator";
+import {
+  assertOperationsAllowedByHardConstraints,
+  assertSurfaceSatisfiesHardConstraints,
+} from "@package-first/preferences";
+import type { PreferenceService } from "@package-first/preferences";
 
-import { uiToolDefinitions } from "./definitions.js";
+import { surfaceToolDefinitions } from "./definitions.js";
 import type {
   SurfaceInspection,
   ToolResult,
@@ -86,18 +92,25 @@ function inspect(surface: Surface): SurfaceInspection {
   return inspection;
 }
 
-/** Host-neutral implementation behind all four Milestone 1 Agent UI tools. */
+/** Host-neutral synchronous Surface tools, including temporary Agent overrides. */
 export class AgentUIToolRuntime {
   readonly #registry: ComponentRegistry;
   readonly #store: SurfaceStore;
+  readonly #preferences: PreferenceService | undefined;
+  readonly #constraints = new Map<string, DeveloperHardConstraints>();
 
-  constructor(registry: ComponentRegistry, store: SurfaceStore) {
+  constructor(
+    registry: ComponentRegistry,
+    store: SurfaceStore,
+    preferences?: PreferenceService,
+  ) {
     this.#registry = registry;
     this.#store = store;
+    this.#preferences = preferences;
   }
 
   definitions(): UIToolDefinition[] {
-    return cloneValue(uiToolDefinitions);
+    return cloneValue(surfaceToolDefinitions);
   }
 
   execute(name: string, argumentsValue: unknown): ToolResult<UIToolValue> {
@@ -124,7 +137,33 @@ export class AgentUIToolRuntime {
   createSurface(argumentsValue: unknown): ToolResult<Surface> {
     return runTool(() => {
       const input = parseCreateSurface(argumentsValue);
-      return this.#store.createSurface(generateSurface(input, this.#registry));
+      const defaultSurface: Surface = {
+        ...generateSurface(input, this.#registry),
+        revision: 0,
+      };
+      const constraints = input.developer?.hardConstraints;
+      const preferenceResult = this.#preferences?.applyPreferences(
+        defaultSurface,
+        {
+          ...(input.toolId === undefined ? {} : { toolId: input.toolId }),
+          ...(input.schemaRef === undefined
+            ? {}
+            : { schemaRef: input.schemaRef }),
+          ...(input.fieldAliases === undefined
+            ? {}
+            : { fieldAliases: input.fieldAliases }),
+          ...(constraints === undefined
+            ? {}
+            : { hardConstraints: constraints }),
+        },
+      );
+      const created = this.#store.createSurface(
+        preferenceResult?.surface ?? defaultSurface,
+      );
+      if (constraints !== undefined) {
+        this.#constraints.set(input.surfaceId, cloneValue(constraints));
+      }
+      return created;
     });
   }
 
@@ -138,6 +177,14 @@ export class AgentUIToolRuntime {
   applyOperations(argumentsValue: unknown): ToolResult<Surface> {
     return runTool(() => {
       const input = parseApplyOperations(argumentsValue);
+      const current = this.#store.requireSurface(input.surfaceId);
+      this.#assertRevision(current, input.baseRevision);
+      assertOperationsAllowedByHardConstraints(
+        current,
+        input.operations,
+        this.#constraints.get(input.surfaceId),
+        this.#registry,
+      );
       return this.#store.applyOperations(
         input.surfaceId,
         input.baseRevision,
@@ -149,11 +196,32 @@ export class AgentUIToolRuntime {
   replaceSurface(argumentsValue: unknown): ToolResult<Surface> {
     return runTool(() => {
       const input = parseReplaceSurface(argumentsValue);
+      const current = this.#store.requireSurface(input.surfaceId);
+      this.#assertRevision(current, input.baseRevision);
+      assertSurfaceSatisfiesHardConstraints(
+        {
+          ...cloneValue(input.surface),
+          id: input.surfaceId,
+          revision: current.revision + 1,
+        },
+        this.#constraints.get(input.surfaceId),
+        current,
+      );
       return this.#store.replaceSurface(
         input.surfaceId,
         input.baseRevision,
         input.surface,
       );
     });
+  }
+
+  #assertRevision(surface: Surface, baseRevision: number): void {
+    if (surface.revision !== baseRevision) {
+      throw new DynamicUIError(
+        "REVISION_CONFLICT",
+        `Surface "${surface.id}" is at revision ${surface.revision}, not ${baseRevision}`,
+        { expected: baseRevision, actual: surface.revision },
+      );
+    }
   }
 }

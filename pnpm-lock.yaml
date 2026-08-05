@@ -75,6 +75,13 @@ importers:
       '@package-first/generator':
         specifier: workspace:*
         version: link:../generator
+      '@package-first/preferences':
+        specifier: workspace:*
+        version: link:../preferences
+    devDependencies:
+      '@package-first/storage':
+        specifier: workspace:*
+        version: link:../storage
 
   packages/core: {}
 

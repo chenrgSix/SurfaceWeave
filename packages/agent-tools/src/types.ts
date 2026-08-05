@@ -1,6 +1,9 @@
 import type {
   DataBinding,
+  PreferenceConflict,
+  PreferencePatch,
   JsonValue,
+  SchemaFieldAliases,
   SchemaRef,
   Surface,
   SurfaceContext,
@@ -9,6 +12,7 @@ import type {
   UIIntent,
 } from "@package-first/core";
 import type {
+  DeveloperUIConfiguration,
   GeneratorMetadata,
   SimpleJsonSchema,
 } from "@package-first/generator";
@@ -17,7 +21,11 @@ export type UIToolName =
   | "ui.createSurface"
   | "ui.inspectSurface"
   | "ui.applyOperations"
-  | "ui.replaceSurface";
+  | "ui.replaceSurface"
+  | "ui.inspectPreferences"
+  | "ui.savePreference"
+  | "ui.migratePreference"
+  | "ui.discardPreference";
 
 /** Portable function-tool definition; adapters can map it to any Agent SDK. */
 export interface UIToolDefinition {
@@ -40,8 +48,11 @@ export interface CreateSurfaceToolInput {
   schema: SimpleJsonSchema;
   data: Record<string, unknown>;
   intent: UIIntent;
+  developer?: DeveloperUIConfiguration;
   metadata?: GeneratorMetadata;
   schemaRef?: SchemaRef;
+  toolId?: string;
+  fieldAliases?: SchemaFieldAliases;
   context?: SurfaceContext;
 }
 
@@ -86,4 +97,34 @@ export interface SurfaceInspection {
   dataPaths: string[];
 }
 
-export type UIToolValue = Surface | SurfaceInspection;
+export type InspectPreferencesToolInput = Record<string, never>;
+
+export interface SavePreferenceToolInput {
+  confirmed: true;
+  preference: PreferencePatch;
+}
+
+export interface MigratePreferenceToolInput {
+  conflictId: string;
+  targetStableId: string;
+}
+
+export interface DiscardPreferenceToolInput {
+  conflictId: string;
+}
+
+export interface PreferenceInspection {
+  preferences: PreferencePatch[];
+  conflicts: PreferenceConflict[];
+}
+
+export interface PreferenceDiscardResult {
+  preferenceId: string;
+}
+
+export type UIToolValue =
+  | Surface
+  | SurfaceInspection
+  | PreferenceInspection
+  | PreferencePatch
+  | PreferenceDiscardResult;

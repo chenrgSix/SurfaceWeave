@@ -1,12 +1,16 @@
 import type {
   DataBinding,
+  DeveloperHardConstraints,
   JsonValue,
+  SchemaFieldAliases,
   SurfaceContext,
+  UIConstraintAspect,
   UINode,
   UIOperation,
   UIIntent,
 } from "@package-first/core";
 import type {
+  DeveloperUIConfiguration,
   FieldMetadata,
   GeneratorMetadata,
   SimpleJsonSchema,
@@ -250,6 +254,117 @@ function metadataValue(value: unknown, path: string): GeneratorMetadata {
   return metadata;
 }
 
+function hardConstraintsValue(
+  value: unknown,
+  path: string,
+): DeveloperHardConstraints {
+  const object = record(value, path);
+  allowedKeys(object, ["rootComponent", "allowedComponents", "fields"], path);
+  const constraints: DeveloperHardConstraints = {};
+  if (object.rootComponent !== undefined) {
+    constraints.rootComponent = stringValue(
+      object.rootComponent,
+      `${path}.rootComponent`,
+    );
+  }
+  if (object.allowedComponents !== undefined) {
+    if (!Array.isArray(object.allowedComponents)) {
+      throw new ToolInputError(`${path}.allowedComponents must be an array`);
+    }
+    constraints.allowedComponents = object.allowedComponents.map(
+      (component, index) =>
+        stringValue(component, `${path}.allowedComponents[${index}]`),
+    );
+  }
+  if (object.fields !== undefined) {
+    const fields = record(object.fields, `${path}.fields`);
+    const aspects: UIConstraintAspect[] = [
+      "component",
+      "props",
+      "layout",
+      "visibility",
+      "position",
+    ];
+    constraints.fields = Object.fromEntries(
+      Object.entries(fields).map(([stableId, rawConstraint]) => {
+        const fieldPath = `${path}.fields.${stableId}`;
+        const field = record(rawConstraint, fieldPath);
+        allowedKeys(field, ["component", "visible", "locked"], fieldPath);
+        const constraint: NonNullable<
+          DeveloperHardConstraints["fields"]
+        >[string] = {};
+        if (field.component !== undefined) {
+          constraint.component = stringValue(
+            field.component,
+            `${fieldPath}.component`,
+          );
+        }
+        if (field.visible !== undefined) {
+          constraint.visible = booleanValue(
+            field.visible,
+            `${fieldPath}.visible`,
+          );
+        }
+        if (field.locked !== undefined) {
+          if (!Array.isArray(field.locked)) {
+            throw new ToolInputError(`${fieldPath}.locked must be an array`);
+          }
+          constraint.locked = field.locked.map((aspect, index) => {
+            if (!aspects.includes(aspect as UIConstraintAspect)) {
+              throw new ToolInputError(
+                `${fieldPath}.locked[${index}] is not supported`,
+              );
+            }
+            return aspect as UIConstraintAspect;
+          });
+        }
+        return [stableId, constraint];
+      }),
+    );
+  }
+  return constraints;
+}
+
+function developerValue(
+  value: unknown,
+  path: string,
+): DeveloperUIConfiguration {
+  const object = record(value, path);
+  allowedKeys(object, ["hardConstraints", "softHints"], path);
+  const developer: DeveloperUIConfiguration = {};
+  if (object.hardConstraints !== undefined) {
+    developer.hardConstraints = hardConstraintsValue(
+      object.hardConstraints,
+      `${path}.hardConstraints`,
+    );
+  }
+  if (object.softHints !== undefined) {
+    developer.softHints = metadataValue(object.softHints, `${path}.softHints`);
+  }
+  return developer;
+}
+
+function fieldAliasesValue(value: unknown, path: string): SchemaFieldAliases {
+  const aliases = record(value, path);
+  return Object.fromEntries(
+    Object.entries(aliases).map(([previousStableId, rawTargets]) => {
+      const aliasPath = `${path}.${previousStableId}`;
+      if (Array.isArray(rawTargets)) {
+        if (rawTargets.length === 0) {
+          throw new ToolInputError(`${aliasPath} must not be empty`);
+        }
+        return [
+          previousStableId,
+          rawTargets.map((target, index) =>
+            stringValue(target, `${aliasPath}[${index}]`),
+          ),
+        ];
+      }
+      return [previousStableId, stringValue(rawTargets, aliasPath)];
+    }),
+  );
+}
+
 function bindingValue(value: unknown, path: string): DataBinding {
   const object = record(value, path);
   allowedKeys(object, ["path", "valueType", "semantic", "required"], path);
@@ -465,8 +580,11 @@ export function parseCreateSurface(value: unknown): CreateSurfaceToolInput {
       "schema",
       "data",
       "intent",
+      "developer",
       "metadata",
       "schemaRef",
+      "toolId",
+      "fieldAliases",
       "context",
     ],
     "arguments",
@@ -477,11 +595,23 @@ export function parseCreateSurface(value: unknown): CreateSurfaceToolInput {
     data: jsonRecord(object.data, "arguments.data"),
     intent: intentValue(object.intent, "arguments.intent"),
   };
+  if (object.developer !== undefined) {
+    input.developer = developerValue(object.developer, "arguments.developer");
+  }
   if (object.metadata !== undefined) {
     input.metadata = metadataValue(object.metadata, "arguments.metadata");
   }
   if (object.schemaRef !== undefined) {
     input.schemaRef = schemaRefValue(object.schemaRef, "arguments.schemaRef");
+  }
+  if (object.toolId !== undefined) {
+    input.toolId = stringValue(object.toolId, "arguments.toolId");
+  }
+  if (object.fieldAliases !== undefined) {
+    input.fieldAliases = fieldAliasesValue(
+      object.fieldAliases,
+      "arguments.fieldAliases",
+    );
   }
   if (object.context !== undefined) {
     input.context = jsonRecord(

@@ -4,7 +4,11 @@ import {
 } from "@package-first/core";
 import { describe, expect, it } from "vitest";
 
-import { AgentUIToolRuntime, uiToolDefinitions } from "../src/index.js";
+import {
+  AgentUIToolRuntime,
+  surfaceToolDefinitions,
+  uiToolDefinitions,
+} from "../src/index.js";
 
 function createRuntime() {
   const registry = createStandardComponentRegistry();
@@ -27,12 +31,15 @@ const createArguments = {
 
 describe("AgentUIToolRuntime", () => {
   it("publishes framework-agnostic definitions for all required tools", () => {
-    expect(uiToolDefinitions.map((definition) => definition.name)).toEqual([
-      "ui.createSurface",
-      "ui.inspectSurface",
-      "ui.applyOperations",
-      "ui.replaceSurface",
-    ]);
+    expect(surfaceToolDefinitions.map((definition) => definition.name)).toEqual(
+      [
+        "ui.createSurface",
+        "ui.inspectSurface",
+        "ui.applyOperations",
+        "ui.replaceSurface",
+      ],
+    );
+    expect(uiToolDefinitions).toHaveLength(8);
     for (const definition of uiToolDefinitions) {
       expect(definition.inputSchema.type).toBe("object");
     }

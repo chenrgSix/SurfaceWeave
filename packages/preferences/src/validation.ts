@@ -34,6 +34,21 @@ function nonEmptyString(value: unknown, label: string): string {
   return value;
 }
 
+function allowedKeys(
+  object: Record<string, unknown>,
+  keys: string[],
+  label: string,
+): void {
+  const allowed = new Set(keys);
+  const extra = Object.keys(object).find((key) => !allowed.has(key));
+  if (extra !== undefined) {
+    throw new DynamicUIError(
+      "INVALID_PREFERENCE",
+      `${label}.${extra} is not supported`,
+    );
+  }
+}
+
 function jsonValue(value: unknown, label: string): JsonValue {
   if (
     value === null ||
@@ -59,6 +74,7 @@ function jsonValue(value: unknown, label: string): JsonValue {
 
 function schemaRef(value: unknown, label: string): SchemaRef {
   const object = record(value, label);
+  allowedKeys(object, ["id", "version"], label);
   const result: SchemaRef = { id: nonEmptyString(object.id, `${label}.id`) };
   if (object.version !== undefined) {
     result.version = nonEmptyString(object.version, `${label}.version`);
@@ -81,6 +97,11 @@ function operation(
   }
   switch (type) {
     case "moveNode": {
+      allowedKeys(
+        object,
+        ["type", "target", "parent", "position"],
+        "preference.operation",
+      );
       const position = object.position;
       if (
         position !== "first" &&
@@ -104,6 +125,11 @@ function operation(
       return parsed;
     }
     case "replaceComponent": {
+      allowedKeys(
+        object,
+        ["type", "target", "component", "props"],
+        "preference.operation",
+      );
       const parsed: PreferenceOperation = {
         type,
         target,
@@ -127,6 +153,11 @@ function operation(
       return parsed;
     }
     case "setProps":
+      allowedKeys(
+        object,
+        ["type", "target", "props", "replace"],
+        "preference.operation",
+      );
       if (object.replace !== undefined && typeof object.replace !== "boolean") {
         throw new DynamicUIError(
           "INVALID_PREFERENCE",
@@ -143,6 +174,7 @@ function operation(
         ...(object.replace === undefined ? {} : { replace: object.replace }),
       };
     case "setLayout":
+      allowedKeys(object, ["type", "target", "layout"], "preference.operation");
       return {
         type,
         target,
@@ -152,6 +184,11 @@ function operation(
         ) as Record<string, JsonValue>,
       };
     case "setVisibility":
+      allowedKeys(
+        object,
+        ["type", "target", "visible"],
+        "preference.operation",
+      );
       if (typeof object.visible !== "boolean") {
         throw new DynamicUIError(
           "INVALID_PREFERENCE",
@@ -178,6 +215,19 @@ const intents: UIIntent[] = [
 
 export function parsePreferencePatch(value: unknown): PreferencePatch {
   const object = record(value, "preference");
+  allowedKeys(
+    object,
+    [
+      "id",
+      "scope",
+      "targetStableId",
+      "operation",
+      "schemaRef",
+      "intent",
+      "toolId",
+    ],
+    "preference",
+  );
   const scope = object.scope as PreferenceScope;
   if (!scopes.includes(scope)) {
     throw new DynamicUIError(
@@ -248,6 +298,7 @@ export function parsePreferencePatch(value: unknown): PreferencePatch {
 
 export function parsePreferenceDocument(value: unknown): PreferenceDocument {
   const object = record(value, "preference document");
+  allowedKeys(object, ["version", "patches"], "preference document");
   if (object.version !== 1 || !Array.isArray(object.patches)) {
     throw new DynamicUIError(
       "INVALID_PREFERENCE",

@@ -55,6 +55,56 @@ function stableNodes(surface: Surface): Map<string, UINode> {
   return nodes;
 }
 
+function nodePlacement(
+  surface: Surface,
+  stableId: string,
+): { parent: string | undefined; index: number } | undefined {
+  let placement: { parent: string | undefined; index: number } | undefined;
+  const visit = (node: UINode, parent: UINode | undefined): void => {
+    if (node.stableId === stableId) {
+      placement = {
+        parent: parent?.stableId ?? parent?.id,
+        index: parent?.children?.indexOf(node) ?? 0,
+      };
+      return;
+    }
+    for (const child of node.children ?? []) {
+      visit(child, node);
+    }
+  };
+  visit(surface.tree, undefined);
+  return placement;
+}
+
+function valuesEqual(left: unknown, right: unknown): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length &&
+      left.every((item, index) => valuesEqual(item, right[index]))
+    );
+  }
+  if (
+    typeof left === "object" &&
+    left !== null &&
+    !Array.isArray(left) &&
+    typeof right === "object" &&
+    right !== null &&
+    !Array.isArray(right)
+  ) {
+    const leftRecord = left as Record<string, unknown>;
+    const rightRecord = right as Record<string, unknown>;
+    const keys = Object.keys(leftRecord).sort();
+    return (
+      keys.length === Object.keys(rightRecord).length &&
+      keys.every((key) => valuesEqual(leftRecord[key], rightRecord[key]))
+    );
+  }
+  return false;
+}
+
 function operationAspect(
   operation: UIOperation,
 ): UIConstraintAspect | undefined {
@@ -163,6 +213,116 @@ function schemaRefsDiffer(
     return false;
   }
   return stored.id !== current.id || stored.version !== current.version;
+}
+
+export function assertOperationsAllowedByHardConstraints(
+  surface: Surface,
+  operations: UIOperation[],
+  constraints: DeveloperHardConstraints | undefined,
+  registry: ComponentRegistry,
+): void {
+  for (const operation of operations) {
+    const violation = hardConstraintMessage(surface, operation, constraints);
+    if (violation !== undefined) {
+      throw new DynamicUIError("HARD_CONSTRAINT_VIOLATION", violation);
+    }
+  }
+  applyOperationsToSurface(surface, operations, registry);
+}
+
+/** Validates a complete temporary replacement against developer-owned rules. */
+export function assertSurfaceSatisfiesHardConstraints(
+  surface: Surface,
+  constraints: DeveloperHardConstraints | undefined,
+  referenceSurface?: Surface,
+): void {
+  if (constraints === undefined) {
+    return;
+  }
+  if (
+    constraints.rootComponent !== undefined &&
+    surface.tree.component !== constraints.rootComponent
+  ) {
+    throw new DynamicUIError(
+      "HARD_CONSTRAINT_VIOLATION",
+      `Surface root requires component "${constraints.rootComponent}"`,
+    );
+  }
+  if (constraints.allowedComponents !== undefined) {
+    walkNodes(surface.tree, (node) => {
+      if (!constraints.allowedComponents?.includes(node.component)) {
+        throw new DynamicUIError(
+          "HARD_CONSTRAINT_VIOLATION",
+          `Component "${node.component}" is outside the developer allow-list`,
+        );
+      }
+    });
+  }
+  const nodes = stableNodes(surface);
+  const referenceNodes =
+    referenceSurface === undefined ? undefined : stableNodes(referenceSurface);
+  for (const [stableId, constraint] of Object.entries(
+    constraints.fields ?? {},
+  )) {
+    const node = nodes.get(stableId);
+    const referenceNode = referenceNodes?.get(stableId);
+    if (
+      constraint.visible === true &&
+      (node === undefined || node.visible === false)
+    ) {
+      throw new DynamicUIError(
+        "HARD_CONSTRAINT_VIOLATION",
+        `Field "${stableId}" must remain visible`,
+      );
+    }
+    if (
+      constraint.visible === false &&
+      node !== undefined &&
+      node.visible !== false
+    ) {
+      throw new DynamicUIError(
+        "HARD_CONSTRAINT_VIOLATION",
+        `Field "${stableId}" must remain hidden`,
+      );
+    }
+    if (
+      constraint.component !== undefined &&
+      node !== undefined &&
+      node.component !== constraint.component
+    ) {
+      throw new DynamicUIError(
+        "HARD_CONSTRAINT_VIOLATION",
+        `Field "${stableId}" requires component "${constraint.component}"`,
+      );
+    }
+    for (const aspect of constraint.locked ?? []) {
+      const missingLockedNode =
+        referenceNode !== undefined && node === undefined;
+      const changed =
+        missingLockedNode ||
+        (referenceNode !== undefined &&
+          node !== undefined &&
+          ((aspect === "component" &&
+            referenceNode.component !== node.component) ||
+            (aspect === "props" &&
+              !valuesEqual(referenceNode.props, node.props)) ||
+            (aspect === "layout" &&
+              !valuesEqual(referenceNode.layout, node.layout)) ||
+            (aspect === "visibility" &&
+              (referenceNode.visible !== false) !== (node.visible !== false)) ||
+            (aspect === "position" &&
+              !valuesEqual(
+                nodePlacement(referenceSurface as Surface, stableId),
+                nodePlacement(surface, stableId),
+              ))));
+      if (changed) {
+        throw new DynamicUIError(
+          "HARD_CONSTRAINT_VIOLATION",
+          `Field "${stableId}" locks ${aspect}`,
+        );
+      }
+    }
+  }
 }
 
 /** Applies persisted preferences without mutating the long-lived document. */
@@ -334,6 +494,7 @@ export class PreferenceService {
         );
       }
     }
+    assertSurfaceSatisfiesHardConstraints(candidate, context.hardConstraints);
     return {
       surface: candidate,
       appliedPatchIds,
@@ -348,13 +509,12 @@ export class PreferenceService {
       surface.id,
     )?.hardConstraints,
   ): void {
-    for (const operation of operations) {
-      const violation = hardConstraintMessage(surface, operation, constraints);
-      if (violation !== undefined) {
-        throw new DynamicUIError("HARD_CONSTRAINT_VIOLATION", violation);
-      }
-    }
-    applyOperationsToSurface(surface, operations, this.#registry);
+    assertOperationsAllowedByHardConstraints(
+      surface,
+      operations,
+      constraints,
+      this.#registry,
+    );
   }
 
   async migratePreference(

@@ -79,7 +79,7 @@ const operationSchema: JsonValue = {
 };
 
 /** JSON Schema definitions passed to a host Agent SDK without importing it. */
-export const uiToolDefinitions: UIToolDefinition[] = [
+export const surfaceToolDefinitions: UIToolDefinition[] = [
   {
     name: "ui.createSurface",
     description:
@@ -93,8 +93,11 @@ export const uiToolDefinitions: UIToolDefinition[] = [
         schema: { type: "object" },
         data: { type: "object" },
         intent: intentSchema,
+        developer: { type: "object" },
         metadata: { type: "object" },
         schemaRef: { type: "object" },
+        toolId: { type: "string", minLength: 1 },
+        fieldAliases: { type: "object" },
         context: { type: "object" },
       },
     },
@@ -152,4 +155,72 @@ export const uiToolDefinitions: UIToolDefinition[] = [
       },
     },
   },
+];
+
+export const preferenceToolDefinitions: UIToolDefinition[] = [
+  {
+    name: "ui.inspectPreferences",
+    description: "List persisted preference patches and unresolved conflicts.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+    },
+  },
+  {
+    name: "ui.savePreference",
+    description:
+      "Persist one confirmed semantic preference patch; never use for temporary overrides.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["confirmed", "preference"],
+      properties: {
+        confirmed: { const: true },
+        preference: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id", "scope", "targetStableId", "operation"],
+          properties: {
+            id: { type: "string", minLength: 1 },
+            scope: { enum: ["global", "intent", "tool"] },
+            targetStableId: { type: "string", minLength: 1 },
+            operation: { type: "object" },
+            schemaRef: { type: "object" },
+            intent: intentSchema,
+            toolId: { type: "string", minLength: 1 },
+          },
+        },
+      },
+    },
+  },
+  {
+    name: "ui.migratePreference",
+    description:
+      "Resolve a preference conflict by explicitly mapping it to a current stableId.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["conflictId", "targetStableId"],
+      properties: {
+        conflictId: { type: "string", minLength: 1 },
+        targetStableId: { type: "string", minLength: 1 },
+      },
+    },
+  },
+  {
+    name: "ui.discardPreference",
+    description: "Discard the persisted preference associated with a conflict.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["conflictId"],
+      properties: { conflictId: { type: "string", minLength: 1 } },
+    },
+  },
+];
+
+export const uiToolDefinitions: UIToolDefinition[] = [
+  ...surfaceToolDefinitions,
+  ...preferenceToolDefinitions,
 ];
