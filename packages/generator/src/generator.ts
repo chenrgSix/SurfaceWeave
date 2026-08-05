@@ -8,6 +8,8 @@ import {
 import type {
   BindingValueType,
   ComponentRegistry,
+  DeveloperHardConstraints,
+  FieldHardConstraint,
   JsonValue,
   Surface,
   UINode,
@@ -50,16 +52,44 @@ function bindingType(schema: SimpleJsonSchema): BindingValueType {
   return schema.type;
 }
 
-function requireComponent(
+function componentIsAllowed(
+  component: string,
+  constraints: DeveloperHardConstraints | undefined,
+): boolean {
+  return (
+    constraints?.allowedComponents === undefined ||
+    constraints.allowedComponents.includes(component)
+  );
+}
+
+function chooseComponent(
   registry: ComponentRegistry,
-  requested: string | undefined,
+  hardComponent: string | undefined,
+  softComponent: string | undefined,
   defaults: string[],
+  constraints: DeveloperHardConstraints | undefined,
 ): string {
-  if (requested !== undefined) {
-    registry.require(requested);
-    return requested;
+  if (hardComponent !== undefined) {
+    registry.require(hardComponent);
+    if (!componentIsAllowed(hardComponent, constraints)) {
+      throw new DynamicUIError(
+        "INVALID_SURFACE",
+        `Hard component "${hardComponent}" is outside allowedComponents`,
+      );
+    }
+    return hardComponent;
   }
-  const available = defaults.find((component) => registry.has(component));
+  if (
+    softComponent !== undefined &&
+    registry.has(softComponent) &&
+    componentIsAllowed(softComponent, constraints)
+  ) {
+    return softComponent;
+  }
+  const available = defaults.find(
+    (component) =>
+      registry.has(component) && componentIsAllowed(component, constraints),
+  );
   if (available === undefined) {
     throw new DynamicUIError(
       "UNKNOWN_COMPONENT",
@@ -73,26 +103,43 @@ function componentForField(
   schema: SimpleJsonSchema,
   metadata: FieldMetadata | undefined,
   registry: ComponentRegistry,
+  hardConstraint: FieldHardConstraint | undefined,
+  constraints: DeveloperHardConstraints | undefined,
 ): string {
-  if (metadata?.component !== undefined) {
-    return requireComponent(registry, metadata.component, []);
-  }
   if (schema.enum !== undefined) {
-    return requireComponent(registry, undefined, ["Select"]);
+    return chooseComponent(
+      registry,
+      hardConstraint?.component,
+      metadata?.component,
+      ["Select"],
+      constraints,
+    );
   }
+  let defaults: string[];
   switch (schema.type) {
     case "string":
-      return requireComponent(registry, undefined, ["TextInput"]);
+      defaults = ["TextInput"];
+      break;
     case "number":
     case "integer":
-      return requireComponent(registry, undefined, ["NumberInput"]);
+      defaults = ["NumberInput"];
+      break;
     case "boolean":
-      return requireComponent(registry, undefined, ["Checkbox"]);
+      defaults = ["Checkbox"];
+      break;
     case "array":
-      return requireComponent(registry, undefined, ["Select"]);
+      defaults = ["Select"];
+      break;
     case "object":
-      return requireComponent(registry, undefined, ["Accordion", "Stack"]);
+      defaults = ["Accordion", "Stack"];
   }
+  return chooseComponent(
+    registry,
+    hardConstraint?.component,
+    metadata?.component,
+    defaults,
+    constraints,
+  );
 }
 
 function jsonValue(value: unknown, path: string): JsonValue {
@@ -147,13 +194,24 @@ function createFieldNode(
   schema: SimpleJsonSchema,
   required: boolean,
   metadata: GeneratorMetadata | undefined,
+  constraints: DeveloperHardConstraints | undefined,
   registry: ComponentRegistry,
 ): UINode | undefined {
   const field = metadata?.fields?.[path];
-  if (field?.hidden === true) {
+  const hardConstraint = constraints?.fields?.[path];
+  if (
+    hardConstraint?.visible === false ||
+    (hardConstraint?.visible !== true && field?.hidden === true)
+  ) {
     return undefined;
   }
-  const component = componentForField(schema, field, registry);
+  const component = componentForField(
+    schema,
+    field,
+    registry,
+    hardConstraint,
+    constraints,
+  );
   const props: Record<string, JsonValue> = {
     label: labelFor(name, schema, field),
     ...cloneValue(field?.props ?? {}),
@@ -183,6 +241,7 @@ function createFieldNode(
           childSchema,
           schema.required?.includes(childName) ?? false,
           metadata,
+          constraints,
           registry,
         ),
       )
@@ -224,22 +283,26 @@ function generateForm(
       "The form intent requires an object schema",
     );
   }
-  const rootComponent = requireComponent(
+  const metadata = input.developer?.softHints ?? input.metadata;
+  const constraints = input.developer?.hardConstraints;
+  const rootComponent = chooseComponent(
     registry,
-    input.metadata?.rootComponent,
+    constraints?.rootComponent,
+    metadata?.rootComponent,
     ["Form"],
+    constraints,
   );
   return {
     id: stableNodeId(input.surfaceId, "root"),
     stableId: `${input.surfaceId}.root`,
     component: rootComponent,
     props: {
-      title: input.metadata?.title ?? input.schema.title ?? input.surfaceId,
-      ...(input.metadata?.description === undefined
+      title: metadata?.title ?? input.schema.title ?? input.surfaceId,
+      ...(metadata?.description === undefined
         ? {}
-        : { description: input.metadata.description }),
+        : { description: metadata.description }),
     },
-    children: sortedProperties(input.schema, "", input.metadata)
+    children: sortedProperties(input.schema, "", metadata)
       .map(([name, schema]) =>
         createFieldNode(
           input.surfaceId,
@@ -247,7 +310,8 @@ function generateForm(
           name,
           schema,
           input.schema.required?.includes(name) ?? false,
-          input.metadata,
+          metadata,
+          constraints,
           registry,
         ),
       )
@@ -265,15 +329,19 @@ function generateCollection(
   input: GenerateSurfaceInput,
   registry: ComponentRegistry,
 ): UINode {
+  const metadata = input.developer?.softHints ?? input.metadata;
+  const constraints = input.developer?.hardConstraints;
   const itemsPath =
-    input.metadata?.itemsPath ?? firstArrayPath(input.schema) ?? "items";
+    metadata?.itemsPath ?? firstArrayPath(input.schema) ?? "items";
   const isSelection =
     input.intent === "single-select" || input.intent === "multi-select";
-  const selectionPath = input.metadata?.selectionPath ?? "selection";
-  const component = requireComponent(
+  const selectionPath = metadata?.selectionPath ?? "selection";
+  const component = chooseComponent(
     registry,
-    input.metadata?.rootComponent,
+    constraints?.rootComponent,
+    metadata?.rootComponent,
     input.intent === "browse" ? ["Table", "CardList"] : ["CardList", "Select"],
+    constraints,
   );
   const items = jsonValue(
     readDataPath(input.data, itemsPath) ?? [],
@@ -284,12 +352,14 @@ function generateCollection(
     stableId: `${input.surfaceId}.collection`,
     component,
     props: {
-      title: input.metadata?.title ?? input.schema.title ?? input.surfaceId,
+      title: metadata?.title ?? input.schema.title ?? input.surfaceId,
       items,
       multiple: input.intent === "multi-select",
-      ...(input.metadata?.itemComponent === undefined
+      ...(metadata?.itemComponent === undefined ||
+      !registry.has(metadata.itemComponent) ||
+      !componentIsAllowed(metadata.itemComponent, constraints)
         ? {}
-        : { itemComponent: input.metadata.itemComponent }),
+        : { itemComponent: metadata.itemComponent }),
     },
     binding: {
       path: isSelection ? selectionPath : itemsPath,
@@ -306,17 +376,23 @@ function generateConfirm(
   input: GenerateSurfaceInput,
   registry: ComponentRegistry,
 ): UINode {
-  const component = requireComponent(registry, input.metadata?.rootComponent, [
-    "Confirm",
-  ]);
+  const metadata = input.developer?.softHints ?? input.metadata;
+  const constraints = input.developer?.hardConstraints;
+  const component = chooseComponent(
+    registry,
+    constraints?.rootComponent,
+    metadata?.rootComponent,
+    ["Confirm"],
+    constraints,
+  );
   return {
     id: stableNodeId(input.surfaceId, "confirm"),
     stableId: `${input.surfaceId}.confirm`,
     component,
     props: {
-      title: input.metadata?.title ?? input.schema.title ?? "Confirm",
+      title: metadata?.title ?? input.schema.title ?? "Confirm",
       message:
-        input.metadata?.description ??
+        metadata?.description ??
         input.schema.description ??
         "Please confirm this action.",
       summary: jsonValue(input.data, "data"),
@@ -331,9 +407,6 @@ export function generateSurface(
 ): GeneratedSurface {
   if (input.surfaceId.trim() === "") {
     throw new DynamicUIError("INVALID_SURFACE", "surfaceId cannot be empty");
-  }
-  if (input.metadata?.itemComponent !== undefined) {
-    registry.require(input.metadata.itemComponent);
   }
   const data = cloneValue(input.data);
   applySchemaDefaults(input.schema, data);

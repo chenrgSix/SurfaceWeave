@@ -110,7 +110,7 @@ describe("generateSurface", () => {
     expect(surface.tree.props.summary).toEqual({ quantity: 2 });
   });
 
-  it("rejects developer metadata that names an unknown component", () => {
+  it("rejects hard constraints that name an unknown component", () => {
     expect(() =>
       generateSurface(
         {
@@ -118,7 +118,9 @@ describe("generateSurface", () => {
           schema: formSchema,
           intent: "form",
           data: {},
-          metadata: { rootComponent: "GeneratedReactCode" },
+          developer: {
+            hardConstraints: { rootComponent: "GeneratedReactCode" },
+          },
         },
         createStandardComponentRegistry(),
       ),
@@ -127,5 +129,40 @@ describe("generateSurface", () => {
         code: "UNKNOWN_COMPONENT",
       }),
     );
+  });
+
+  it("falls back from unsupported soft hints and enforces hard visibility", () => {
+    const surface = generateSurface(
+      {
+        surfaceId: "developer-priority",
+        schema: formSchema,
+        intent: "form",
+        data: { buyer: "Ada", remark: "Visible only when allowed" },
+        developer: {
+          softHints: {
+            rootComponent: "UnregisteredSoftRenderer",
+            fields: {
+              buyer: { hidden: true, component: "UnregisteredSoftInput" },
+              remark: { hidden: false },
+            },
+          },
+          hardConstraints: {
+            allowedComponents: ["Form", "TextInput", "NumberInput"],
+            fields: {
+              buyer: { visible: true, component: "TextInput" },
+              remark: { visible: false },
+            },
+          },
+        },
+      },
+      createStandardComponentRegistry(),
+    );
+
+    expect(surface.tree.component).toBe("Form");
+    expect(surface.tree.children?.map((node) => node.stableId)).toEqual([
+      "buyer",
+      "quantity",
+    ]);
+    expect(surface.tree.children?.[0]?.component).toBe("TextInput");
   });
 });

@@ -1,4 +1,5 @@
 import type {
+  DeveloperHardConstraints,
   JsonValue,
   SchemaRef,
   Surface,
@@ -32,7 +33,7 @@ export interface FieldMetadata {
   collapsed?: boolean;
 }
 
-export interface GeneratorMetadata {
+export interface DeveloperSoftHints {
   title?: string;
   description?: string;
   rootComponent?: string;
@@ -42,11 +43,21 @@ export interface GeneratorMetadata {
   fields?: Record<string, FieldMetadata>;
 }
 
+/** @deprecated Use DeveloperSoftHints through GenerateSurfaceInput.developer. */
+export type GeneratorMetadata = DeveloperSoftHints;
+
+export interface DeveloperUIConfiguration {
+  hardConstraints?: DeveloperHardConstraints;
+  softHints?: DeveloperSoftHints;
+}
+
 export interface GenerateSurfaceInput {
   surfaceId: string;
   schema: SimpleJsonSchema;
   data: Record<string, unknown>;
   intent: UIIntent;
+  developer?: DeveloperUIConfiguration;
+  /** @deprecated Use developer.softHints. */
   metadata?: GeneratorMetadata;
   schemaRef?: SchemaRef;
   context?: SurfaceContext;
