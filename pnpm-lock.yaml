@@ -129,6 +129,24 @@ importers:
 
   packages/storage: {}
 
+  packages/tauri:
+    dependencies:
+      '@package-first/core':
+        specifier: workspace:*
+        version: link:../core
+      '@package-first/preferences':
+        specifier: workspace:*
+        version: link:../preferences
+      '@package-first/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@tauri-apps/api':
+        specifier: ^2.8.0
+        version: 2.11.1
+      '@tauri-apps/plugin-store':
+        specifier: ^2.4.0
+        version: 2.4.4
+
 packages:
 
   '@asamuzakjp/css-color@6.0.5':
@@ -360,6 +378,12 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@tauri-apps/api@2.11.1':
+    resolution: {integrity: sha512-M2FPuYND2m+wh5hfW9ZpSdxMPdEJovPBWwoHJmwUpysTYNHaOkVFN419m/K0LIgjb/7KU2vBgsUepJWugQCvAA==}
+
+  '@tauri-apps/plugin-store@2.4.4':
+    resolution: {integrity: sha512-oxSMaj/QpVfJcBMYX5aOQV94fWvga0MwQMfD6TLlbK2dh+ShPWAzefd8HWXhvOKjPRJdGVAkW7ZGO76JzzjaDA==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -1342,6 +1366,12 @@ snapshots:
   '@rolldown/pluginutils@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@tauri-apps/api@2.11.1': {}
+
+  '@tauri-apps/plugin-store@2.4.4':
+    dependencies:
+      '@tauri-apps/api': 2.11.1
 
   '@testing-library/dom@10.4.1':
     dependencies:
