@@ -1,4 +1,10 @@
-import { cloneValue, splitDataPath, walkNodes } from "./data.js";
+import {
+  bindingValueTypeMatches,
+  cloneValue,
+  readDataPath,
+  splitDataPath,
+  walkNodes,
+} from "./data.js";
 import { DynamicUIError } from "./errors.js";
 import type {
   ComponentRegistry,
@@ -224,6 +230,13 @@ export function validateSurface(
         throw new DynamicUIError(
           "INVALID_SURFACE",
           `Node "${node.id}" has an invalid data binding path`,
+        );
+      }
+      const value = readDataPath(surface.data, node.binding.path);
+      if (!bindingValueTypeMatches(node.binding.valueType, value)) {
+        throw new DynamicUIError(
+          "INVALID_SURFACE",
+          `Data at "${node.binding.path}" is incompatible with ${node.binding.valueType} binding`,
         );
       }
     }

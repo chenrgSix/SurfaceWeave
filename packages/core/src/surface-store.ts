@@ -1,4 +1,5 @@
 import {
+  bindingValueTypeMatches,
   bindingsAreCompatible,
   cloneValue,
   collectBindings,
@@ -10,6 +11,7 @@ import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
 import type {
   ComponentRegistry,
+  DataBinding,
   DataChange,
   Surface,
   SurfaceListener,
@@ -146,18 +148,25 @@ export class InMemorySurfaceStore implements SurfaceStore {
     }
     const current = this.#current(surfaceId);
     assertRevision(current, baseRevision);
-    const boundPaths = new Set<string>();
+    const boundPaths = new Map<string, DataBinding>();
     walkNodes(current.tree, (node) => {
       if (node.binding !== undefined) {
-        boundPaths.add(node.binding.path);
+        boundPaths.set(node.binding.path, node.binding);
       }
     });
     const next = cloneValue(current);
     for (const change of changes) {
-      if (!boundPaths.has(change.path)) {
+      const binding = boundPaths.get(change.path);
+      if (binding === undefined) {
         throw new DynamicUIError(
           "INVALID_OPERATION",
           `Data path "${change.path}" is not bound by the surface`,
+        );
+      }
+      if (!bindingValueTypeMatches(binding.valueType, change.value)) {
+        throw new DynamicUIError(
+          "INVALID_OPERATION",
+          `Data at "${change.path}" is incompatible with ${binding.valueType} binding`,
         );
       }
       writeDataPath(next.data, change.path, change.value);

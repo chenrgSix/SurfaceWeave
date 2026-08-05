@@ -1,4 +1,6 @@
-import type { DataBinding, UINode } from "./types.js";
+import type { BindingValueType, DataBinding, UINode } from "./types.js";
+
+const unsafePathSegments = new Set(["__proto__", "constructor", "prototype"]);
 
 export function cloneValue<T>(value: T): T {
   return structuredClone(value);
@@ -8,11 +10,31 @@ export function splitDataPath(path: string): string[] {
   const segments = path.split(".").filter(Boolean);
   if (
     segments.length === 0 ||
-    segments.some((segment) => segment === "__proto__")
+    segments.some((segment) => unsafePathSegments.has(segment))
   ) {
     throw new Error(`Invalid data path: ${path}`);
   }
   return segments;
+}
+
+export function bindingValueTypeMatches(
+  valueType: BindingValueType,
+  value: unknown,
+): boolean {
+  if (value === undefined || value === null || valueType === "unknown") {
+    return true;
+  }
+  switch (valueType) {
+    case "string":
+    case "boolean":
+      return typeof value === valueType;
+    case "number":
+      return typeof value === "number" && Number.isFinite(value);
+    case "array":
+      return Array.isArray(value);
+    case "object":
+      return typeof value === "object" && !Array.isArray(value);
+  }
 }
 
 export function readDataPath(

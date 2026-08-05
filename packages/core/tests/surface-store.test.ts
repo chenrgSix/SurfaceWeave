@@ -56,6 +56,37 @@ describe("InMemorySurfaceStore", () => {
     );
   });
 
+  it("rejects incompatible bound values without changing state", () => {
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(createFormSurface());
+
+    expect(() =>
+      store.updateData(surface.id, 0, [
+        { path: "purchase.name", value: { arbitrary: "object" } },
+      ]),
+    ).toThrowError(
+      expect.objectContaining<Partial<DynamicUIError>>({
+        code: "INVALID_OPERATION",
+      }),
+    );
+    expect(store.requireSurface(surface.id)).toEqual(surface);
+  });
+
+  it("rejects prototype-polluting binding paths", () => {
+    const unsafe = createFormSurface();
+    const firstNode = unsafe.tree.children?.[0];
+    if (firstNode?.binding !== undefined) {
+      firstNode.binding.path = "constructor.prototype.polluted";
+    }
+    const store = new InMemorySurfaceStore(createRegistry());
+
+    expect(() => store.createSurface(unsafe)).toThrowError(
+      expect.objectContaining<Partial<DynamicUIError>>({
+        code: "INVALID_SURFACE",
+      }),
+    );
+  });
+
   it("preserves form data when nodes move", () => {
     const store = new InMemorySurfaceStore(createRegistry());
     const surface = store.createSurface(createFormSurface());

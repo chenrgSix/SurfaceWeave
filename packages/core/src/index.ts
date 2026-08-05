@@ -2,6 +2,7 @@ export { createActionIntent } from "./action-intent.js";
 export type { CreateActionIntentInput } from "./action-intent.js";
 export { InMemoryComponentRegistry } from "./component-registry.js";
 export {
+  bindingValueTypeMatches,
   bindingsAreCompatible,
   cloneValue,
   collectBindings,
