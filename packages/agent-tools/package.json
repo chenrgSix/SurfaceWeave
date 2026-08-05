@@ -1,0 +1,24 @@
+{
+  "name": "@package-first/agent-tools",
+  "version": "0.1.0",
+  "description": "Framework-agnostic Agent tool definitions and handlers for Dynamic UI",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@package-first/core": "workspace:*",
+    "@package-first/generator": "workspace:*"
+  }
+}

@@ -36,6 +36,15 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(vite@8.2.0(@types/node@26.1.2))
 
+  packages/agent-tools:
+    dependencies:
+      '@package-first/core':
+        specifier: workspace:*
+        version: link:../core
+      '@package-first/generator':
+        specifier: workspace:*
+        version: link:../generator
+
   packages/core: {}
 
   packages/generator:
