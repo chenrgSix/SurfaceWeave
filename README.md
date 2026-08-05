@@ -16,7 +16,7 @@ Milestone 1 implements the in-memory runtime, deterministic generator, Agent too
 
 ## Development
 
-Use Node 22 and pnpm 10:
+Use Node 22.13 or newer and pnpm 10:
 
 ```bash
 nvm use 22
