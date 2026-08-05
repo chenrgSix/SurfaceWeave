@@ -36,6 +36,14 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(vite@8.2.0(@types/node@26.1.2))
 
+  packages/core: {}
+
+  packages/generator:
+    dependencies:
+      '@package-first/core':
+        specifier: workspace:*
+        version: link:../core
+
 packages:
 
   '@eslint-community/eslint-utils@4.10.1':
