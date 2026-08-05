@@ -27,7 +27,7 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm check:tauri
-pnpm build:tauri -- --no-bundle
+pnpm build:tauri --no-bundle
 ```
 
 ## Explicit Non-goals

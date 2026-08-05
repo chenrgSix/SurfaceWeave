@@ -40,7 +40,7 @@ After installing the [Tauri prerequisites](https://v2.tauri.app/start/prerequisi
 pnpm check:tauri
 pnpm dev:tauri
 # Release compilation without packaging an installer:
-pnpm build:tauri -- --no-bundle
+pnpm build:tauri --no-bundle
 ```
 
 The desktop flow proves that Rust supplies tea results, both views share one Surface Store, Agent operations preserve form data, preferences survive through Tauri Store, session form values do not persist, and unknown semantic actions are rejected.
