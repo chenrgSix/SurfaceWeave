@@ -147,4 +147,39 @@ describe("SurfaceRenderer", () => {
         ?.open,
     ).toBe(false);
   });
+
+  it("switches surface ids without rendering the previous snapshot", () => {
+    const runtime = createFormRuntime();
+    runtime.store.createSurface({
+      id: "second",
+      intent: "confirm",
+      tree: {
+        id: "confirm",
+        component: "Confirm",
+        props: { title: "Second surface", message: "Ready" },
+      },
+      data: {},
+      context: {},
+    });
+    const view = render(
+      <SurfaceRenderer
+        store={runtime.store}
+        componentRegistry={runtime.registry}
+        reactComponents={runtime.reactComponents}
+        surfaceId="purchase"
+      />,
+    );
+
+    view.rerender(
+      <SurfaceRenderer
+        store={runtime.store}
+        componentRegistry={runtime.registry}
+        reactComponents={runtime.reactComponents}
+        surfaceId="second"
+      />,
+    );
+
+    expect(screen.getByText("Second surface")).toBeTruthy();
+    expect(screen.queryByText("Purchase")).toBeNull();
+  });
 });
