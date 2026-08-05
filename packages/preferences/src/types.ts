@@ -14,12 +14,14 @@ export interface PreferenceApplicationContext {
   hardConstraints?: DeveloperHardConstraints;
 }
 
+/** Result of composing durable patches over one deterministic default Surface. */
 export interface PreferenceApplicationResult {
   surface: Surface;
   appliedPatchIds: string[];
   conflicts: PreferenceConflict[];
 }
 
+/** Internal resolution state retained until a conflict is migrated or discarded. */
 export interface PreferenceConflictRecord {
   conflict: PreferenceConflict;
   patch: PreferencePatch;

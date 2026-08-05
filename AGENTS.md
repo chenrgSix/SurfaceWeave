@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Architecture decisions live in `docs/`. Framework-independent TypeScript is under `packages/core`, with generation and Agent adapters in sibling packages. React stays in `packages/renderer-react`; the runnable Vite flow is `examples/tea-purchase`.
+Architecture decisions live in `docs/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preference composition, and Agent tools are in `packages/generator`, `packages/storage`, `packages/preferences`, and `packages/agent-tools`. React stays in `packages/renderer-react`; the runnable Vite flow is `examples/tea-purchase`.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
 
@@ -24,7 +24,7 @@ Use TypeScript for shared protocols and runtime code. Keep core packages indepen
 
 ## Testing Guidelines
 
-Vitest is the test runner; jsdom and Testing Library cover React. Name tests `*.test.ts` or `*.test.tsx`. Every bug fix needs a regression test. Test atomic failure, revision conflicts, data migration, deterministic generation, shared views, and ActionIntent safety.
+Vitest is the test runner; jsdom and Testing Library cover React. Name tests `*.test.ts` or `*.test.tsx`. Every bug fix needs a regression test. Test atomic failure, revision conflicts, data and preference migration, scope precedence, durable-write failures, shared views, and ActionIntent safety.
 
 ## Commit & Pull Request Guidelines
 

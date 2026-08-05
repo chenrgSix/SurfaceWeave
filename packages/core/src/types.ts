@@ -134,6 +134,7 @@ export interface PreferenceDocument {
   patches: PreferencePatch[];
 }
 
+/** Developer-declared old stableId to current stableId candidates. */
 export type SchemaFieldAliases = Record<string, string | string[]>;
 
 export type UIConstraintAspect =
@@ -159,6 +160,7 @@ export type PreferenceConflictCode =
   | "HARD_CONSTRAINT"
   | "INVALID_OPERATION";
 
+/** Explicit resolution request produced when a durable patch cannot be applied. */
 export interface PreferenceConflict {
   id: string;
   patchId: string;
