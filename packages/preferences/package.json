@@ -2,7 +2,11 @@
   "name": "@package-first/preferences",
   "version": "0.2.0",
   "description": "Structured preference repository and personalization engine",
+  "license": "UNLICENSED",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
     "dist"
@@ -10,15 +14,20 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "workspace:*",
-    "@package-first/storage": "workspace:*"
+    "@package-first/core": "^0.1.0",
+    "@package-first/storage": "^0.2.0"
   }
 }

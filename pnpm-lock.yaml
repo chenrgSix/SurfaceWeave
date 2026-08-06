@@ -137,25 +137,25 @@ importers:
   packages/agent-tools:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
       '@package-first/generator':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../generator
       '@package-first/preferences':
-        specifier: workspace:*
+        specifier: ^0.2.0
         version: link:../preferences
       '@package-first/storage':
-        specifier: workspace:*
+        specifier: ^0.2.0
         version: link:../storage
 
   packages/component-pack-antd:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
       '@package-first/renderer-react':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../renderer-react
     devDependencies:
       '@testing-library/react':
@@ -186,10 +186,10 @@ importers:
   packages/component-pack-react-aria:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
       '@package-first/renderer-react':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../renderer-react
     devDependencies:
       '@testing-library/react':
@@ -230,22 +230,22 @@ importers:
   packages/generator:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
 
   packages/preferences:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
       '@package-first/storage':
-        specifier: workspace:*
+        specifier: ^0.2.0
         version: link:../storage
 
   packages/renderer-react:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
     devDependencies:
       '@testing-library/react':
@@ -275,13 +275,13 @@ importers:
   packages/tauri:
     dependencies:
       '@package-first/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
       '@package-first/preferences':
-        specifier: workspace:*
+        specifier: ^0.2.0
         version: link:../preferences
       '@package-first/storage':
-        specifier: workspace:*
+        specifier: ^0.2.0
         version: link:../storage
       '@tauri-apps/api':
         specifier: ^2.8.0

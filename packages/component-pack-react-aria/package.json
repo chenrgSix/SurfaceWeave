@@ -2,7 +2,11 @@
   "name": "@package-first/component-pack-react-aria",
   "version": "0.4.0",
   "description": "Accessible React Aria bindings for the Package First semantic UI protocol",
+  "license": "UNLICENSED",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": [
     "./styles.css"
   ],
@@ -13,21 +17,26 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./styles.css": "./styles.css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "workspace:*",
-    "@package-first/renderer-react": "workspace:*"
+    "@package-first/core": "^0.1.0",
+    "@package-first/renderer-react": "^0.1.0"
   },
   "peerDependencies": {
-    "react": ">=18.2.0",
-    "react-dom": ">=18.2.0",
+    "react": ">=18.2.0 <20",
+    "react-dom": ">=18.2.0 <20",
     "react-aria-components": ">=1.20.0 <2"
   },
   "devDependencies": {

@@ -2,28 +2,38 @@
   "name": "@package-first/component-pack-antd",
   "version": "0.4.0",
   "description": "Ant Design bindings for the Package First semantic UI protocol",
+  "license": "UNLICENSED",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "workspace:*",
-    "@package-first/renderer-react": "workspace:*"
+    "@package-first/core": "^0.1.0",
+    "@package-first/renderer-react": "^0.1.0"
   },
   "peerDependencies": {
     "antd": ">=6.5.3 <7",
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react": ">=18.2.0 <20",
+    "react-dom": ">=18.2.0 <20"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

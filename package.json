@@ -20,7 +20,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "pnpm -r --if-present typecheck",
-    "verify:packages": "node scripts/verify-package-tarballs.mjs"
+    "verify:packages": "node scripts/verify-package-tarballs.mjs",
+    "verify:release": "node scripts/audit-release-packages.mjs && node scripts/verify-npm-publish-dry-run.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
