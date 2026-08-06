@@ -2,6 +2,8 @@
 
 Milestone 5 在此基线上增加 Canonical Tool Registry、可序列化 Invocation 生命周期、Host submission 边界和独立结果投影；详见 [Tool-to-UI Runtime](tool-to-ui-runtime.md)。
 
+长期决策：本项目不实现前端工作流引擎。多个 Tool 的调用顺序、条件与下一步由接入方业务 Agent 或后端负责；Runtime 只维护当前 Surface、单次 Invocation 和轻量导航关联。完整边界见 [ADR 0001](adr/0001-no-frontend-workflow-engine.md)。
+
 它借鉴 [AG-UI](https://docs.ag-ui.com/introduction) 的事件流和 [A2UI](https://a2ui.org/) 的声明式组件树，但定义自己的轻量协议，不强求兼容。
 
 ## 一、系统定位
@@ -23,7 +25,7 @@ Milestone 5 在此基线上增加 Canonical Tool Registry、可序列化 Invocat
 * 提交后的冻结、恢复等业务生命周期；
 * 创建新的业务数据模型；
 * 执行 Agent 生成的任意代码；
-* 完整的工作流编排。
+* 任何前端工作流编排、业务规则执行或长期流程实例。
 
 ## 二、总体架构
 

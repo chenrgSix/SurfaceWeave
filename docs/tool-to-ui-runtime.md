@@ -57,3 +57,8 @@ policy, supply a URL, execute a tool, or resolve an invocation.
 Milestone 5 does not add an Agent, workflow/DAG engine, remote discovery,
 cross-session form recovery, production authorization service, Vue/Flutter
 renderer, or Pack lazy loading.
+
+The permanent ownership boundary is recorded in
+[ADR 0001](adr/0001-no-frontend-workflow-engine.md). Existing Surface and
+Invocation primitives are intentionally sufficient for current lightweight UI
+continuity; there is no `InteractionSession` or frontend business-step engine.
