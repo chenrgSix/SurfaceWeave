@@ -12,6 +12,15 @@ const booleanSchema: JsonSchema = { type: "boolean" };
 const numberSchema: JsonSchema = { type: "number" };
 const arraySchema: JsonSchema = { type: "array" };
 const anySchema: JsonSchema = {};
+const toolActions = [
+  "tool.validate",
+  "tool.request-confirmation",
+  "tool.submit",
+  "tool.cancel",
+  "tool.retry",
+  "tool.edit",
+  "result.continue",
+];
 
 function propsSchema(
   properties: Record<string, JsonSchema> = {},
@@ -83,9 +92,26 @@ export const standardComponentManifests: ComponentManifest[] = [
       title: stringSchema,
       description: stringSchema,
       submitLabel: stringSchema,
+      submitAction: stringSchema,
+      invocationId: stringSchema,
+      submitting: booleanSchema,
     }),
-    actions: [{ name: "submit", sideEffect: true }],
-    actionSchema: actionSchema(["submit"]),
+    actions: [
+      { name: "submit", sideEffect: true },
+      { name: "tool.submit", sideEffect: true },
+      "tool.validate",
+      "tool.cancel",
+      "tool.retry",
+      "tool.edit",
+    ],
+    actionSchema: actionSchema([
+      "submit",
+      "tool.submit",
+      "tool.validate",
+      "tool.cancel",
+      "tool.retry",
+      "tool.edit",
+    ]),
   },
   {
     semanticType: "TextInput",
@@ -146,9 +172,14 @@ export const standardComponentManifests: ComponentManifest[] = [
   },
   {
     semanticType: "Action",
-    propsSchema: propsSchema({ label: stringSchema }),
-    actions: ["press"],
-    actionSchema: actionSchema(["press"]),
+    propsSchema: propsSchema({
+      label: stringSchema,
+      action: stringSchema,
+      invocationId: stringSchema,
+      disabled: booleanSchema,
+    }),
+    actions: ["press", ...toolActions],
+    actionSchema: actionSchema(["press", ...toolActions]),
   },
   {
     semanticType: "Dialog",
@@ -158,9 +189,18 @@ export const standardComponentManifests: ComponentManifest[] = [
       summary: anySchema,
       confirmLabel: stringSchema,
       cancelLabel: stringSchema,
+      confirmAction: stringSchema,
+      cancelAction: stringSchema,
+      invocationId: stringSchema,
     }),
-    actions: ["confirm", "cancel"],
-    actionSchema: actionSchema(["confirm", "cancel"]),
+    actions: ["confirm", "cancel", "tool.submit", "tool.cancel", "tool.edit"],
+    actionSchema: actionSchema([
+      "confirm",
+      "cancel",
+      "tool.submit",
+      "tool.cancel",
+      "tool.edit",
+    ]),
   },
   {
     semanticType: "EmptyState",

@@ -30,3 +30,22 @@ the described operation.
 The generated Surface contains only semantic component names and serializable
 data bindings. Component Pack selection is a renderer concern; changing a pack
 does not alter the Tool Definition, Surface, form data, or invocation contract.
+
+## Invocation and Host Boundary
+
+Each `toolInvocation` follows the closed state set `idle`, `editing`,
+`validating`, `awaiting-confirmation`, `submitting`, `success`, `error`, and
+`cancelled`. Implementations must reject transitions outside the state machine.
+
+`tool.submit` never identifies a URL or transport. After schema validation and
+any mandatory confirmation, the Runtime emits a `toolSubmissionRequest` with a
+registered tool id/version, projected arguments, correlation id, idempotency
+key, source Surface, and logical sequence. Only the host may execute it and
+later resolve or reject the invocation.
+
+Observable `toolRuntimeEvent` records carry redacted argument projections.
+Raw validated arguments are present only in the request delivered to the host.
+Read-only schema fields are rendered as non-editable and removed from submitted
+arguments; modifying them causes validation failure. While an invocation is
+submitting, renderers disable the semantic Form submission control and the
+Runtime rejects duplicates independently of renderer behavior.

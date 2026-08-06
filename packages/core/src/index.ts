@@ -32,6 +32,7 @@ export {
   assertValidJsonSchema,
 } from "./json-schema.js";
 export { InMemorySurfaceStore } from "./surface-store.js";
+export { InMemoryToolInvocationStore } from "./tool-invocation.js";
 export { InMemoryToolRegistry, parseToolDefinition } from "./tool-registry.js";
 export {
   createStandardComponentRegistry,

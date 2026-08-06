@@ -129,6 +129,7 @@ export function AriaTextInput({
   const field = (
     <TextField
       className="pf-aria-field"
+      isReadOnly={node.props.readOnly === true}
       value={typeof value === "string" ? value : ""}
       onChange={onValueChange}
     >
@@ -157,6 +158,7 @@ export function AriaNumberInput({
   return (
     <NumberField
       className="pf-aria-field"
+      isReadOnly={node.props.readOnly === true}
       {...(typeof value === "number" ? { value } : {})}
       {...(numberProp(node.props, "minimum") === undefined
         ? {}
@@ -187,6 +189,7 @@ export function AriaCheckbox({
   return (
     <Checkbox
       className="pf-aria-checkbox"
+      isReadOnly={node.props.readOnly === true}
       isSelected={value === true}
       onChange={onValueChange}
     >
@@ -208,6 +211,7 @@ export function AriaChoiceField({
     return (
       <CheckboxGroup
         className="pf-aria-choice"
+        isReadOnly={node.props.readOnly === true}
         value={selected}
         onChange={(next) => {
           onValueChange(next);
@@ -230,6 +234,7 @@ export function AriaChoiceField({
   return (
     <RadioGroup
       className="pf-aria-choice"
+      isReadOnly={node.props.readOnly === true}
       value={
         typeof value === "string" || typeof value === "number"
           ? String(value)
@@ -262,18 +267,24 @@ export function AriaChoiceField({
 }
 
 export function AriaForm({ node, children, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
     <Form
       className="pf-aria-form"
       onSubmit={(event) => {
         event.preventDefault();
-        onAction("submit", null);
+        onAction(
+          stringProp(node.props, "submitAction", "submit"),
+          invocationId === "" ? null : { invocationId },
+        );
       }}
     >
       <Heading slot="title">{stringProp(node.props, "title")}</Heading>
       {children}
-      <Button type="submit">
-        {stringProp(node.props, "submitLabel", "Submit")}
+      <Button type="submit" isDisabled={node.props.submitting === true}>
+        {node.props.submitting === true
+          ? "Submitting…"
+          : stringProp(node.props, "submitLabel", "Submit")}
       </Button>
     </Form>
   );
@@ -378,14 +389,25 @@ export function AriaDataTable({ node }: RendererComponentProps) {
 }
 
 export function AriaAction({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
-    <Button className="pf-aria-action" onPress={() => onAction("press", null)}>
+    <Button
+      className="pf-aria-action"
+      isDisabled={node.props.disabled === true}
+      onPress={() =>
+        onAction(
+          stringProp(node.props, "action", "press"),
+          invocationId === "" ? null : { invocationId },
+        )
+      }
+    >
       {stringProp(node.props, "label", "Continue")}
     </Button>
   );
 }
 
 export function AriaDialog({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
     <ModalOverlay isOpen isDismissable={false} className="pf-aria-overlay">
       <Modal className="pf-aria-modal">
@@ -395,10 +417,26 @@ export function AriaDialog({ node, onAction }: RendererComponentProps) {
           </Heading>
           <p>{stringProp(node.props, "message")}</p>
           <div className="pf-aria-dialog-actions">
-            <Button onPress={() => onAction("confirm", null)}>
+            <Button
+              onPress={() =>
+                onAction(
+                  stringProp(node.props, "confirmAction", "confirm"),
+                  invocationId === ""
+                    ? null
+                    : { invocationId, confirmed: true },
+                )
+              }
+            >
               {stringProp(node.props, "confirmLabel", "Confirm")}
             </Button>
-            <Button onPress={() => onAction("cancel", null)}>
+            <Button
+              onPress={() =>
+                onAction(
+                  stringProp(node.props, "cancelAction", "cancel"),
+                  invocationId === "" ? null : { invocationId },
+                )
+              }
+            >
               {stringProp(node.props, "cancelLabel", "Cancel")}
             </Button>
           </div>

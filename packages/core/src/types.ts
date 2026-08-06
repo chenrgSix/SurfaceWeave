@@ -314,7 +314,78 @@ export type SurfaceEvent =
   | SurfaceReplacedEvent
   | SurfaceDataChangedEvent;
 
-export type UIEvent = SurfaceEvent | PreferenceEvent;
+export type ToolInvocationStatus =
+  | "idle"
+  | "editing"
+  | "validating"
+  | "awaiting-confirmation"
+  | "submitting"
+  | "success"
+  | "error"
+  | "cancelled";
+
+export type ToolActionName =
+  | "tool.validate"
+  | "tool.request-confirmation"
+  | "tool.submit"
+  | "tool.cancel"
+  | "tool.retry"
+  | "tool.edit"
+  | "result.continue";
+
+export interface ToolInvocation {
+  id: string;
+  toolId: string;
+  toolVersion: string;
+  sourceSurfaceId: string;
+  resultSurfaceId?: string;
+  correlationId: string;
+  status: ToolInvocationStatus;
+  revision: number;
+  attempt: number;
+  lastIdempotencyKey?: string;
+  error?: ActionError;
+}
+
+export interface ToolSubmissionRequest {
+  invocationId: string;
+  toolId: string;
+  toolVersion: string;
+  validatedArguments: JsonObject;
+  correlationId: string;
+  idempotencyKey: string;
+  sourceSurfaceId: string;
+  sequence: number;
+}
+
+export interface ToolRuntimeEvent {
+  type:
+    | "tool.surfaceCreated"
+    | "tool.inputChanged"
+    | "tool.validationFailed"
+    | "tool.confirmationRequested"
+    | "tool.invocationRequested"
+    | "tool.invocationStarted"
+    | "tool.invocationSucceeded"
+    | "tool.invocationFailed"
+    | "tool.invocationCancelled"
+    | "tool.retryRequested"
+    | "result.surfaceCreated"
+    | "ui.dataMigrationConflict";
+  sequence: number;
+  invocationId: string;
+  correlationId: string;
+  toolId: string;
+  toolVersion: string;
+  status: ToolInvocationStatus;
+  surfaceId?: string;
+  resultSurfaceId?: string;
+  redactedArguments?: JsonObject;
+  error?: ActionError;
+  details?: JsonObject;
+}
+
+export type UIEvent = SurfaceEvent | PreferenceEvent | ToolRuntimeEvent;
 
 /** Serializable request emitted by a component for execution by its host. */
 export interface ActionIntent {
@@ -324,6 +395,7 @@ export interface ActionIntent {
   action: string;
   input: JsonValue;
   idempotencyKey?: string;
+  correlationId?: string;
 }
 
 export interface ActionError {
@@ -341,6 +413,33 @@ export interface ActionResult {
 /** Implemented by the embedding application; SDK components never call a network directly. */
 export interface ActionExecutor {
   execute(intent: ActionIntent): Promise<ActionResult>;
+}
+
+/** Optional host-side shape; the Runtime emits requests but never invokes it. */
+export interface ToolHostExecutor {
+  execute(request: ToolSubmissionRequest): Promise<JsonValue>;
+}
+
+export interface ToolInvocationStore {
+  create(
+    invocation: Omit<ToolInvocation, "revision" | "attempt"> & {
+      revision?: number;
+      attempt?: number;
+    },
+  ): ToolInvocation;
+  get(invocationId: string): ToolInvocation | undefined;
+  require(invocationId: string): ToolInvocation;
+  list(): ToolInvocation[];
+  transition(
+    invocationId: string,
+    status: ToolInvocationStatus,
+    patch?: Partial<
+      Pick<
+        ToolInvocation,
+        "resultSurfaceId" | "lastIdempotencyKey" | "error" | "attempt"
+      >
+    >,
+  ): ToolInvocation;
 }
 
 export interface ComponentActionDefinition {

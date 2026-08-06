@@ -20,7 +20,14 @@ export type DynamicUIErrorCode =
   | "INVALID_TOOL_DEFINITION"
   | "TOOL_EXISTS"
   | "TOOL_NOT_FOUND"
-  | "TOOL_VERSION_CONFLICT";
+  | "TOOL_VERSION_CONFLICT"
+  | "INVOCATION_EXISTS"
+  | "INVOCATION_NOT_FOUND"
+  | "INVALID_INVOCATION_TRANSITION"
+  | "TOOL_INPUT_INVALID"
+  | "TOOL_CONFIRMATION_REQUIRED"
+  | "DUPLICATE_SUBMISSION"
+  | "TOOL_RETRY_NOT_ALLOWED";
 
 /** Stable SDK error suitable for mapping to Agent tool error results. */
 export class DynamicUIError extends Error {

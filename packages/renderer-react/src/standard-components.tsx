@@ -126,6 +126,7 @@ function TextInputComponent({
     <Field node={node}>
       <input
         aria-label={stringProp(node.props, "label", node.stableId ?? node.id)}
+        readOnly={node.props.readOnly === true}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(event.currentTarget.value)}
       />
@@ -153,6 +154,7 @@ function NumberInputComponent({
       <input
         type="number"
         aria-label={stringProp(node.props, "label", node.stableId ?? node.id)}
+        readOnly={node.props.readOnly === true}
         value={typeof value === "number" ? value : ""}
         onChange={(event) =>
           onValueChange(
@@ -176,6 +178,7 @@ function CheckboxComponent({
       <input
         type="checkbox"
         checked={value === true}
+        disabled={node.props.readOnly === true}
         onChange={(event) => onValueChange(event.currentTarget.checked)}
       />
       {stringProp(node.props, "label", node.stableId ?? node.id)}
@@ -202,6 +205,7 @@ function SelectComponent({
     <Field node={node}>
       <select
         aria-label={stringProp(node.props, "label", node.stableId ?? node.id)}
+        disabled={node.props.readOnly === true}
         multiple={multiple}
         value={
           multiple
@@ -229,18 +233,26 @@ function SelectComponent({
 }
 
 function FormComponent({ node, children, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onAction("submit", null);
+        onAction(
+          stringProp(node.props, "submitAction", "submit"),
+          invocationId === "" ? null : { invocationId },
+        );
       }}
     >
       <h2>{stringProp(node.props, "title")}</h2>
-      <div style={{ display: "grid", gap: 12 }}>{children}</div>
-      <button type="submit">
-        {stringProp(node.props, "submitLabel", "Submit")}
-      </button>
+      <fieldset disabled={node.props.submitting === true}>
+        <div style={{ display: "grid", gap: 12 }}>{children}</div>
+        <button type="submit">
+          {node.props.submitting === true
+            ? "Submitting…"
+            : stringProp(node.props, "submitLabel", "Submit")}
+        </button>
+      </fieldset>
     </form>
   );
 }
@@ -303,22 +315,49 @@ function TableComponent({ node }: RendererComponentProps) {
 }
 
 function ButtonComponent({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
-    <button type="button" onClick={() => onAction("press", null)}>
+    <button
+      type="button"
+      disabled={node.props.disabled === true}
+      onClick={() =>
+        onAction(
+          stringProp(node.props, "action", "press"),
+          invocationId === "" ? null : { invocationId },
+        )
+      }
+    >
       {stringProp(node.props, "label", "Continue")}
     </button>
   );
 }
 
 function ConfirmComponent({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
     <section>
       <h2>{stringProp(node.props, "title", "Confirm")}</h2>
       <p>{stringProp(node.props, "message")}</p>
-      <button type="button" onClick={() => onAction("confirm", null)}>
+      <button
+        type="button"
+        onClick={() =>
+          onAction(
+            stringProp(node.props, "confirmAction", "confirm"),
+            invocationId === "" ? null : { invocationId, confirmed: true },
+          )
+        }
+      >
         Confirm
       </button>
-      <button type="button" onClick={() => onAction("cancel", null)}>
+      <button
+        type="button"
+        onClick={() =>
+          onAction(
+            stringProp(node.props, "cancelAction", "cancel"),
+            invocationId === "" ? null : { invocationId },
+          )
+        }
+      >
         Cancel
       </button>
     </section>

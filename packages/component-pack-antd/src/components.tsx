@@ -149,6 +149,7 @@ export function AntTextInput({
     >
       <Input
         aria-label={fieldLabel(node)}
+        readOnly={node.props.readOnly === true}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(event.currentTarget.value)}
       />
@@ -175,6 +176,7 @@ export function AntNumberInput({
     >
       <InputNumber
         aria-label={fieldLabel(node)}
+        readOnly={node.props.readOnly === true}
         style={{ width: "100%" }}
         {...(typeof value === "number" ? { value } : {})}
         {...(numberProp(node.props, "minimum") === undefined
@@ -200,6 +202,7 @@ export function AntCheckbox({
   return (
     <Checkbox
       checked={value === true}
+      disabled={node.props.readOnly === true}
       onChange={(event) => onValueChange(event.target.checked)}
     >
       {fieldLabel(node)}
@@ -225,6 +228,7 @@ export function AntChoiceField({
     >
       <Select
         aria-label={fieldLabel(node)}
+        disabled={node.props.readOnly === true}
         style={{ width: "100%" }}
         {...(multiple ? { mode: "multiple" as const } : {})}
         value={
@@ -251,13 +255,27 @@ export function AntChoiceField({
 }
 
 export function AntForm({ node, children, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
-    <Form layout="vertical" onFinish={() => onAction("submit", null)}>
+    <Form
+      layout="vertical"
+      disabled={node.props.submitting === true}
+      onFinish={() =>
+        onAction(
+          stringProp(node.props, "submitAction", "submit"),
+          invocationId === "" ? null : { invocationId },
+        )
+      }
+    >
       <Typography.Title level={3}>
         {stringProp(node.props, "title")}
       </Typography.Title>
       {children}
-      <Button type="primary" htmlType="submit">
+      <Button
+        type="primary"
+        htmlType="submit"
+        loading={node.props.submitting === true}
+      >
         {stringProp(node.props, "submitLabel", "Submit")}
       </Button>
     </Form>
@@ -360,22 +378,43 @@ export function AntDataTable({ node }: RendererComponentProps) {
 }
 
 export function AntAction({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
-    <Button type="primary" onClick={() => onAction("press", null)}>
+    <Button
+      type="primary"
+      disabled={node.props.disabled === true}
+      onClick={() =>
+        onAction(
+          stringProp(node.props, "action", "press"),
+          invocationId === "" ? null : { invocationId },
+        )
+      }
+    >
       {stringProp(node.props, "label", "Continue")}
     </Button>
   );
 }
 
 export function AntDialog({ node, onAction }: RendererComponentProps) {
+  const invocationId = stringProp(node.props, "invocationId");
   return (
     <Modal
       open
       title={stringProp(node.props, "title", "Confirm")}
       closable={false}
       maskClosable={false}
-      onOk={() => onAction("confirm", null)}
-      onCancel={() => onAction("cancel", null)}
+      onOk={() =>
+        onAction(
+          stringProp(node.props, "confirmAction", "confirm"),
+          invocationId === "" ? null : { invocationId, confirmed: true },
+        )
+      }
+      onCancel={() =>
+        onAction(
+          stringProp(node.props, "cancelAction", "cancel"),
+          invocationId === "" ? null : { invocationId },
+        )
+      }
       okText={stringProp(node.props, "confirmLabel", "Confirm")}
       cancelText={stringProp(node.props, "cancelLabel", "Cancel")}
     >

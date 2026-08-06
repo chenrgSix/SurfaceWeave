@@ -11,6 +11,8 @@
     { "$ref": "#/$defs/actionIntent" },
     { "$ref": "#/$defs/actionResult" },
     { "$ref": "#/$defs/toolDefinition" },
+    { "$ref": "#/$defs/toolInvocation" },
+    { "$ref": "#/$defs/toolSubmissionRequest" },
     { "$ref": "#/$defs/preferenceDocument" }
   ],
   "$defs": {
@@ -287,6 +289,81 @@
         "uiHints": { "$ref": "#/$defs/declarationObject" }
       }
     },
+    "toolInvocationStatus": {
+      "enum": [
+        "idle",
+        "editing",
+        "validating",
+        "awaiting-confirmation",
+        "submitting",
+        "success",
+        "error",
+        "cancelled"
+      ]
+    },
+    "actionError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "toolInvocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "toolId",
+        "toolVersion",
+        "sourceSurfaceId",
+        "correlationId",
+        "status",
+        "revision",
+        "attempt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "toolId": { "$ref": "#/$defs/identifier" },
+        "toolVersion": { "type": "string", "minLength": 1 },
+        "sourceSurfaceId": { "type": "string", "minLength": 1 },
+        "resultSurfaceId": { "type": "string", "minLength": 1 },
+        "correlationId": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/toolInvocationStatus" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "attempt": { "type": "integer", "minimum": 0 },
+        "lastIdempotencyKey": { "type": "string", "minLength": 1 },
+        "error": { "$ref": "#/$defs/actionError" }
+      }
+    },
+    "toolSubmissionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invocationId",
+        "toolId",
+        "toolVersion",
+        "validatedArguments",
+        "correlationId",
+        "idempotencyKey",
+        "sourceSurfaceId",
+        "sequence"
+      ],
+      "properties": {
+        "invocationId": { "type": "string", "minLength": 1 },
+        "toolId": { "$ref": "#/$defs/identifier" },
+        "toolVersion": { "type": "string", "minLength": 1 },
+        "validatedArguments": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        },
+        "correlationId": { "type": "string", "minLength": 1 },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "sourceSurfaceId": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 1 }
+      }
+    },
     "actionIntent": {
       "type": "object",
       "additionalProperties": false,
@@ -297,7 +374,8 @@
         "nodeId": { "type": "string", "minLength": 1 },
         "action": { "$ref": "#/$defs/identifier" },
         "input": { "$ref": "#/$defs/declarationValue" },
-        "idempotencyKey": { "type": "string", "minLength": 1 }
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "correlationId": { "type": "string", "minLength": 1 }
       }
     },
     "actionResult": {
@@ -512,6 +590,54 @@
         }
       }
     },
+    "toolRuntimeEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "sequence",
+        "invocationId",
+        "correlationId",
+        "toolId",
+        "toolVersion",
+        "status"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "tool.surfaceCreated",
+            "tool.inputChanged",
+            "tool.validationFailed",
+            "tool.confirmationRequested",
+            "tool.invocationRequested",
+            "tool.invocationStarted",
+            "tool.invocationSucceeded",
+            "tool.invocationFailed",
+            "tool.invocationCancelled",
+            "tool.retryRequested",
+            "result.surfaceCreated",
+            "ui.dataMigrationConflict"
+          ]
+        },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "invocationId": { "type": "string", "minLength": 1 },
+        "correlationId": { "type": "string", "minLength": 1 },
+        "toolId": { "$ref": "#/$defs/identifier" },
+        "toolVersion": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/toolInvocationStatus" },
+        "surfaceId": { "type": "string", "minLength": 1 },
+        "resultSurfaceId": { "type": "string", "minLength": 1 },
+        "redactedArguments": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        },
+        "error": { "$ref": "#/$defs/actionError" },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      }
+    },
     "uiEvent": {
       "oneOf": [
         {
@@ -636,7 +762,8 @@
             "surfaceId": { "type": "string", "minLength": 1 },
             "conflict": { "$ref": "#/$defs/preferenceConflict" }
           }
-        }
+        },
+        { "$ref": "#/$defs/toolRuntimeEvent" }
       ]
     }
   }
