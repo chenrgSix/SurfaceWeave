@@ -141,7 +141,7 @@ describe("Component Pack Protocol", () => {
     );
   });
 
-  it("rejects fallback cycles, duplicate semantics, invalid versions, and code", () => {
+  it("rejects invalid manifests without filtering inert guidance text", () => {
     const cycle = pack("cycle", 0, [
       { semanticType: "One", propsSchema: {}, fallback: "Two" },
       { semanticType: "Two", propsSchema: {}, fallback: "One" },
@@ -158,10 +158,10 @@ describe("Component Pack Protocol", () => {
     ).toMatchObject({ valid: false });
     expect(
       validateComponentPack({
-        ...pack("unsafe", 0),
+        ...pack("inert-guidance", 0),
         agentGuidance: { summary: "eval(payload)" },
       }),
-    ).toMatchObject({ valid: false });
+    ).toMatchObject({ valid: true, errors: [] });
     expect(
       validateComponentPack({
         ...pack("framework-prop", 0),
