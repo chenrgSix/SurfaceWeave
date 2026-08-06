@@ -1,25 +1,29 @@
-# Package First Dynamic UI SDK
+# SurfaceWeave
 
-A package-first, framework-agnostic conversational UI runtime. JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
+**SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
+
+面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
+
+JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
 Milestones 1–5 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, and language-neutral wire protocols. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
 
 ## Packages
 
-| Package                                    | Responsibility                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `@package-first/core`                      | Wire types, Tool/Component registries, Surface and Invocation stores, Operations, and validation |
-| `@package-first/generator`                 | Deterministic input/result Surfaces from JSON Schema and canonical Tool Definitions              |
-| `@package-first/agent-tools`               | Tool-to-UI orchestration and portable Agent UI tool definitions                                  |
-| `@package-first/preferences`               | Scoped preference composition, conflict detection, migration, and events                         |
-| `@package-first/renderer-react`            | Trusted React implementations and shared Store rendering                                         |
-| `@package-first/protocol`                  | Standalone JSON Schema and language-neutral Component Pack specification                         |
-| `@package-first/component-pack-react-aria` | Accessible React Aria runtime bindings and styles                                                |
-| `@package-first/component-pack-antd`       | Ant Design runtime bindings and ConfigProvider theme integration                                 |
-| `@package-first/storage`                   | LocalStorage, memory, and host-transport persistence adapters                                    |
-| `@package-first/tauri`                     | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                |
-| `@package-first/tea-purchase`              | Runnable Vite acceptance example                                                                 |
-| `@package-first/tea-purchase-tauri`        | Runnable Tauri 2 desktop acceptance example                                                      |
+| Package                            | Responsibility                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `@surfaceweave/core`               | Wire types, Tool/Component registries, Surface and Invocation stores, Operations, and validation |
+| `@surfaceweave/generator`          | Deterministic input/result Surfaces from JSON Schema and canonical Tool Definitions              |
+| `@surfaceweave/agent-tools`        | Tool-to-UI orchestration and portable Agent UI tool definitions                                  |
+| `@surfaceweave/preferences`        | Scoped preference composition, conflict detection, migration, and events                         |
+| `@surfaceweave/react`              | Trusted React implementations and shared Store rendering                                         |
+| `@surfaceweave/protocol`           | Standalone JSON Schema and language-neutral Component Pack specification                         |
+| `@surfaceweave/react-aria`         | Accessible React Aria runtime bindings and styles                                                |
+| `@surfaceweave/antd`               | Ant Design runtime bindings and ConfigProvider theme integration                                 |
+| `@surfaceweave/storage`            | LocalStorage, memory, and host-transport persistence adapters                                    |
+| `@surfaceweave/tauri`              | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                |
+| `@surfaceweave/tea-purchase`       | Runnable Vite acceptance example                                                                 |
+| `@surfaceweave/tea-purchase-tauri` | Runnable Tauri 2 desktop acceptance example                                                      |
 
 ## npm Installation
 
@@ -28,18 +32,18 @@ used by the host:
 
 ```bash
 # Framework-independent Tool-to-UI runtime
-npm install @package-first/core@next @package-first/generator@next @package-first/agent-tools@next
+npm install @surfaceweave/core@next @surfaceweave/generator@next @surfaceweave/agent-tools@next
 
 # Default React renderer
-npm install react react-dom @package-first/renderer-react@next
+npm install react react-dom @surfaceweave/react@next
 
 # Choose zero or one optional third-party Pack
-npm install react-aria-components @package-first/component-pack-react-aria@next
+npm install react-aria-components @surfaceweave/react-aria@next
 # or
-npm install antd @package-first/component-pack-antd@next
+npm install antd @surfaceweave/antd@next
 
 # Optional Tauri 2 host adapter
-npm install @package-first/storage@next @package-first/preferences@next @package-first/tauri@next
+npm install @surfaceweave/storage@next @surfaceweave/preferences@next @surfaceweave/tauri@next
 ```
 
 The Protocol and Core packages never install React, DOM bindings, a Component
@@ -80,14 +84,11 @@ The desktop flow reuses the Web Tool Definitions, data model, intents, and mock 
 The host registers serializable definitions. The Runtime generates input UI and emits a request after validation and any mandatory confirmation; it never calls the business API.
 
 ```ts
-import {
-  AgentUIToolRuntime,
-  ToolToUIRuntime,
-} from "@package-first/agent-tools";
+import { AgentUIToolRuntime, ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
@@ -133,19 +134,19 @@ const agentTools = new AgentUIToolRuntime(
 Install only the bindings used by the host:
 
 ```bash
-npm install @package-first/core @package-first/renderer-react react react-dom
-npm install @package-first/component-pack-react-aria react-aria-components
+npm install @surfaceweave/core @surfaceweave/react react react-dom
+npm install @surfaceweave/react-aria react-aria-components
 # or
-npm install @package-first/component-pack-antd antd
+npm install @surfaceweave/antd antd
 ```
 
 The serializable Manifest and local React bindings are separate. Registering a Pack adds its trusted semantic schemas to Core, while the binding stays in the React package.
 
 ```tsx
-import { createStandardComponentRegistry } from "@package-first/core";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
-import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
-import "@package-first/component-pack-react-aria/styles.css";
+import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
+import "@surfaceweave/react-aria/styles.css";
 
 const components = createStandardComponentRegistry();
 const reactComponents = createStandardReactComponentRegistry(components);
@@ -160,12 +161,12 @@ Ant Design accepts host-only `ConfigProvider` options through `createAntDesignCo
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
-} from "@package-first/core";
-import { generateSurface } from "@package-first/generator";
+} from "@surfaceweave/core";
+import { generateSurface } from "@surfaceweave/generator";
 import {
   SurfaceRenderer,
   createStandardReactComponentRegistry,
-} from "@package-first/renderer-react";
+} from "@surfaceweave/react";
 
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
@@ -207,7 +208,7 @@ export function Profile() {
 Pass `runtime.definitions()` to the host Agent SDK, then route returned calls through the host-neutral runtime. Invalid arguments and revision conflicts are returned as data.
 
 ```ts
-import { AgentUIToolRuntime } from "@package-first/agent-tools";
+import { AgentUIToolRuntime } from "@surfaceweave/agent-tools";
 
 const runtime = new AgentUIToolRuntime(components, store);
 const definitions = runtime.definitions();
@@ -227,17 +228,17 @@ Call `ui.inspectComponentPacks` to give an Agent the current semantic component 
 Hydrate preferences before creating Surfaces, then pass the service into the Surface tool runtime. Preference operations target `stableId`, not generated node IDs or array indexes.
 
 ```ts
-import type { PreferenceDocument } from "@package-first/core";
+import type { PreferenceDocument } from "@surfaceweave/core";
 import {
   AgentUIToolRuntime,
   PreferenceAgentToolRuntime,
-} from "@package-first/agent-tools";
+} from "@surfaceweave/agent-tools";
 import {
   PreferenceRepository,
   PreferenceService,
   parsePreferenceDocument,
-} from "@package-first/preferences";
-import { LocalStorageAdapter } from "@package-first/storage";
+} from "@surfaceweave/preferences";
+import { LocalStorageAdapter } from "@surfaceweave/storage";
 
 const adapter = new LocalStorageAdapter<PreferenceDocument>(
   "dynamic-ui.preferences.v1",
@@ -266,7 +267,7 @@ Renderer components emit JSON-only `ActionIntent` values. Route them to a host `
 In Tauri, register semantic host actions and let trusted handlers choose fixed Rust command names:
 
 ```ts
-import { createTauriDynamicUIAdapter } from "@package-first/tauri";
+import { createTauriDynamicUIAdapter } from "@surfaceweave/tauri";
 
 const desktop = createTauriDynamicUIAdapter({
   namespace: "tea-purchase",

@@ -2,7 +2,7 @@
 
 ## Boundary
 
-A Pack has three independent layers: the JSON Wire Protocol, a serializable `ComponentPackManifest`, and a renderer-local runtime binding. TypeScript Core is only the reference implementation. The published `@package-first/protocol` package exposes the Draft 2020-12 Schema at `@package-first/protocol/schema`; non-JavaScript runtimes can consume it directly.
+A Pack has three independent layers: the JSON Wire Protocol, a serializable `ComponentPackManifest`, and a renderer-local runtime binding. TypeScript Core is only the reference implementation. The published `@surfaceweave/protocol` package exposes the Draft 2020-12 Schema at `@surfaceweave/protocol/schema`; non-JavaScript runtimes can consume it directly.
 
 Semantic UI uses names such as `ChoiceField` and `Card`, never `Select` from a vendor library. This keeps Surface data, `stableId`, Preference Patch, and Agent Operations portable.
 

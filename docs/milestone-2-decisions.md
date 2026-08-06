@@ -2,7 +2,7 @@
 
 ## Persistence Boundary
 
-`@package-first/storage` exposes `StorageAdapter<T>` with asynchronous `load`, `save`, and `clear`. `LocalStorageAdapter` is the browser implementation. `BackendStorageAdapter` delegates serialized reads and writes to a host-provided transport; it owns no URL, credentials, retry policy, or network client. `PreferenceRepository` must be hydrated explicitly and persists a complete versioned document before publishing a cache mutation.
+`@surfaceweave/storage` exposes `StorageAdapter<T>` with asynchronous `load`, `save`, and `clear`. `LocalStorageAdapter` is the browser implementation. `BackendStorageAdapter` delegates serialized reads and writes to a host-provided transport; it owns no URL, credentials, retry policy, or network client. `PreferenceRepository` must be hydrated explicitly and persists a complete versioned document before publishing a cache mutation.
 
 ## Preference Composition
 

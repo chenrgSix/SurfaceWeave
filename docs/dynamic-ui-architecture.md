@@ -1,4 +1,6 @@
-方案可以定为：**Package-first 的对话式动态 UI SDK**。核心使用框架无关的 TypeScript 数据模型，首个渲染器做 React/Web，Tauri 直接复用 Web 渲染器；后续再扩展 Vue、Flutter 等终端。
+# SurfaceWeave Architecture
+
+SurfaceWeave 是协议优先的对话式动态 UI SDK。核心使用框架无关的 TypeScript 数据模型，首个渲染器做 React/Web，Tauri 直接复用 Web 渲染器；后续可扩展 Vue、Flutter 等终端。正式命名和 npm 包映射记录在 [ADR 0002](adr/0002-surfaceweave-naming.md)。
 
 Milestone 5 在此基线上增加 Canonical Tool Registry、可序列化 Invocation 生命周期、Host submission 边界和独立结果投影；详见 [Tool-to-UI Runtime](tool-to-ui-runtime.md)。
 
@@ -51,7 +53,7 @@ Agent 不直接生产底层事件，也不直接执行组件动作。
 
 组件系统分为三个不可混合的层次：
 
-1. `@package-first/protocol` 提供语言无关的 JSON Wire Protocol 和 Draft 2020-12 JSON Schema；
+1. `@surfaceweave/protocol` 提供语言无关的 JSON Wire Protocol 和 Draft 2020-12 JSON Schema；
 2. `ComponentPackManifest` 是可序列化组件能力、Schema、fallback 和 Agent 提示；
 3. `ReactComponentPack` 等 Runtime Binding 才包含本地框架组件与 Provider。
 
@@ -69,7 +71,7 @@ TypeScript Core 是参考实现，不是协议定义。Surface 只保存 `TextIn
 | `@scope/dynamic-ui-tauri`       | Tauri Action Executor、Store 与事件桥接 |
 | `@scope/dynamic-ui-devtools`    | 查看 Surface、Operations、事件和偏好应用过程   |
 
-当前仓库还提供 `@package-first/protocol`、`@package-first/component-pack-react-aria` 和 `@package-first/component-pack-antd`。第三方 UI 库只存在于各自 Pack 的 peer/dev dependencies；Core 不依赖 React、DOM、Tauri 或任何组件库。
+当前仓库还提供 `@surfaceweave/protocol`、`@surfaceweave/react-aria` 和 `@surfaceweave/antd`。第三方 UI 库只存在于各自 Pack 的 peer/dev dependencies；Core 不依赖 React、DOM、Tauri 或任何组件库。
 
 核心包不依赖 React、Tauri 或特定 Agent SDK。
 
@@ -353,7 +355,7 @@ Tauri 前端运行在系统 WebView 中，React Renderer 可以直接使用；Ru
 
 必须使用动作白名单，并结合 [Tauri Capabilities](https://v2.tauri.app/security/capabilities/) 限制不同窗口可调用的能力。AI 不能直接指定任意 Command 名称。
 
-Milestone 3 将该边界落实为 `@package-first/tauri`：`TauriActionExecutor` 只执行宿主注册的语义动作，注册处理器再选择固定 Rust Command；`TauriPreferenceStorage` 通过官方 Store 插件保存现有版本化偏好文档；`TauriCapabilityProvider` 仅描述平台能力，不参与授权；`createTauriDynamicUIAdapter` 组合这些宿主适配器。
+Milestone 3 将该边界落实为 `@surfaceweave/tauri`：`TauriActionExecutor` 只执行宿主注册的语义动作，注册处理器再选择固定 Rust Command；`TauriPreferenceStorage` 通过官方 Store 插件保存现有版本化偏好文档；`TauriCapabilityProvider` 仅描述平台能力，不参与授权；`createTauriDynamicUIAdapter` 组合这些宿主适配器。
 
 动作白名单和 Tauri Capability 是两道独立边界。前者拒绝未知动作、可执行代码字段和 URL 注入，后者限制窗口实际可调用的 Command。示例只声明 `search_teas`、`create_purchase` 及必要的 Store 权限，不启用 shell、文件系统、HTTP 或任意命令能力；CSP 仅允许打包资源、IPC 和本地 Vite 开发端点。Store 只保存带 Schema 版本的长期偏好，不保存 Surface 表单数据和 Tool Result。
 

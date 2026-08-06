@@ -2,7 +2,7 @@
 
 ## Proposed Version
 
-No published npm release is recorded in this repository. If the `@package-first`
+No published npm release is recorded in this repository. If the `@surfaceweave`
 scope confirms that these names have never shipped, use a synchronized first
 suite version of `0.1.0-rc.1` and publish it under the `next` tag. Do not change
 wire protocol `1.0` or Tool/Component Pack manifest versions when setting npm
@@ -14,20 +14,33 @@ versions are intentionally unchanged until release approval.
 
 ## Release Inventory
 
-| Package                                    | Current workspace version | RC proposal |
-| ------------------------------------------ | ------------------------: | ----------: |
-| `@package-first/protocol`                  |                     0.4.0 |  0.1.0-rc.1 |
-| `@package-first/core`                      |                     0.1.0 |  0.1.0-rc.1 |
-| `@package-first/storage`                   |                     0.2.0 |  0.1.0-rc.1 |
-| `@package-first/preferences`               |                     0.2.0 |  0.1.0-rc.1 |
-| `@package-first/generator`                 |                     0.1.0 |  0.1.0-rc.1 |
-| `@package-first/agent-tools`               |                     0.1.0 |  0.1.0-rc.1 |
-| `@package-first/renderer-react`            |                     0.1.0 |  0.1.0-rc.1 |
-| `@package-first/component-pack-react-aria` |                     0.4.0 |  0.1.0-rc.1 |
-| `@package-first/component-pack-antd`       |                     0.4.0 |  0.1.0-rc.1 |
-| `@package-first/tauri`                     |                     0.3.0 |  0.1.0-rc.1 |
+| Package                     | Current workspace version | RC proposal |
+| --------------------------- | ------------------------: | ----------: |
+| `@surfaceweave/protocol`    |                     0.4.0 |  0.1.0-rc.1 |
+| `@surfaceweave/core`        |                     0.1.0 |  0.1.0-rc.1 |
+| `@surfaceweave/storage`     |                     0.2.0 |  0.1.0-rc.1 |
+| `@surfaceweave/preferences` |                     0.2.0 |  0.1.0-rc.1 |
+| `@surfaceweave/generator`   |                     0.1.0 |  0.1.0-rc.1 |
+| `@surfaceweave/agent-tools` |                     0.1.0 |  0.1.0-rc.1 |
+| `@surfaceweave/react`       |                     0.1.0 |  0.1.0-rc.1 |
+| `@surfaceweave/react-aria`  |                     0.4.0 |  0.1.0-rc.1 |
+| `@surfaceweave/antd`        |                     0.4.0 |  0.1.0-rc.1 |
+| `@surfaceweave/tauri`       |                     0.3.0 |  0.1.0-rc.1 |
 
-Existing package names are retained; no migration is required.
+## Package Name Migration
+
+SurfaceWeave replaces the pre-release `@package-first` scope. Package
+responsibilities and public exports stay unchanged; the React-facing package
+names are shortened at the public boundary:
+
+- `@package-first/renderer-react` becomes `@surfaceweave/react`;
+- `@package-first/component-pack-react-aria` becomes `@surfaceweave/react-aria`;
+- `@package-first/component-pack-antd` becomes `@surfaceweave/antd`;
+- all other publishable packages retain their suffix under `@surfaceweave`.
+
+No compatibility aliases are required because this repository records no
+published release under the previous names. Reassess that assumption before a
+real publish.
 
 ## Completed Checks
 
@@ -50,7 +63,7 @@ Do not perform a real publish until all items are resolved:
 - choose a public license and replace `UNLICENSED` plus add the license file;
 - provide the canonical Git repository URL for every package's `repository`
   metadata;
-- confirm ownership and availability of the `@package-first` npm scope/names;
+- confirm ownership and availability of the `@surfaceweave` npm scope/names;
 - confirm the intended registry. The dry-run observed the developer's current
   `https://registry.npmmirror.com/` configuration; this repository did not
   modify npm account, organization, authentication, or registry settings;

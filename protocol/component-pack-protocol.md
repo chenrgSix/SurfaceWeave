@@ -2,9 +2,9 @@
 
 ## Status and Scope
 
-This document is the language- and framework-independent definition of the Dynamic UI wire contract. The normative machine-readable artifact is [`schemas/dynamic-ui-wire.schema.json`](schemas/dynamic-ui-wire.schema.json), using JSON Schema Draft 2020-12. TypeScript types in `@package-first/core` are a reference implementation, not the protocol definition.
+This document is the language- and framework-independent definition of the Dynamic UI wire contract. The normative machine-readable artifact is [`schemas/dynamic-ui-wire.schema.json`](schemas/dynamic-ui-wire.schema.json), using JSON Schema Draft 2020-12. TypeScript types in `@surfaceweave/core` are a reference implementation, not the protocol definition.
 
-Both files are also published without runtime dependencies as `@package-first/protocol`; JSON consumers can load the Schema from the `@package-first/protocol/schema` export.
+Both files are also published without runtime dependencies as `@surfaceweave/protocol`; JSON consumers can load the Schema from the `@surfaceweave/protocol/schema` export.
 
 The protocol covers `Surface`, `UINode`, `DataBinding`, semantic operations, UI events, `ActionIntent`, preferences, and Component Pack Manifests. Every value crossing a trust boundary is JSON. Implementations in Rust, Java, Dart, Python, or another language can validate and process these documents without installing any JavaScript package.
 

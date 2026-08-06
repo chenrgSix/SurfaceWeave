@@ -2,7 +2,7 @@
 
 ## Delivered Scope
 
-Milestone 3 adds a Tauri 2 host adapter without changing the framework-independent Core. `@package-first/tauri` exports `TauriActionExecutor`, `TauriPreferenceStorage`, `TauriCapabilityProvider`, and `createTauriDynamicUIAdapter`. All Tauri APIs are isolated in that package.
+Milestone 3 adds a Tauri 2 host adapter without changing the framework-independent Core. `@surfaceweave/tauri` exports `TauriActionExecutor`, `TauriPreferenceStorage`, `TauriCapabilityProvider`, and `createTauriDynamicUIAdapter`. All Tauri APIs are isolated in that package.
 
 `TauriActionExecutor` maps registered semantic actions to trusted host handlers. It rejects unknown actions, executable-code fields, command names, and URLs before invoking a handler. Validation, authorization, and handler failures return structured `ActionResult` errors while preserving trace and idempotency fields.
 

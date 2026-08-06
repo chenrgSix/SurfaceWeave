@@ -4,7 +4,7 @@ Milestone 4 introduces a framework-neutral Component Pack Protocol without chang
 
 ## Delivered
 
-- Independent `@package-first/protocol` JSON Schema and protocol document; TypeScript Core remains a reference implementation.
+- Independent `@surfaceweave/protocol` JSON Schema and protocol document; TypeScript Core remains a reference implementation.
 - Serializable Manifest parsing, conformance validation, deterministic resolution, capabilities, priorities, accepted versions, diagnostics, fallbacks, and namespaced extensions.
 - Default React Pack plus independent React Aria and Ant Design runtime packages.
 - Agent `ui.inspectComponentPacks` discovery with schemas and concise guidance, without runtime bindings or vendor APIs.

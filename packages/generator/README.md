@@ -1,8 +1,8 @@
-# @package-first/generator
+# @surfaceweave/generator
 
 Deterministic semantic Surface generation from JSON Schema, canonical Tool
 Definitions, data, and interaction intent.
 
 ```sh
-npm install @package-first/core@next @package-first/generator@next
+npm install @surfaceweave/core@next @surfaceweave/generator@next
 ```

@@ -2,7 +2,7 @@
 
 ## Package and Dependency Boundaries
 
-`@package-first/core` owns declarative protocols and in-memory state. It has no renderer, Agent SDK, network, storage, or React dependency. Generator and Agent Tools depend inward on Core. React is isolated in `renderer-react`; the example is the composition root.
+`@surfaceweave/core` owns declarative protocols and in-memory state. It has no renderer, Agent SDK, network, storage, or React dependency. Generator and Agent Tools depend inward on Core. React is isolated in `renderer-react`; the example is the composition root.
 
 ## Trusted State Transition Model
 

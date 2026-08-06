@@ -12,18 +12,18 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 
 ## Public Entry Points
 
-| Package                                    | Public entry points                                 |
-| ------------------------------------------ | --------------------------------------------------- |
-| `@package-first/protocol`                  | `.`, `./schema`, `./component-pack`, `./tool-to-ui` |
-| `@package-first/core`                      | `.`                                                 |
-| `@package-first/storage`                   | `.`                                                 |
-| `@package-first/preferences`               | `.`                                                 |
-| `@package-first/generator`                 | `.`                                                 |
-| `@package-first/agent-tools`               | `.`                                                 |
-| `@package-first/renderer-react`            | `.`                                                 |
-| `@package-first/component-pack-react-aria` | `.`, `./styles.css`                                 |
-| `@package-first/component-pack-antd`       | `.`                                                 |
-| `@package-first/tauri`                     | `.`                                                 |
+| Package                     | Public entry points                                 |
+| --------------------------- | --------------------------------------------------- |
+| `@surfaceweave/protocol`    | `.`, `./schema`, `./component-pack`, `./tool-to-ui` |
+| `@surfaceweave/core`        | `.`                                                 |
+| `@surfaceweave/storage`     | `.`                                                 |
+| `@surfaceweave/preferences` | `.`                                                 |
+| `@surfaceweave/generator`   | `.`                                                 |
+| `@surfaceweave/agent-tools` | `.`                                                 |
+| `@surfaceweave/react`       | `.`                                                 |
+| `@surfaceweave/react-aria`  | `.`, `./styles.css`                                 |
+| `@surfaceweave/antd`        | `.`                                                 |
+| `@surfaceweave/tauri`       | `.`                                                 |
 
 ## Frozen Runtime Exports
 
