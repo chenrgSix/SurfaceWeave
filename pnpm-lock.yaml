@@ -50,6 +50,9 @@ importers:
       '@package-first/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@package-first/generator':
+        specifier: workspace:*
+        version: link:../../packages/generator
       '@package-first/renderer-react':
         specifier: workspace:*
         version: link:../../packages/renderer-react

@@ -1,177 +1,120 @@
-import type { ActionIntent, ActionResult } from "@package-first/core";
+import type { ActionIntent } from "@package-first/core";
 import { SurfaceRenderer, useSurface } from "@package-first/renderer-react";
 import { useEffect, useState } from "react";
 
 import { createExampleRuntime, type TauriExampleRuntime } from "./runtime.js";
 
 type PackChoice = "default" | "antd";
-
 let runtimePromise: Promise<TauriExampleRuntime> | undefined;
-
-function getRuntime(): Promise<TauriExampleRuntime> {
+function getRuntime() {
   runtimePromise ??= createExampleRuntime();
   return runtimePromise;
 }
 
 export function App() {
   const [runtime, setRuntime] = useState<TauriExampleRuntime>();
-  const [startupError, setStartupError] = useState<string>();
-
+  const [error, setError] = useState<string>();
   useEffect(() => {
     void getRuntime()
       .then(setRuntime)
-      .catch((error: unknown) => {
-        setStartupError(
-          error instanceof Error ? error.message : "Tauri Runtime 初始化失败",
-        );
-      });
+      .catch((reason: unknown) =>
+        setError(
+          reason instanceof Error ? reason.message : "Runtime 初始化失败",
+        ),
+      );
   }, []);
-
-  if (startupError !== undefined) {
-    return <main className="startup">启动失败：{startupError}</main>;
-  }
-  if (runtime === undefined) {
-    return <main className="startup">正在连接 Tauri Runtime…</main>;
-  }
+  if (error) return <main className="startup">启动失败：{error}</main>;
+  if (!runtime) return <main className="startup">正在连接 Tauri Runtime…</main>;
   return <RuntimeApp runtime={runtime} />;
 }
 
 function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
-  const [surfaceId, setSurfaceId] = useState("tea-selection");
-  const [lastIntent, setLastIntent] = useState<ActionIntent>();
-  const [lastResult, setLastResult] = useState<ActionResult>();
+  const [surfaceId, setSurfaceId] = useState(runtime.searchSurfaceId);
   const [pack, setPack] = useState<PackChoice>("default");
+  const [lastIntent, setLastIntent] = useState<ActionIntent>();
   const [message, setMessage] = useState(
-    runtime.initialPreferenceError === undefined
-      ? "偏好已从 Tauri Store 恢复；业务表单数据未恢复"
-      : `偏好不可用，已安全降级为本次会话内存：${runtime.initialPreferenceError}`,
+    runtime.initialPreferenceError
+      ? `偏好已降级到内存：${runtime.initialPreferenceError}`
+      : "模拟 Agent 已选择 searchTeaProducts",
   );
   const surface = useSurface(runtime.surfaceStore, surfaceId);
 
-  async function handleAction(originalIntent: ActionIntent): Promise<void> {
-    if (originalIntent.action === "select") {
-      setLastIntent(originalIntent);
-      setMessage("茶叶选择已同步到聊天和工作区");
-      return;
-    }
-    const intent =
-      originalIntent.action === "purchase.create"
-        ? { ...originalIntent, idempotencyKey: originalIntent.id }
-        : originalIntent;
+  useEffect(
+    () =>
+      runtime.toolRuntime.subscribe((event) => {
+        if (event.type === "result.surfaceCreated" && event.resultSurfaceId) {
+          setSurfaceId(event.resultSurfaceId);
+          setMessage(
+            event.toolId === "createPurchaseOrder"
+              ? "采购单创建成功"
+              : "Host 已返回商品",
+          );
+        }
+      }),
+    [runtime],
+  );
+
+  function handleAction(intent: ActionIntent): void {
     setLastIntent(intent);
-    const result = await runtime.actionExecutor.execute(intent);
-    setLastResult(result);
-    if (result.status === "error") {
-      setMessage(`${result.error?.code}: ${result.error?.message}`);
+    if (intent.action === "select") {
+      setMessage("选择已同步");
       return;
     }
-    if (intent.action === "tea.search") {
-      const teas = Array.isArray(result.output) ? result.output : [];
-      runtime.replaceTeaResults(
-        teas.flatMap((item) =>
-          typeof item === "object" &&
-          item !== null &&
-          !Array.isArray(item) &&
-          typeof item.id === "string" &&
-          typeof item.name === "string" &&
-          typeof item.origin === "string" &&
-          typeof item.price === "number"
-            ? [
-                {
-                  id: item.id,
-                  name: item.name,
-                  origin: item.origin,
-                  price: item.price,
-                },
-              ]
-            : [],
-        ),
-      );
-      setMessage("Rust search_teas 已返回模拟茶叶列表");
-      return;
-    }
-    if (intent.action === "purchase.create") {
-      const created = runtime.ensurePurchaseSurface();
-      if (!created.ok) {
-        setMessage(`${created.error.code}: ${created.error.message}`);
-        return;
+    try {
+      const outcome = runtime.toolRuntime.handleAction(intent);
+      if (outcome.kind === "confirmation-required") {
+        setSurfaceId(outcome.confirmationSurface.id);
+        setMessage("采购提交等待强制确认");
       }
-      setSurfaceId("purchase-form");
-      setMessage("语义动作已映射到 create_purchase；采购表单已生成");
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : "操作失败");
     }
   }
 
-  function applyAgentChange(): void {
-    const before = structuredClone(
-      runtime.surfaceStore.requireSurface("purchase-form").data,
-    );
-    const result = runtime.applyAgentLayoutOperations();
-    if (!result.ok) {
-      setMessage(`${result.error.code}: ${result.error.message}`);
-      return;
+  function next(): void {
+    if (surfaceId.includes("tea-search-form--result")) {
+      setSurfaceId(runtime.createSelectionSurface());
+    } else if (surfaceId === "tea-selection") {
+      if (runtime.selectedTeaIds().length === 0)
+        setMessage("请至少选择一种茶叶");
+      else setSurfaceId(runtime.createPurchaseSurface());
     }
-    setMessage(
-      JSON.stringify(before) === JSON.stringify(result.value.data)
-        ? "Agent Operations 已应用，兼容表单数据完整保留"
-        : "Agent Operations 已应用，但数据发生了非预期变化",
-    );
-  }
-
-  async function savePreference(): Promise<void> {
-    const result = await runtime.saveRemarkPreference();
-    if (!result.ok) {
-      setMessage(`${result.error.code}: ${result.error.message}`);
-      return;
-    }
-    setMessage(
-      runtime.initialPreferenceError === undefined
-        ? "备注折叠 Preference Patch 已写入 Tauri Store"
-        : "持久存储仍不可用；偏好只保存于本次会话内存",
-    );
   }
 
   return (
     <main>
       <header className="hero">
-        <p className="eyebrow">PACKAGE-FIRST · MILESTONE 3 · TAURI 2</p>
-        <h1>受控桌面动态 UI</h1>
+        <p className="eyebrow">PACKAGE-FIRST · MILESTONE 5 · TAURI 2</p>
+        <h1>Tool-to-UI 桌面闭环</h1>
         <p>
-          React Renderer 运行在 WebView；语义 ActionIntent 经过宿主白名单后，
-          才能调用 capabilities 明确授权的 Rust Command。
+          与 Web 复用 Tool Definitions、Surface 模型、ActionIntent 和 Mock Host
+          Executor。
         </p>
       </header>
-
       <section className="status-bar">
         <span>{message}</span>
         <code>
           {surface.id} · revision {surface.revision}
         </code>
       </section>
-
       <section className="pack-switcher" aria-label="Component Pack">
         <strong>WebView Component Pack</strong>
-        {(["default", "antd"] as const).map((packId) => (
+        {(["default", "antd"] as const).map((id) => (
           <button
             type="button"
-            key={packId}
-            aria-pressed={pack === packId}
-            onClick={() => {
-              setPack(packId);
-              setMessage(`已切换到 ${packId} Pack；Surface 和数据保持不变`);
-            }}
+            key={id}
+            aria-pressed={pack === id}
+            onClick={() => setPack(id)}
           >
-            {packId}
+            {id}
           </button>
         ))}
       </section>
-
       <section className="views">
         {(["compact", "workspace"] as const).map((mode) => (
           <article className="view-card" key={mode}>
             <div className="view-heading">
-              <span>
-                {mode === "compact" ? "聊天紧凑视图" : "工作区完整视图"}
-              </span>
+              <span>{mode}</span>
               <small>{mode}</small>
             </div>
             <SurfaceRenderer
@@ -183,33 +126,48 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
               preferredPack={pack}
               enabledPackIds={[pack]}
               capabilities={["web", "desktop"]}
-              onActionIntent={(intent) => void handleAction(intent)}
-              onError={(error) => setMessage(`${error.code}: ${error.message}`)}
+              onActionIntent={handleAction}
+              onError={(renderError) => setMessage(renderError.message)}
             />
           </article>
         ))}
       </section>
-
       <section className="controls">
+        {(surfaceId.includes("tea-search-form--result") ||
+          surfaceId === "tea-selection") && (
+          <button type="button" className="primary" onClick={next}>
+            {surfaceId === "tea-selection" ? "生成采购表单" : "进入商品选择"}
+          </button>
+        )}
         {surfaceId === "purchase-form" && (
           <>
             <button
               type="button"
-              className="primary"
-              onClick={applyAgentChange}
+              onClick={() => {
+                const before = JSON.stringify(
+                  runtime.surfaceStore.requireSurface("purchase-form").data,
+                );
+                const result = runtime.applyAgentLayoutOperations();
+                setMessage(
+                  result.ok && before === JSON.stringify(result.value.data)
+                    ? "Agent Operations 已应用且数据保留"
+                    : result.ok
+                      ? "数据变化"
+                      : result.error.message,
+                );
+              }}
             >
               模拟 Agent 调整表单
             </button>
-            <button type="button" onClick={() => void savePreference()}>
-              持久化备注折叠偏好
-            </button>
-            <button type="button" onClick={() => setSurfaceId("tea-selection")}>
-              返回茶叶选择
+            <button
+              type="button"
+              onClick={() => void runtime.saveRemarkPreference()}
+            >
+              保存备注偏好
             </button>
           </>
         )}
       </section>
-
       <section className="evidence-grid">
         <article>
           <h2>最近 ActionIntent</h2>
@@ -218,13 +176,7 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
           </pre>
         </article>
         <article>
-          <h2>最近 ActionResult</h2>
-          <pre>
-            {lastResult ? JSON.stringify(lastResult, null, 2) : "尚未执行"}
-          </pre>
-        </article>
-        <article>
-          <h2>当前会话 Surface Data</h2>
+          <h2>当前 Surface Data</h2>
           <pre>{JSON.stringify(surface.data, null, 2)}</pre>
         </article>
       </section>

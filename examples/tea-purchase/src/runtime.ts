@@ -1,4 +1,7 @@
-import { AgentUIToolRuntime } from "@package-first/agent-tools";
+import {
+  AgentUIToolRuntime,
+  ToolToUIRuntime,
+} from "@package-first/agent-tools";
 import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
 import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
 import {
@@ -6,12 +9,20 @@ import {
   createStandardComponentRegistry,
   readDataPath,
 } from "@package-first/core";
+import { generateSurface } from "@package-first/generator";
 import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
 
 import {
   teaBusinessReactPack,
   teaProductCardDefinition,
 } from "./tea-component-pack.js";
+import {
+  MockTeaHostExecutor,
+  createPurchaseOrder,
+  searchTeaProducts,
+  teaProducts,
+  teaToolDefinitions,
+} from "./tool-runtime-model.js";
 
 export const componentRegistry = createStandardComponentRegistry();
 componentRegistry.register(teaProductCardDefinition);
@@ -25,67 +36,72 @@ reactComponents.registerPack(
   }),
 );
 reactComponents.registerPack(teaBusinessReactPack);
+
+export const toolRuntime = new ToolToUIRuntime(componentRegistry, surfaceStore);
+for (const definition of teaToolDefinitions)
+  toolRuntime.registerTool(definition);
 export const agentTools = new AgentUIToolRuntime(
   componentRegistry,
   surfaceStore,
+  undefined,
+  toolRuntime,
 );
 
-export const teaToolResult = {
-  teas: [
-    {
-      id: "longjing",
-      name: "西湖龙井",
-      origin: "浙江杭州",
-      price: 168,
-    },
-    {
-      id: "tieguanyin",
-      name: "安溪铁观音",
-      origin: "福建安溪",
-      price: 128,
-    },
-    {
-      id: "dahongpao",
-      name: "武夷大红袍",
-      origin: "福建武夷山",
-      price: 198,
-    },
-  ],
-};
-
-const teaSurface = agentTools.createSurface({
-  surfaceId: "tea-selection",
-  schema: {
-    type: "object",
-    title: "可选茶叶",
-    properties: {
-      teas: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            name: { type: "string" },
-            origin: { type: "string" },
-            price: { type: "number" },
-          },
-        },
-      },
-    },
-  },
-  data: { ...teaToolResult, selectedTeaIds: [] },
-  intent: "multi-select",
-  metadata: {
-    title: "选择茶叶",
-    itemsPath: "teas",
-    selectionPath: "selectedTeaIds",
-    rootComponent: "TeaProductCard",
-  },
-  context: { source: "tea.search" },
+const hostExecutor = new MockTeaHostExecutor();
+toolRuntime.onInvocationRequested((request) => {
+  toolRuntime.markInvocationStarted(request.invocationId);
+  void hostExecutor
+    .execute(request)
+    .then((result) =>
+      toolRuntime.resolveInvocation(request.invocationId, result),
+    )
+    .catch((error: unknown) =>
+      toolRuntime.rejectInvocation(request.invocationId, {
+        code: "MOCK_HOST_ERROR",
+        message: error instanceof Error ? error.message : "Mock host failed",
+      }),
+    );
 });
 
-if (!teaSurface.ok) {
-  throw new Error(teaSurface.error.message);
+export const searchFlow = toolRuntime.createToolSurface({
+  toolId: searchTeaProducts.id,
+  surfaceId: "tea-search-form",
+  initialValues: { kind: null, origin: null, maxPrice: null },
+});
+
+export function createSelectionSurface(): string {
+  const existing = surfaceStore.getSurface("tea-selection");
+  if (existing !== undefined) return existing.id;
+  const result = toolRuntime.getRawResult(searchFlow.invocation.id);
+  const products = Array.isArray(result)
+    ? result
+    : teaProducts.map(({ id, name, kind, origin, price }) => ({
+        id,
+        name,
+        kind,
+        origin,
+        price,
+      }));
+  const generated = generateSurface(
+    {
+      surfaceId: "tea-selection",
+      schema: {
+        type: "object",
+        properties: { teas: { type: "array", items: { type: "object" } } },
+      },
+      data: { teas: products, selectedTeaIds: [] },
+      intent: "multi-select",
+      metadata: {
+        title: "选择茶叶",
+        itemsPath: "teas",
+        selectionPath: "selectedTeaIds",
+        rootComponent: "TeaProductCard",
+      },
+      context: { source: "local.selection" },
+    },
+    componentRegistry,
+  );
+  return surfaceStore.createSurface(generated).id;
 }
 
 export function selectedTeaIds(): string[] {
@@ -98,54 +114,19 @@ export function selectedTeaIds(): string[] {
     : [];
 }
 
-export function ensurePurchaseSurface() {
+export function createPurchaseSurface(): string {
   const existing = surfaceStore.getSurface("purchase-form");
-  if (existing !== undefined) {
-    return { ok: true as const, value: existing };
-  }
-  return agentTools.createSurface({
+  if (existing !== undefined) return existing.id;
+  return toolRuntime.createToolSurface({
+    toolId: createPurchaseOrder.id,
     surfaceId: "purchase-form",
-    schema: {
-      type: "object",
-      title: "创建采购单",
-      required: ["quantity", "shipping"],
-      properties: {
-        selectedTeaIds: {
-          type: "array",
-          items: { type: "string" },
-        },
-        quantity: { type: "integer", title: "采购数量", default: 1 },
-        remark: { type: "string", title: "备注" },
-        shipping: {
-          type: "object",
-          title: "收货信息",
-          required: ["recipient", "address"],
-          properties: {
-            recipient: { type: "string", title: "收货人" },
-            address: { type: "string", title: "收货地址" },
-            phone: { type: "string", title: "联系电话" },
-          },
-        },
-      },
+    initialValues: {
+      items: selectedTeaIds(),
+      supplier: "",
+      delivery: { recipient: "", address: "", date: "" },
+      remark: null,
     },
-    data: {
-      selectedTeaIds: selectedTeaIds(),
-      quantity: 1,
-      remark: "",
-      shipping: { recipient: "", address: "", phone: "" },
-    },
-    intent: "form",
-    metadata: {
-      title: "茶叶采购单",
-      fields: {
-        selectedTeaIds: { hidden: true },
-        quantity: { order: 0 },
-        remark: { order: 1 },
-        shipping: { order: 2 },
-      },
-    },
-    context: { source: "purchase.create" },
-  });
+  }).surface.id;
 }
 
 export function applyAgentLayoutOperations() {
@@ -153,18 +134,10 @@ export function applyAgentLayoutOperations() {
   return agentTools.applyOperations({
     surfaceId: surface.id,
     baseRevision: surface.revision,
-    reason: "用户希望收货信息最显眼，并折叠可选备注",
+    reason: "收货信息前置并折叠备注",
     operations: [
-      {
-        type: "moveNode",
-        target: "shipping",
-        position: "first",
-      },
-      {
-        type: "setProps",
-        target: "remark",
-        props: { collapsed: true },
-      },
+      { type: "moveNode", target: "delivery", position: "first" },
+      { type: "setProps", target: "remark", props: { collapsed: true } },
     ],
   });
 }

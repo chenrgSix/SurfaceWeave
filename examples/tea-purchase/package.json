@@ -13,6 +13,7 @@
     "@package-first/component-pack-antd": "workspace:*",
     "@package-first/component-pack-react-aria": "workspace:*",
     "@package-first/core": "workspace:*",
+    "@package-first/generator": "workspace:*",
     "@package-first/renderer-react": "workspace:*",
     "antd": "^6.5.3",
     "react": "^19.2.8",
