@@ -223,6 +223,17 @@ function createFieldNode(
   if (schema.enum !== undefined) {
     props.options = cloneValue(schema.enum);
   }
+  if (schema.type !== "object") {
+    if (schema.readOnly === true) props.readOnly = true;
+    if (required) props.required = true;
+    if (schema.format !== undefined) props.format = schema.format;
+    if (schema.minimum !== undefined) props.minimum = schema.minimum;
+    if (schema.maximum !== undefined) props.maximum = schema.maximum;
+    if (schema.multipleOf !== undefined) props.step = schema.multipleOf;
+    if (schema.minLength !== undefined) props.minLength = schema.minLength;
+    if (schema.maxLength !== undefined) props.maxLength = schema.maxLength;
+    if (schema.pattern !== undefined) props.pattern = schema.pattern;
+  }
   if (field?.collapsed !== undefined) {
     props.collapsed = field.collapsed;
   }
@@ -252,6 +263,7 @@ function createFieldNode(
       path,
       valueType: bindingType(schema),
       required,
+      ...(schema.readOnly === true ? { semantic: "readOnly" } : {}),
     };
   }
   return node;

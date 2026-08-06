@@ -12,6 +12,51 @@ export interface JsonObject {
 /** JSON Schema document. The protocol uses the 2020-12 dialect. */
 export type JsonSchema = boolean | JsonObject;
 
+/** Serializable, host-registered description of one executable business tool. */
+export interface ToolDefinition {
+  id: string;
+  version: string;
+  title?: string;
+  description?: string;
+  inputSchema: JsonSchema;
+  outputSchema?: JsonSchema;
+  annotations?: ToolAnnotations;
+  uiHints?: ToolUIHints;
+}
+
+export interface ToolAnnotations {
+  sideEffect?: boolean;
+  confirmation?: "never" | "required";
+  retry?: "never" | "safe";
+  sensitiveInputPaths?: string[];
+}
+
+export interface ToolSemanticFieldHint {
+  purpose?: string;
+  group?: string;
+  component?: string;
+  importance?: "low" | "normal" | "high";
+}
+
+export interface ToolUIHints {
+  hardConstraints?: DeveloperHardConstraints;
+  softHints?: {
+    title?: string;
+    description?: string;
+    rootComponent?: string;
+    fields?: Record<string, JsonObject>;
+  };
+  semanticHints?: Record<string, ToolSemanticFieldHint>;
+}
+
+export interface ToolRegistry {
+  register(definition: ToolDefinition): void;
+  unregister(toolId: string): boolean;
+  get(toolId: string): ToolDefinition | undefined;
+  require(toolId: string, version?: string): ToolDefinition;
+  list(): ToolDefinition[];
+}
+
 /** Supported interaction modes for default UI generation. */
 export type UIIntent =
   "form" | "browse" | "single-select" | "multi-select" | "confirm";

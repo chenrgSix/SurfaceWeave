@@ -16,7 +16,11 @@ export type DynamicUIErrorCode =
   | "PREFERENCE_NOT_FOUND"
   | "PREFERENCE_CONFLICT_NOT_FOUND"
   | "PREFERENCES_NOT_HYDRATED"
-  | "HARD_CONSTRAINT_VIOLATION";
+  | "HARD_CONSTRAINT_VIOLATION"
+  | "INVALID_TOOL_DEFINITION"
+  | "TOOL_EXISTS"
+  | "TOOL_NOT_FOUND"
+  | "TOOL_VERSION_CONFLICT";
 
 /** Stable SDK error suitable for mapping to Agent tool error results. */
 export class DynamicUIError extends Error {

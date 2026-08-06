@@ -1,12 +1,14 @@
 import type {
   DeveloperHardConstraints,
   JsonObject,
+  JsonSchema,
   JsonValue,
   SchemaRef,
   Surface,
   SurfaceContext,
   SurfacePresentation,
   UIIntent,
+  ToolDefinition,
 } from "@package-first/core";
 
 export type JsonSchemaType =
@@ -23,6 +25,16 @@ export interface SimpleJsonSchema {
   enum?: JsonValue[];
   default?: JsonValue;
   format?: string;
+  readOnly?: boolean;
+  nullable?: boolean;
+  oneOf?: SimpleJsonSchema[];
+  anyOf?: SimpleJsonSchema[];
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
 }
 
 export interface FieldMetadata {
@@ -67,3 +79,25 @@ export interface GenerateSurfaceInput {
 }
 
 export type GeneratedSurface = Omit<Surface, "revision">;
+
+export interface GenerateToolSurfaceInput {
+  definition: ToolDefinition;
+  surfaceId: string;
+  initialValues?: JsonObject;
+  context?: SurfaceContext;
+  presentation?: SurfacePresentation;
+}
+
+export interface AgentToolDefinitionInput {
+  name: string;
+  description?: string;
+  inputSchema: JsonSchema;
+  outputSchema?: JsonSchema;
+  version?: string;
+}
+
+export interface OpenApiToolInput {
+  document: JsonObject;
+  path: string;
+  method: "get" | "post" | "put" | "patch" | "delete";
+}

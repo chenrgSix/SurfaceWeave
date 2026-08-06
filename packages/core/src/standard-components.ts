@@ -41,6 +41,14 @@ const fieldProps = {
   label: stringSchema,
   description: stringSchema,
   collapsed: booleanSchema,
+  readOnly: booleanSchema,
+  required: booleanSchema,
+  format: stringSchema,
+  minLength: numberSchema,
+  maxLength: numberSchema,
+  pattern: stringSchema,
+  group: stringSchema,
+  importance: stringSchema,
 };
 
 /** Canonical semantic declarations. They contain no renderer binding. */

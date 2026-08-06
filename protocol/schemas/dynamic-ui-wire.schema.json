@@ -10,6 +10,7 @@
     { "$ref": "#/$defs/uiEvent" },
     { "$ref": "#/$defs/actionIntent" },
     { "$ref": "#/$defs/actionResult" },
+    { "$ref": "#/$defs/toolDefinition" },
     { "$ref": "#/$defs/preferenceDocument" }
   ],
   "$defs": {
@@ -256,6 +257,35 @@
         { "$ref": "#/$defs/setVisibility" },
         { "$ref": "#/$defs/groupNodes" }
       ]
+    },
+    "toolAnnotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sideEffect": { "type": "boolean" },
+        "confirmation": { "enum": ["never", "required"] },
+        "retry": { "enum": ["never", "safe"] },
+        "sensitiveInputPaths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "toolDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "inputSchema"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "type": "string", "minLength": 1 },
+        "title": { "$ref": "#/$defs/safeString" },
+        "description": { "$ref": "#/$defs/safeString" },
+        "inputSchema": { "$ref": "#/$defs/jsonSchema" },
+        "outputSchema": { "$ref": "#/$defs/jsonSchema" },
+        "annotations": { "$ref": "#/$defs/toolAnnotations" },
+        "uiHints": { "$ref": "#/$defs/declarationObject" }
+      }
     },
     "actionIntent": {
       "type": "object",
