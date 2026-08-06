@@ -221,7 +221,7 @@ function createFieldNode(
     props.description = field?.description ?? schema.description ?? "";
   }
   if (schema.enum !== undefined) {
-    props.options = cloneValue(schema.enum);
+    props.options = cloneValue(schema.enum.filter((value) => value !== null));
   }
   if (schema.type !== "object") {
     if (schema.readOnly === true) props.readOnly = true;

@@ -13,7 +13,7 @@ describe("Core framework boundary", () => {
     ) as { compilerOptions?: { lib?: string[] } };
     const dependencies = Object.keys(packageJson.dependencies ?? {});
 
-    expect(dependencies).toEqual(["ajv"]);
+    expect(dependencies).toEqual(["@cfworker/json-schema"]);
     expect(buildConfig.compilerOptions?.lib).toEqual(["ES2022"]);
     expect(
       dependencies.some((name) =>

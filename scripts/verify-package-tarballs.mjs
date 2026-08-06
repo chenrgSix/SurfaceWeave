@@ -16,6 +16,10 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const packageDirectories = [
   "protocol",
   "packages/core",
+  "packages/storage",
+  "packages/preferences",
+  "packages/generator",
+  "packages/agent-tools",
   "packages/renderer-react",
   "packages/component-pack-react-aria",
   "packages/component-pack-antd",
@@ -104,11 +108,17 @@ try {
     join(fixtureRoot, "consumer.ts"),
     `import protocolSchema from "@package-first/protocol/schema" with { type: "json" };
 import { createStandardComponentRegistry } from "@package-first/core";
+import { InMemorySurfaceStore } from "@package-first/core";
+import { ToolToUIRuntime } from "@package-first/agent-tools";
 import { createDefaultReactComponentPack, validateReactComponentPack } from "@package-first/renderer-react";
 import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
 import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
 
 const registry = createStandardComponentRegistry();
+const store = new InMemorySurfaceStore(registry);
+const tools = new ToolToUIRuntime(registry, store);
+tools.registerTool({ id: "smoke.search", version: "1.0.0", inputSchema: { type: "object" } });
+if (tools.createToolSurface({ toolId: "smoke.search", surfaceId: "smoke-form" }).surface.id !== "smoke-form") throw new Error("tool runtime");
 const packs = [
   createDefaultReactComponentPack(),
   createReactAriaComponentPack(),
@@ -125,11 +135,17 @@ if (protocolSchema.$schema !== "https://json-schema.org/draft/2020-12/schema") t
     `import { existsSync } from "node:fs";
 import protocolSchema from "@package-first/protocol/schema" with { type: "json" };
 import { createStandardComponentRegistry } from "@package-first/core";
+import { InMemorySurfaceStore } from "@package-first/core";
+import { ToolToUIRuntime } from "@package-first/agent-tools";
 import { createDefaultReactComponentPack, validateReactComponentPack } from "@package-first/renderer-react";
 import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
 import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
 
 const registry = createStandardComponentRegistry();
+const store = new InMemorySurfaceStore(registry);
+const tools = new ToolToUIRuntime(registry, store);
+tools.registerTool({ id: "smoke.search", version: "1.0.0", inputSchema: { type: "object" } });
+tools.createToolSurface({ toolId: "smoke.search", surfaceId: "smoke-form" });
 for (const pack of [createDefaultReactComponentPack(), createReactAriaComponentPack(), createAntDesignComponentPack()]) {
   const result = validateReactComponentPack(pack, registry);
   if (!result.valid) throw new Error(result.errors.join("; "));

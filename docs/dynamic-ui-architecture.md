@@ -1,5 +1,7 @@
 方案可以定为：**Package-first 的对话式动态 UI SDK**。核心使用框架无关的 TypeScript 数据模型，首个渲染器做 React/Web，Tauri 直接复用 Web 渲染器；后续再扩展 Vue、Flutter 等终端。
 
+Milestone 5 在此基线上增加 Canonical Tool Registry、可序列化 Invocation 生命周期、Host submission 边界和独立结果投影；详见 [Tool-to-UI Runtime](tool-to-ui-runtime.md)。
+
 它借鉴 [AG-UI](https://docs.ag-ui.com/introduction) 的事件流和 [A2UI](https://a2ui.org/) 的声明式组件树，但定义自己的轻量协议，不强求兼容。
 
 ## 一、系统定位

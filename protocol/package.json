@@ -6,11 +6,13 @@
   "sideEffects": false,
   "files": [
     "component-pack-protocol.md",
+    "tool-to-ui-runtime-protocol.md",
     "schemas"
   ],
   "exports": {
     ".": "./schemas/dynamic-ui-wire.schema.json",
     "./schema": "./schemas/dynamic-ui-wire.schema.json",
-    "./component-pack": "./component-pack-protocol.md"
+    "./component-pack": "./component-pack-protocol.md",
+    "./tool-to-ui": "./tool-to-ui-runtime-protocol.md"
   }
 }

@@ -402,7 +402,7 @@ export function AntDialog({ node, onAction }: RendererComponentProps) {
       open
       title={stringProp(node.props, "title", "Confirm")}
       closable={false}
-      maskClosable={false}
+      mask={{ closable: false }}
       onOk={() =>
         onAction(
           stringProp(node.props, "confirmAction", "confirm"),
