@@ -14,6 +14,8 @@ import type {
   UINode,
   UIOperation,
   UIIntent,
+  ToolDefinition,
+  ToolInvocation,
 } from "@package-first/core";
 import type {
   DeveloperUIConfiguration,
@@ -27,6 +29,11 @@ export type UIToolName =
   | "ui.inspectComponentPacks"
   | "ui.applyOperations"
   | "ui.replaceSurface"
+  | "ui.inspectTools"
+  | "ui.inspectTool"
+  | "ui.createToolSurface"
+  | "ui.inspectInvocation"
+  | "ui.proposeToolSubmission"
   | "ui.inspectPreferences"
   | "ui.savePreference"
   | "ui.migratePreference"
@@ -141,10 +148,35 @@ export interface PreferenceDiscardResult {
   preferenceId: string;
 }
 
+export interface ToolCatalogInspection {
+  tools: Array<
+    Pick<
+      ToolDefinition,
+      "id" | "version" | "title" | "description" | "annotations"
+    >
+  >;
+}
+
+export interface ToolProposalResult {
+  invocation: ToolInvocation;
+  outcome: "confirmation-required" | "invocation-requested" | "state-changed";
+  confirmationSurfaceId?: string;
+}
+
+export interface ToolSurfaceCreation {
+  surface: Surface;
+  invocation: ToolInvocation;
+}
+
 export type UIToolValue =
   | Surface
   | SurfaceInspection
   | ComponentCatalogInspection
   | PreferenceInspection
   | PreferencePatch
-  | PreferenceDiscardResult;
+  | PreferenceDiscardResult
+  | ToolCatalogInspection
+  | ToolDefinition
+  | ToolInvocation
+  | ToolProposalResult
+  | ToolSurfaceCreation;

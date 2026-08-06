@@ -202,6 +202,18 @@ export interface PreferenceDocument {
 /** Developer-declared old stableId to current stableId candidates. */
 export type SchemaFieldAliases = Record<string, string | string[]>;
 
+export interface DataMigrationConflict {
+  code: "TARGET_MISSING" | "ALIAS_AMBIGUOUS" | "TYPE_INCOMPATIBLE";
+  previousStableId: string;
+  suggestedStableIds: string[];
+  message: string;
+}
+
+export interface SurfaceDataMigrationResult {
+  surface: Surface;
+  conflicts: DataMigrationConflict[];
+}
+
 export type UIConstraintAspect =
   "component" | "props" | "layout" | "visibility" | "position";
 

@@ -105,9 +105,24 @@ describe("ToolToUIRuntime", () => {
     ).toThrow(/already submitting/);
 
     runtime.markInvocationStarted(invocation.id);
-    expect(
-      runtime.resolveInvocation(invocation.id, { orderId: "PO-1" }).status,
-    ).toBe("success");
+    const resolved = runtime.resolveInvocation(invocation.id, {
+      orderId: "PO-1",
+    });
+    expect(resolved.status).toBe("success");
+    expect(resolved.resultSurfaceId).toBe("order-form--result-1");
+    expect(runtime.getRawResult(invocation.id)).toEqual({ orderId: "PO-1" });
+    const raw = runtime.getRawResult(invocation.id) as { orderId: string };
+    raw.orderId = "tampered";
+    expect(runtime.getRawResult(invocation.id)).toEqual({ orderId: "PO-1" });
+    const resultSurface = surfaces.requireSurface(resolved.resultSurfaceId!);
+    surfaces.applyOperations(resultSurface.id, resultSurface.revision, [
+      {
+        type: "setVisibility",
+        target: "result.orderId",
+        visible: false,
+      },
+    ]);
+    expect(runtime.getRawResult(invocation.id)).toEqual({ orderId: "PO-1" });
     expect(surfaces.requireSurface(surface.id).tree.props.submitting).toBe(
       false,
     );
@@ -176,6 +191,9 @@ describe("ToolToUIRuntime", () => {
       code: "TEMPORARY",
       message: "Try again",
     });
+    expect(
+      runtime.inspectInvocation(created.invocation.id).resultSurfaceId,
+    ).toBe("retry-form--result-1");
     const retried = runtime.handleAction(
       action(created.surface.id, "tool.retry", created.invocation.id),
     );
@@ -186,6 +204,59 @@ describe("ToolToUIRuntime", () => {
       );
       expect(retried.invocation.attempt).toBe(2);
     }
+  });
+
+  it("migrates aliased values and emits type conflicts", () => {
+    const { runtime } = runtimeFixture();
+    const events: ToolRuntimeEvent[] = [];
+    runtime.subscribe((event) => events.push(event));
+    const created = runtime.createToolSurface({
+      toolId: "order.create",
+      surfaceId: "migration-form",
+      initialValues: { buyer: "Ada", password: "secret", tenant: "north" },
+    });
+    const migrated = runtime.replaceToolSurface(
+      created.invocation.id,
+      {
+        intent: "form",
+        schemaRef: { id: "order.create", version: "1.0.0" },
+        tree: {
+          id: "replacement-root",
+          component: "Form",
+          props: {},
+          children: [
+            {
+              id: "customer",
+              stableId: "customer",
+              component: "TextInput",
+              props: { label: "Customer" },
+              binding: { path: "customer", valueType: "string" },
+            },
+            {
+              id: "password-count",
+              stableId: "password",
+              component: "NumberInput",
+              props: { label: "Password count" },
+              binding: { path: "passwordCount", valueType: "number" },
+            },
+          ],
+        },
+        data: { customer: "Default", passwordCount: 0 },
+        context: { source: "tool.input" },
+      },
+      { buyer: "customer" },
+    );
+
+    expect(migrated.surface.data.customer).toBe("Ada");
+    expect(migrated.conflicts).toEqual([
+      expect.objectContaining({
+        code: "TYPE_INCOMPATIBLE",
+        previousStableId: "password",
+      }),
+    ]);
+    expect(
+      events.some((event) => event.type === "ui.dataMigrationConflict"),
+    ).toBe(true);
   });
 
   it("rejects unregistered tools and version conflicts", () => {

@@ -1,12 +1,10 @@
 import {
   bindingValueTypeMatches,
-  bindingsAreCompatible,
   cloneValue,
-  collectBindings,
-  readDataPath,
   walkNodes,
   writeDataPath,
 } from "./data.js";
+import { migrateSurfaceData } from "./data-migration.js";
 import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
 import type {
@@ -30,24 +28,6 @@ function assertRevision(surface: Surface, baseRevision: number): void {
       `Surface "${surface.id}" is at revision ${surface.revision}, not ${baseRevision}`,
       { expected: baseRevision, actual: surface.revision },
     );
-  }
-}
-
-function migrateCompatibleData(previous: Surface, next: Surface): void {
-  const previousBindings = collectBindings(previous.tree);
-  const nextBindings = collectBindings(next.tree);
-  for (const [stableId, nextBinding] of nextBindings) {
-    const previousBinding = previousBindings.get(stableId);
-    if (
-      previousBinding === undefined ||
-      !bindingsAreCompatible(previousBinding, nextBinding)
-    ) {
-      continue;
-    }
-    const value = readDataPath(previous.data, previousBinding.path);
-    if (value !== undefined) {
-      writeDataPath(next.data, nextBinding.path, value);
-    }
   }
 }
 
@@ -196,7 +176,8 @@ export class InMemorySurfaceStore implements SurfaceStore {
       revision: current.revision + 1,
     };
     validateSurface(next, this.#registry);
-    migrateCompatibleData(current, next);
+    const migrated = migrateSurfaceData(current, next);
+    next.data = migrated.surface.data;
     this.#surfaces.set(surfaceId, next);
     this.#publish(surfaceId, {
       type: "surface.replaced",

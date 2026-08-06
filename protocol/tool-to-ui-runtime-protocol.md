@@ -49,3 +49,21 @@ Read-only schema fields are rendered as non-editable and removed from submitted
 arguments; modifying them causes validation failure. While an invocation is
 submitting, renderers disable the semantic Form submission control and the
 Runtime rejects duplicates independently of renderer behavior.
+
+## Results, Migration, and Agent Tools
+
+The Runtime keeps an immutable cloned raw result outside the Surface Store and
+creates a separate semantic result projection. Agent `UIOperation` batches may
+reorder or restyle that result Surface but cannot mutate the raw result. Default
+projections cover object summaries, collections, empty success, partial output,
+structured errors, and retryable errors.
+
+Input Surface replacement migrates compatible bindings by stableId. A
+developer-supplied field alias may map an old stableId to a renamed field;
+missing, ambiguous, and type-incompatible targets produce
+`ui.dataMigrationConflict` events instead of coercing data.
+
+Portable Agent tools expose registered Tool discovery, Tool Surface creation,
+invocation inspection, and submission proposals. A proposal enters the same
+validation and confirmation path as a user action. It cannot register a tool,
+change its schemas or policies, supply a URL, execute it, or forge a result.

@@ -101,3 +101,14 @@ export interface OpenApiToolInput {
   path: string;
   method: "get" | "post" | "put" | "patch" | "delete";
 }
+
+export interface GenerateResultSurfaceInput {
+  definition: ToolDefinition;
+  surfaceId: string;
+  invocationId: string;
+  correlationId: string;
+  result?: JsonValue;
+  status: "success" | "partial" | "error";
+  errors?: Array<{ code: string; message: string }>;
+  retryable?: boolean;
+}

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   AgentUIToolRuntime,
+  ToolToUIRuntime,
   surfaceToolDefinitions,
   uiToolDefinitions,
 } from "../src/index.js";
@@ -41,10 +42,68 @@ describe("AgentUIToolRuntime", () => {
         "ui.replaceSurface",
       ],
     );
-    expect(uiToolDefinitions).toHaveLength(9);
+    expect(uiToolDefinitions).toHaveLength(14);
     for (const definition of uiToolDefinitions) {
       expect(definition.inputSchema.type).toBe("object");
     }
+  });
+
+  it("exposes registered Tool discovery and proposal without allowing Agent registration", () => {
+    const registry = createStandardComponentRegistry();
+    const store = new InMemorySurfaceStore(registry);
+    const toolRuntime = new ToolToUIRuntime(registry, store);
+    toolRuntime.registerTool({
+      id: "order.create",
+      version: "1.0.0",
+      inputSchema: {
+        type: "object",
+        required: ["buyer"],
+        properties: { buyer: { type: "string" } },
+      },
+      annotations: { sideEffect: true, confirmation: "required" },
+    });
+    const agent = new AgentUIToolRuntime(
+      registry,
+      store,
+      undefined,
+      toolRuntime,
+    );
+
+    expect(agent.execute("ui.inspectTools", {})).toMatchObject({
+      ok: true,
+      value: { tools: [{ id: "order.create", version: "1.0.0" }] },
+    });
+    const created = agent.execute("ui.createToolSurface", {
+      toolId: "order.create",
+      surfaceId: "agent-order-form",
+      initialValues: { buyer: "Ada" },
+    });
+    expect(created).toMatchObject({
+      ok: true,
+      value: { invocation: { status: "editing" } },
+    });
+    if (!created.ok || !("invocation" in created.value)) {
+      throw new Error("Tool Surface was not created");
+    }
+    expect(
+      agent.execute("ui.proposeToolSubmission", {
+        invocationId: created.value.invocation.id,
+      }),
+    ).toMatchObject({
+      ok: true,
+      value: { outcome: "confirmation-required" },
+    });
+    expect(
+      agent.execute("ui.createToolSurface", {
+        toolId: "order.create",
+        surfaceId: "unsafe",
+        url: "https://agent.invalid",
+        definition: { id: "forged" },
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_TOOL_ARGUMENTS" },
+    });
   });
 
   it("discovers only serializable semantic manifests, schemas, and guidance", () => {

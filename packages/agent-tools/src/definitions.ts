@@ -239,7 +239,75 @@ export const preferenceToolDefinitions: UIToolDefinition[] = [
   },
 ];
 
+export const toolRuntimeToolDefinitions: UIToolDefinition[] = [
+  {
+    name: "ui.inspectTools",
+    description:
+      "List developer-registered tools and immutable execution policies.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+    },
+  },
+  {
+    name: "ui.inspectTool",
+    description: "Inspect one registered canonical Tool Definition.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["toolId"],
+      properties: {
+        toolId: { type: "string", minLength: 1 },
+        toolVersion: { type: "string", minLength: 1 },
+      },
+    },
+  },
+  {
+    name: "ui.createToolSurface",
+    description:
+      "Create an input Surface only for a developer-registered tool.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["toolId", "surfaceId"],
+      properties: {
+        toolId: { type: "string", minLength: 1 },
+        toolVersion: { type: "string", minLength: 1 },
+        surfaceId: { type: "string", minLength: 1 },
+        invocationId: { type: "string", minLength: 1 },
+        correlationId: { type: "string", minLength: 1 },
+        initialValues: { type: "object" },
+        context: { type: "object" },
+      },
+    },
+  },
+  {
+    name: "ui.inspectInvocation",
+    description:
+      "Inspect serializable invocation state without raw sensitive arguments.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["invocationId"],
+      properties: { invocationId: { type: "string", minLength: 1 } },
+    },
+  },
+  {
+    name: "ui.proposeToolSubmission",
+    description:
+      "Request validation and submission; Runtime still enforces confirmation and never executes the tool.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["invocationId"],
+      properties: { invocationId: { type: "string", minLength: 1 } },
+    },
+  },
+];
+
 export const uiToolDefinitions: UIToolDefinition[] = [
   ...surfaceToolDefinitions,
   ...preferenceToolDefinitions,
+  ...toolRuntimeToolDefinitions,
 ];

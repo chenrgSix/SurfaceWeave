@@ -24,6 +24,7 @@ export {
   walkNodes,
   writeDataPath,
 } from "./data.js";
+export { migrateSurfaceData } from "./data-migration.js";
 export { DynamicUIError } from "./errors.js";
 export type { DynamicUIErrorCode } from "./errors.js";
 export { applyOperationsToSurface, validateSurface } from "./operations.js";

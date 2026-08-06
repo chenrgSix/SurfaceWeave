@@ -4,6 +4,7 @@ import {
   InMemoryToolRegistry,
   assertMatchesJsonSchema,
   cloneValue,
+  migrateSurfaceData,
   readDataPath,
 } from "@package-first/core";
 import type {
@@ -13,7 +14,9 @@ import type {
   JsonObject,
   JsonSchema,
   JsonValue,
+  SchemaFieldAliases,
   Surface,
+  SurfaceDataMigrationResult,
   SurfaceStore,
   ToolDefinition,
   ToolInvocation,
@@ -22,7 +25,11 @@ import type {
   ToolRuntimeEvent,
   ToolSubmissionRequest,
 } from "@package-first/core";
-import { generateSurface, generateToolSurface } from "@package-first/generator";
+import {
+  generateResultSurface,
+  generateSurface,
+  generateToolSurface,
+} from "@package-first/generator";
 
 export interface CreateToolSurfaceInput {
   toolId: string;
@@ -51,6 +58,14 @@ export type ToolRuntimeListener = (event: ToolRuntimeEvent) => void;
 export type InvocationRequestListener = (
   request: ToolSubmissionRequest,
 ) => void;
+
+export interface ToolExecutionError extends ActionError {
+  retryable?: boolean;
+}
+
+export interface ResolveInvocationOptions {
+  partialErrors?: ActionError[];
+}
 
 function schemaObject(schema: JsonSchema): JsonObject | undefined {
   return schema === true || schema === false ? undefined : schema;
@@ -175,6 +190,7 @@ export class ToolToUIRuntime {
   >();
   readonly #listeners = new Set<ToolRuntimeListener>();
   readonly #requestListeners = new Set<InvocationRequestListener>();
+  readonly #rawResults = new Map<string, JsonValue>();
   #sequence = 0;
   #invocationSequence = 0;
 
@@ -204,6 +220,11 @@ export class ToolToUIRuntime {
 
   inspectInvocation(invocationId: string): ToolInvocation {
     return this.#invocations.require(invocationId);
+  }
+
+  getRawResult(invocationId: string): JsonValue | undefined {
+    const result = this.#rawResults.get(invocationId);
+    return result === undefined ? undefined : cloneValue(result);
   }
 
   subscribe(listener: ToolRuntimeListener): () => void {
@@ -316,6 +337,8 @@ export class ToolToUIRuntime {
       case "tool.request-confirmation":
       case "tool.submit":
         return this.#submit(invocation, input.confirmed === true);
+      case "result.continue":
+        return { kind: "state-changed", invocation };
       default:
         throw new DynamicUIError(
           "INVALID_ACTION_INTENT",
@@ -336,21 +359,115 @@ export class ToolToUIRuntime {
     return invocation;
   }
 
-  resolveInvocation(invocationId: string, result: JsonValue): ToolInvocation {
-    cloneValue(result);
-    const invocation = this.#invocations.transition(invocationId, "success");
+  resolveInvocation(
+    invocationId: string,
+    result: JsonValue,
+    options: ResolveInvocationOptions = {},
+  ): ToolInvocation {
+    const current = this.#invocations.require(invocationId);
+    const definition = this.#tools.require(current.toolId, current.toolVersion);
+    if (definition.outputSchema !== undefined) {
+      assertMatchesJsonSchema(
+        definition.outputSchema,
+        result,
+        `Result for ${definition.id}`,
+        "TOOL_OUTPUT_INVALID",
+      );
+    }
+    this.#rawResults.set(invocationId, cloneValue(result));
+    const resultSurface = this.#createResultSurface(
+      current,
+      result,
+      options.partialErrors?.length ? "partial" : "success",
+      options.partialErrors,
+      false,
+    );
+    const invocation = this.#invocations.transition(invocationId, "success", {
+      resultSurfaceId: resultSurface.id,
+    });
     this.#setSubmitting(invocation.sourceSurfaceId, false);
-    this.#publish(invocationId, "tool.invocationSucceeded");
+    this.#publish(invocationId, "tool.invocationSucceeded", {
+      resultSurfaceId: resultSurface.id,
+    });
+    this.#publish(invocationId, "result.surfaceCreated", {
+      surfaceId: resultSurface.id,
+      resultSurfaceId: resultSurface.id,
+    });
     return invocation;
   }
 
-  rejectInvocation(invocationId: string, error: ActionError): ToolInvocation {
+  rejectInvocation(
+    invocationId: string,
+    error: ToolExecutionError,
+  ): ToolInvocation {
+    const current = this.#invocations.require(invocationId);
+    const definition = this.#tools.require(current.toolId, current.toolVersion);
+    const retryable =
+      error.retryable !== false && definition.annotations?.retry === "safe";
+    const resultSurface = this.#createResultSurface(
+      current,
+      undefined,
+      "error",
+      [error],
+      retryable,
+    );
+    const actionError: ActionError = {
+      code: error.code,
+      message: error.message,
+    };
     const invocation = this.#invocations.transition(invocationId, "error", {
-      error,
+      error: actionError,
+      resultSurfaceId: resultSurface.id,
     });
     this.#setSubmitting(invocation.sourceSurfaceId, false);
-    this.#publish(invocationId, "tool.invocationFailed", { error });
+    this.#publish(invocationId, "tool.invocationFailed", {
+      error: actionError,
+      resultSurfaceId: resultSurface.id,
+    });
+    this.#publish(invocationId, "result.surfaceCreated", {
+      surfaceId: resultSurface.id,
+      resultSurfaceId: resultSurface.id,
+    });
     return invocation;
+  }
+
+  replaceToolSurface(
+    invocationId: string,
+    replacement: Omit<Surface, "id" | "revision">,
+    aliases: SchemaFieldAliases = {},
+  ): SurfaceDataMigrationResult {
+    const invocation = this.#invocations.require(invocationId);
+    const current = this.#surfaces.requireSurface(invocation.sourceSurfaceId);
+    const candidate: Surface = {
+      ...cloneValue(replacement),
+      id: current.id,
+      revision: current.revision + 1,
+    };
+    const migration = migrateSurfaceData(current, candidate, aliases);
+    const migratedReplacement: Omit<Surface, "id" | "revision"> = {
+      intent: migration.surface.intent,
+      tree: migration.surface.tree,
+      data: migration.surface.data,
+      context: migration.surface.context,
+      ...(migration.surface.schemaRef === undefined
+        ? {}
+        : { schemaRef: migration.surface.schemaRef }),
+      ...(migration.surface.presentation === undefined
+        ? {}
+        : { presentation: migration.surface.presentation }),
+    };
+    const surface = this.#surfaces.replaceSurface(
+      current.id,
+      current.revision,
+      migratedReplacement,
+    );
+    for (const conflict of migration.conflicts) {
+      this.#publish(invocationId, "ui.dataMigrationConflict", {
+        surfaceId: surface.id,
+        details: cloneValue(conflict) as unknown as JsonObject,
+      });
+    }
+    return { surface, conflicts: migration.conflicts };
   }
 
   #validate(invocation: ToolInvocation): JsonObject {
@@ -584,6 +701,36 @@ export class ToolToUIRuntime {
     generated.tree.props.confirmAction = "tool.submit";
     generated.tree.props.cancelAction = "tool.cancel";
     generated.tree.props.invocationId = invocation.id;
+    const surface = this.#surfaces.createSurface(generated);
+    this.#surfaceInvocations.set(surface.id, invocation.id);
+    return surface;
+  }
+
+  #createResultSurface(
+    invocation: ToolInvocation,
+    result: JsonValue | undefined,
+    status: "success" | "partial" | "error",
+    errors: ActionError[] | undefined,
+    retryable: boolean,
+  ): Surface {
+    const definition = this.#tools.require(
+      invocation.toolId,
+      invocation.toolVersion,
+    );
+    const surfaceId = `${invocation.sourceSurfaceId}--result-${invocation.attempt}`;
+    const generated = generateResultSurface(
+      {
+        definition,
+        surfaceId,
+        invocationId: invocation.id,
+        correlationId: invocation.correlationId,
+        status,
+        ...(result === undefined ? {} : { result }),
+        ...(errors === undefined ? {} : { errors }),
+        ...(retryable ? { retryable: true } : {}),
+      },
+      this.#components,
+    );
     const surface = this.#surfaces.createSurface(generated);
     this.#surfaceInvocations.set(surface.id, invocation.id);
     return surface;
