@@ -19,10 +19,10 @@ describe("language-independent wire schema", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const manifestValidator = ajv.getSchema(
-      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/componentPackManifest",
+      "urn:surfaceweave:schema:dynamic-ui-wire:1.0#/$defs/componentPackManifest",
     );
     const surfaceValidator = ajv.getSchema(
-      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
+      "urn:surfaceweave:schema:dynamic-ui-wire:1.0#/$defs/surface",
     );
     expect(manifestValidator).toBeTypeOf("function");
     expect(surfaceValidator).toBeTypeOf("function");
@@ -53,12 +53,28 @@ describe("language-independent wire schema", () => {
     ).toBe(true);
   });
 
-  it("rejects framework props and executable strings", () => {
+  it("rejects framework props while preserving inert code-like text", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const validate = ajv.getSchema(
-      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
+      "urn:surfaceweave:schema:dynamic-ui-wire:1.0#/$defs/surface",
     );
+    expect(
+      validate?.({
+        id: "technical-copy",
+        revision: 0,
+        intent: "browse",
+        tree: {
+          id: "docs",
+          component: "Text",
+          props: {
+            code: "A => B; function(example); import(module); <script>",
+          },
+        },
+        data: {},
+        context: {},
+      }),
+    ).toBe(true);
     expect(
       validate?.({
         id: "unsafe",
@@ -67,7 +83,7 @@ describe("language-independent wire schema", () => {
         tree: {
           id: "name",
           component: "TextInput",
-          props: { className: "vendor", label: "eval(payload)" },
+          props: { className: "vendor", label: "ordinary text" },
         },
         data: {},
         context: {},
@@ -79,7 +95,7 @@ describe("language-independent wire schema", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const validate = ajv.getSchema(
-      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/uiEvent",
+      "urn:surfaceweave:schema:dynamic-ui-wire:1.0#/$defs/uiEvent",
     );
     const event = {
       type: "preference.saved",

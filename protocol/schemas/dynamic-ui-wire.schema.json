@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json",
+  "$id": "urn:surfaceweave:schema:dynamic-ui-wire:1.0",
   "title": "SurfaceWeave Wire Protocol 1.0",
   "description": "Language- and framework-independent Dynamic UI wire documents.",
   "oneOf": [
@@ -31,15 +31,10 @@
     "safePropertyName": {
       "type": "string",
       "not": {
-        "pattern": "^(?:__proto__|prototype|constructor|className|dangerouslySetInnerHTML|antdProps|reactAriaProps|code|command|eval|function|handler|javascript|script)$"
+        "pattern": "^(?:__proto__|prototype|constructor|className|dangerouslySetInnerHTML|antdProps|reactAriaProps)$"
       }
     },
-    "safeString": {
-      "type": "string",
-      "not": {
-        "pattern": "(?:javascript\\s*:|<\\s*script\\b|\\beval\\s*\\(|\\bfunction\\s*\\(|=>|\\bimport\\s*\\()"
-      }
-    },
+    "safeString": { "type": "string" },
     "jsonValue": {
       "oneOf": [
         { "type": "null" },

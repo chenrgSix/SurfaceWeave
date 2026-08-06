@@ -13,20 +13,11 @@ const unsafeDeclarationKeys = new Set([
   "__proto__",
   "antdprops",
   "classname",
-  "code",
-  "command",
   "constructor",
   "dangerouslysetinnerhtml",
-  "eval",
-  "function",
-  "handler",
-  "javascript",
   "prototype",
   "reactariaprops",
-  "script",
 ]);
-const executableString =
-  /(?:javascript\s*:|<\s*script\b|\beval\s*\(|\bfunction\s*\(|=>|\bimport\s*\()/i;
 
 export function cloneValue<T>(value: T): T {
   if (
@@ -98,22 +89,14 @@ export function assertJsonValue(
   }
 }
 
-/** Rejects framework props and executable-looking values from wire declarations. */
+/** Rejects framework-specific fields while preserving inert JSON text verbatim. */
 export function assertSafeDeclaration(
   value: unknown,
   path = "declaration",
   code: DynamicUIErrorCode = "INVALID_COMPONENT_PACK",
 ): asserts value is JsonValue {
   assertJsonValue(value, path);
-  if (typeof value === "string") {
-    if (executableString.test(value)) {
-      throw new DynamicUIError(
-        code,
-        `${path} contains executable code-like text`,
-      );
-    }
-    return;
-  }
+  if (typeof value === "string") return;
   if (Array.isArray(value)) {
     value.forEach((item, index) =>
       assertSafeDeclaration(item, `${path}[${index}]`, code),
