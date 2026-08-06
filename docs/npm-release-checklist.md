@@ -64,6 +64,8 @@ Do not perform a real publish until all items are resolved:
 - provide the canonical Git repository URL for every package's `repository`
   metadata;
 - confirm ownership and availability of the `@surfaceweave` npm scope/names;
+- confirm ownership of `surfaceweave.dev` before treating the protocol Schema
+  `$id` as a resolvable canonical URL;
 - confirm the intended registry. The dry-run observed the developer's current
   `https://registry.npmmirror.com/` configuration; this repository did not
   modify npm account, organization, authentication, or registry settings;
