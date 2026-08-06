@@ -27,6 +27,25 @@ A real publish remains blocked only on confirming npm organization/name
 ownership, authentication permissions, and explicit release approval. No
 package was published.
 
+## Release Gate Verification
+
+- Node `22.23.1` and pnpm `10.34.4`: frozen install, build, typecheck, lint,
+  release metadata audit, and all 109 tests passed.
+- A local clone containing no `dist/` directories completed frozen install and
+  the dependency-ordered workspace build.
+- Ten `npm pack` tarballs, including MIT licenses, installed successfully in
+  seven isolated consumers covering Protocol, Core, all three React Packs,
+  Tool-to-UI, and Tauri.
+- Ten official-registry `npm publish --dry-run` checks passed; no package was
+  published.
+- `cargo check` and the Tauri release build with `--no-bundle` passed.
+- The tea-purchase example was exercised in a real browser and its synchronized
+  chat/workspace state is captured in the repository README.
+
+The GitHub Actions definition starts from a clean checkout, but it has not run
+on GitHub because this task did not push. The Demo's deliberate multi-Pack
+preload and the Ant Design-only chunk warning remain documented RC limitations.
+
 ## Explicit Non-goals
 
 No product behavior, workflow feature, `InteractionSession`, Renderer, dynamic
