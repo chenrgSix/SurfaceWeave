@@ -66,11 +66,42 @@ h1 {
 
 .status-bar,
 .view-heading,
-.controls {
+.controls,
+.pack-switcher {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.pack-switcher {
+  justify-content: flex-start;
+  margin: 0 0 20px;
+  padding: 12px 0;
+}
+
+.pack-switcher button[aria-pressed="true"] {
+  color: white;
+  background: #294b32;
+}
+
+.tea-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.tea-product-card {
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 16px;
+  text-align: left;
+}
+
+.tea-product-card b {
+  color: #8b4c20;
+  font-size: 1.15rem;
 }
 
 .status-bar {

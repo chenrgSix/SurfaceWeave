@@ -14,12 +14,14 @@
   },
   "dependencies": {
     "@package-first/agent-tools": "workspace:*",
+    "@package-first/component-pack-antd": "workspace:*",
     "@package-first/core": "workspace:*",
     "@package-first/generator": "workspace:*",
     "@package-first/preferences": "workspace:*",
     "@package-first/renderer-react": "workspace:*",
     "@package-first/storage": "workspace:*",
     "@package-first/tauri": "workspace:*",
+    "antd": "^6.5.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

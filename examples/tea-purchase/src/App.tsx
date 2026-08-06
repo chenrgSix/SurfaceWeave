@@ -12,9 +12,18 @@ import {
   teaToolResult,
 } from "./runtime.js";
 
+type PackChoice = "default" | "react-aria" | "antd";
+
+const enabledPacks: Record<PackChoice, string[]> = {
+  default: ["default", "tea-business"],
+  "react-aria": ["react-aria", "default"],
+  antd: ["antd", "default"],
+};
+
 export function App() {
   const [surfaceId, setSurfaceId] = useState("tea-selection");
   const [lastIntent, setLastIntent] = useState<ActionIntent>();
+  const [pack, setPack] = useState<PackChoice>("default");
   const [message, setMessage] = useState("等待用户选择茶叶");
   const surface = useSurface(surfaceStore, surfaceId);
 
@@ -68,6 +77,27 @@ export function App() {
         </code>
       </section>
 
+      <section className="pack-switcher" aria-label="Component Pack">
+        <strong>Renderer / Component Pack</strong>
+        {(["default", "react-aria", "antd"] as const).map((packId) => (
+          <button
+            type="button"
+            key={packId}
+            aria-pressed={pack === packId}
+            onClick={() => {
+              setPack(packId);
+              setMessage(
+                packId === "default"
+                  ? "已启用业务 TeaProductCard React Binding"
+                  : `已切换到 ${packId}；业务组件通过语义 fallback 渲染`,
+              );
+            }}
+          >
+            {packId}
+          </button>
+        ))}
+      </section>
+
       <section className="views">
         <article className="view-card compact-card">
           <div className="view-heading">
@@ -80,6 +110,9 @@ export function App() {
             componentRegistry={componentRegistry}
             reactComponents={reactComponents}
             mode="compact"
+            preferredPack={pack}
+            enabledPackIds={enabledPacks[pack]}
+            capabilities={["web"]}
             onActionIntent={(intent) => {
               setLastIntent(intent);
               setMessage(`已产生 ActionIntent: ${intent.action}`);
@@ -98,6 +131,9 @@ export function App() {
             componentRegistry={componentRegistry}
             reactComponents={reactComponents}
             mode="workspace"
+            preferredPack={pack}
+            enabledPackIds={enabledPacks[pack]}
+            capabilities={["web"]}
             onActionIntent={(intent) => {
               setLastIntent(intent);
               setMessage(`已产生 ActionIntent: ${intent.action}`);

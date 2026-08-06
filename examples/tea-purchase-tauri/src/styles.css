@@ -62,10 +62,20 @@ h1 {
 .status-bar,
 .view-heading,
 .controls,
+.pack-switcher,
 .native-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.pack-switcher {
+  margin: 0 0 18px;
+}
+
+.pack-switcher button[aria-pressed="true"] {
+  color: white;
+  background: #294b32;
 }
 
 .status-bar {

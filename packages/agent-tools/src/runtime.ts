@@ -14,6 +14,7 @@ import type { PreferenceService } from "@package-first/preferences";
 
 import { surfaceToolDefinitions } from "./definitions.js";
 import type {
+  ComponentCatalogInspection,
   SurfaceInspection,
   ToolResult,
   UIToolDefinition,
@@ -23,6 +24,7 @@ import {
   ToolInputError,
   parseApplyOperations,
   parseCreateSurface,
+  parseInspectComponentPacks,
   parseInspectSurface,
   parseReplaceSurface,
 } from "./validation.js";
@@ -119,6 +121,8 @@ export class AgentUIToolRuntime {
         return this.createSurface(argumentsValue);
       case "ui.inspectSurface":
         return this.inspectSurface(argumentsValue);
+      case "ui.inspectComponentPacks":
+        return this.inspectComponentPacks(argumentsValue);
       case "ui.applyOperations":
         return this.applyOperations(argumentsValue);
       case "ui.replaceSurface":
@@ -171,6 +175,33 @@ export class AgentUIToolRuntime {
     return runTool(() => {
       const input = parseInspectSurface(argumentsValue);
       return inspect(this.#store.requireSurface(input.surfaceId));
+    });
+  }
+
+  inspectComponentPacks(
+    argumentsValue: unknown,
+  ): ToolResult<ComponentCatalogInspection> {
+    return runTool(() => {
+      const input = parseInspectComponentPacks(argumentsValue);
+      const available = new Set(input.capabilities ?? []);
+      return {
+        protocolVersion: "1.0",
+        components: this.#registry.list(),
+        packs: this.#registry.listPacks().filter((pack) => {
+          if (
+            input.rendererKind !== undefined &&
+            pack.rendererKind !== input.rendererKind
+          ) {
+            return false;
+          }
+          return (
+            input.capabilities === undefined ||
+            (pack.capabilities ?? []).every((capability) =>
+              available.has(capability),
+            )
+          );
+        }),
+      };
     });
   }
 

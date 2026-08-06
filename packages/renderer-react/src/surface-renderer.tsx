@@ -24,6 +24,8 @@ export interface SurfaceRendererProps {
   reactComponents: ReactComponentRegistry;
   mode?: RendererMode;
   preferredPack?: string;
+  /** Explicit host allow-list for runtime bindings available in this view. */
+  enabledPackIds?: string[];
   capabilities?: string[];
   packPriorities?: Record<string, number>;
   onActionIntent?: ActionIntentHandler;
@@ -47,6 +49,7 @@ export function SurfaceRenderer({
   reactComponents,
   mode = "workspace",
   preferredPack,
+  enabledPackIds,
   capabilities,
   packPriorities,
   onActionIntent,
@@ -75,6 +78,9 @@ export function SurfaceRenderer({
         ? {}
         : { preferredPack: selectedPreferredPack }),
       ...(capabilities === undefined ? {} : { capabilities }),
+      ...(enabledPackIds === undefined
+        ? {}
+        : { availablePackIds: enabledPackIds }),
       ...(packPriorities === undefined ? {} : { packPriorities }),
     });
     const Component = resolved.component;

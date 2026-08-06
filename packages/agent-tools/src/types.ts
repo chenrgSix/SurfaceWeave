@@ -1,4 +1,6 @@
 import type {
+  ComponentDefinition,
+  ComponentPackManifest,
   DataBinding,
   PreferenceConflict,
   PreferencePatch,
@@ -22,6 +24,7 @@ import type {
 export type UIToolName =
   | "ui.createSurface"
   | "ui.inspectSurface"
+  | "ui.inspectComponentPacks"
   | "ui.applyOperations"
   | "ui.replaceSurface"
   | "ui.inspectPreferences"
@@ -63,6 +66,11 @@ export interface InspectSurfaceToolInput {
   surfaceId: string;
 }
 
+export interface InspectComponentPacksToolInput {
+  rendererKind?: string;
+  capabilities?: string[];
+}
+
 export interface ApplyOperationsToolInput {
   surfaceId: string;
   baseRevision: number;
@@ -101,6 +109,13 @@ export interface SurfaceInspection {
   dataPaths: string[];
 }
 
+/** Serializable discovery result; it never contains runtime bindings. */
+export interface ComponentCatalogInspection {
+  protocolVersion: "1.0";
+  components: ComponentDefinition[];
+  packs: ComponentPackManifest[];
+}
+
 export type InspectPreferencesToolInput = Record<string, never>;
 
 export interface SavePreferenceToolInput {
@@ -129,6 +144,7 @@ export interface PreferenceDiscardResult {
 export type UIToolValue =
   | Surface
   | SurfaceInspection
+  | ComponentCatalogInspection
   | PreferenceInspection
   | PreferencePatch
   | PreferenceDiscardResult;

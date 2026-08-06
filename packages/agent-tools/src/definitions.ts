@@ -115,6 +115,23 @@ export const surfaceToolDefinitions: UIToolDefinition[] = [
     },
   },
   {
+    name: "ui.inspectComponentPacks",
+    description:
+      "Inspect trusted semantic components, schemas, fallbacks, capabilities, and serializable pack manifests without runtime implementation details.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        rendererKind: { type: "string", minLength: 1 },
+        capabilities: {
+          type: "array",
+          uniqueItems: true,
+          items: { type: "string", minLength: 1 },
+        },
+      },
+    },
+  },
+  {
     name: "ui.applyOperations",
     description:
       "Atomically apply a batch of semantic UI operations at a base revision.",

@@ -2,6 +2,7 @@ import {
   AgentUIToolRuntime,
   PreferenceAgentToolRuntime,
 } from "@package-first/agent-tools";
+import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
 import {
   InMemorySurfaceStore,
   cloneValue,
@@ -167,6 +168,11 @@ export async function createExampleRuntime(): Promise<TauriExampleRuntime> {
   const surfaceStore = new InMemorySurfaceStore(componentRegistry);
   const reactComponents =
     createStandardReactComponentRegistry(componentRegistry);
+  reactComponents.registerPack(
+    createAntDesignComponentPack({
+      theme: { token: { colorPrimary: "#315b3b" } },
+    }),
+  );
   reactComponents.register("NativeActions", NativeActions);
 
   const tauri = createTauriDynamicUIAdapter({

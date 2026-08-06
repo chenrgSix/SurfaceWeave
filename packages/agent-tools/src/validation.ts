@@ -20,9 +20,33 @@ import type {
 import type {
   ApplyOperationsToolInput,
   CreateSurfaceToolInput,
+  InspectComponentPacksToolInput,
   InspectSurfaceToolInput,
   ReplaceSurfaceToolInput,
 } from "./types.js";
+
+export function parseInspectComponentPacks(
+  value: unknown,
+): InspectComponentPacksToolInput {
+  const object = record(value, "arguments");
+  allowedKeys(object, ["rendererKind", "capabilities"], "arguments");
+  const result: InspectComponentPacksToolInput = {};
+  if (object.rendererKind !== undefined) {
+    result.rendererKind = stringValue(
+      object.rendererKind,
+      "arguments.rendererKind",
+    );
+  }
+  if (object.capabilities !== undefined) {
+    if (!Array.isArray(object.capabilities)) {
+      throw new ToolInputError("arguments.capabilities must be an array");
+    }
+    result.capabilities = object.capabilities.map((capability, index) =>
+      stringValue(capability, `arguments.capabilities[${index}]`),
+    );
+  }
+  return result;
+}
 
 export class ToolInputError extends Error {
   readonly code = "INVALID_TOOL_ARGUMENTS";

@@ -1,6 +1,7 @@
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  standardComponentManifests,
 } from "@package-first/core";
 import { describe, expect, it } from "vitest";
 
@@ -35,14 +36,57 @@ describe("AgentUIToolRuntime", () => {
       [
         "ui.createSurface",
         "ui.inspectSurface",
+        "ui.inspectComponentPacks",
         "ui.applyOperations",
         "ui.replaceSurface",
       ],
     );
-    expect(uiToolDefinitions).toHaveLength(8);
+    expect(uiToolDefinitions).toHaveLength(9);
     for (const definition of uiToolDefinitions) {
       expect(definition.inputSchema.type).toBe("object");
     }
+  });
+
+  it("discovers only serializable semantic manifests, schemas, and guidance", () => {
+    const registry = createStandardComponentRegistry();
+    const textInput = standardComponentManifests.find(
+      (component) => component.semanticType === "TextInput",
+    );
+    expect(textInput).toBeDefined();
+    registry.registerPack({
+      protocolVersion: "1.0",
+      id: "material",
+      version: "1.0.0",
+      rendererKind: "flutter",
+      capabilities: ["mobile"],
+      components: [textInput!],
+      agentGuidance: { summary: "Portable material field semantics." },
+    });
+    const runtime = new AgentUIToolRuntime(
+      registry,
+      new InMemorySurfaceStore(registry),
+    );
+    const result = runtime.execute("ui.inspectComponentPacks", {
+      rendererKind: "flutter",
+      capabilities: ["mobile"],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        protocolVersion: "1.0",
+        components: expect.arrayContaining([
+          expect.objectContaining({ type: "ChoiceField" }),
+        ]),
+        packs: [
+          expect.objectContaining({ id: "material", rendererKind: "flutter" }),
+        ],
+      },
+    });
+    expect(JSON.parse(JSON.stringify(result))).toEqual(result);
+    expect(JSON.stringify(result)).not.toMatch(
+      /ReactNode|JSX|className|onClick|function\s*\(/,
+    );
   });
 
   it("creates and inspects a surface", () => {

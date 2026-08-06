@@ -127,7 +127,7 @@ export class ReactComponentRegistry {
     type: string,
     options: Omit<
       ComponentResolutionRequest,
-      "semanticType" | "rendererKind" | "availablePackIds"
+      "semanticType" | "rendererKind"
     > = {},
   ): ReactComponentResolution {
     this.#trustedComponents.require(type);
@@ -149,7 +149,8 @@ export class ReactComponentRegistry {
     const resolution = this.#resolver.resolve({
       semanticType: type,
       rendererKind: "react",
-      availablePackIds: [...this.#packs.keys()].sort(),
+      availablePackIds:
+        options.availablePackIds ?? [...this.#packs.keys()].sort(),
       ...options,
     });
     const pack = this.#packs.get(resolution.packId);

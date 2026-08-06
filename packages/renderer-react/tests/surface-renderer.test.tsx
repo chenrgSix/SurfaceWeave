@@ -2,8 +2,11 @@
 
 import {
   InMemorySurfaceStore,
+  componentManifestToDefinition,
   createStandardComponentRegistry,
+  standardComponentManifests,
   type ActionIntent,
+  type ComponentManifest,
 } from "@package-first/core";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -12,6 +15,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   SurfaceRenderer,
   createStandardReactComponentRegistry,
+  type ReactComponentPack,
+  type RendererComponentProps,
 } from "../src/index.js";
 
 afterEach(cleanup);
@@ -181,5 +186,115 @@ describe("SurfaceRenderer", () => {
 
     expect(screen.getByText("Second surface")).toBeTruthy();
     expect(screen.queryByText("Purchase")).toBeNull();
+  });
+
+  it("uses an explicit pack allow-list and falls back without rewriting the Surface", async () => {
+    const businessManifest: ComponentManifest = {
+      semanticType: "BusinessTextInput",
+      propsSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: { label: { type: "string" } },
+      },
+      binding: { valueTypes: ["string"] },
+      fallback: "TextInput",
+    };
+    const textInputManifest = standardComponentManifests.find(
+      (component) => component.semanticType === "TextInput",
+    );
+    expect(textInputManifest).toBeDefined();
+    const registry = createStandardComponentRegistry();
+    registry.register(componentManifestToDefinition(businessManifest));
+    const store = new InMemorySurfaceStore(registry);
+    store.createSurface({
+      id: "business",
+      intent: "form",
+      tree: {
+        id: "business-name",
+        stableId: "business.name",
+        component: "BusinessTextInput",
+        props: { label: "Business name" },
+        binding: { path: "name", valueType: "string" },
+      },
+      data: { name: "Original" },
+      context: {},
+    });
+    function BusinessInput({ value, onValueChange }: RendererComponentProps) {
+      return (
+        <input
+          aria-label="Business name"
+          data-binding="business"
+          value={String(value ?? "")}
+          onChange={(event) => onValueChange(event.currentTarget.value)}
+        />
+      );
+    }
+    function AlternateInput({ value, onValueChange }: RendererComponentProps) {
+      return (
+        <input
+          aria-label="Business name"
+          data-binding="alternate"
+          value={String(value ?? "")}
+          onChange={(event) => onValueChange(event.currentTarget.value)}
+        />
+      );
+    }
+    const businessPack: ReactComponentPack = {
+      manifest: {
+        protocolVersion: "1.0",
+        id: "business",
+        version: "1.0.0",
+        rendererKind: "react",
+        components: [businessManifest],
+      },
+      bindings: { BusinessTextInput: BusinessInput },
+    };
+    const alternatePack: ReactComponentPack = {
+      manifest: {
+        protocolVersion: "1.0",
+        id: "alternate",
+        version: "1.0.0",
+        rendererKind: "react",
+        components: [textInputManifest as ComponentManifest],
+      },
+      bindings: { TextInput: AlternateInput },
+    };
+    const reactComponents = createStandardReactComponentRegistry(registry);
+    reactComponents.registerPack(businessPack);
+    reactComponents.registerPack(alternatePack);
+    const view = render(
+      <SurfaceRenderer
+        store={store}
+        componentRegistry={registry}
+        reactComponents={reactComponents}
+        surfaceId="business"
+        preferredPack="business"
+        enabledPackIds={["business", "default"]}
+      />,
+    );
+    expect(screen.getByRole("textbox").getAttribute("data-binding")).toBe(
+      "business",
+    );
+
+    view.rerender(
+      <SurfaceRenderer
+        store={store}
+        componentRegistry={registry}
+        reactComponents={reactComponents}
+        surfaceId="business"
+        preferredPack="alternate"
+        enabledPackIds={["alternate", "default"]}
+      />,
+    );
+    const fallbackInput = screen.getByRole("textbox");
+    expect(fallbackInput.getAttribute("data-binding")).toBe("alternate");
+    expect(store.requireSurface("business").tree.component).toBe(
+      "BusinessTextInput",
+    );
+    expect((fallbackInput as HTMLInputElement).value).toBe("Original");
+    await userEvent.setup().type(fallbackInput, " value");
+    expect(store.requireSurface("business").data).toEqual({
+      name: "Original value",
+    });
   });
 });

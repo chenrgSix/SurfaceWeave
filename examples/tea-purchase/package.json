@@ -10,9 +10,13 @@
   },
   "dependencies": {
     "@package-first/agent-tools": "workspace:*",
+    "@package-first/component-pack-antd": "workspace:*",
+    "@package-first/component-pack-react-aria": "workspace:*",
     "@package-first/core": "workspace:*",
     "@package-first/renderer-react": "workspace:*",
+    "antd": "^6.5.3",
     "react": "^19.2.8",
+    "react-aria-components": "^1.20.0",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {

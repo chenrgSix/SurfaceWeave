@@ -41,15 +41,27 @@ importers:
       '@package-first/agent-tools':
         specifier: workspace:*
         version: link:../../packages/agent-tools
+      '@package-first/component-pack-antd':
+        specifier: workspace:*
+        version: link:../../packages/component-pack-antd
+      '@package-first/component-pack-react-aria':
+        specifier: workspace:*
+        version: link:../../packages/component-pack-react-aria
       '@package-first/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@package-first/renderer-react':
         specifier: workspace:*
         version: link:../../packages/renderer-react
+      antd:
+        specifier: ^6.5.3
+        version: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8
+      react-aria-components:
+        specifier: ^1.20.0
+        version: 1.20.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
@@ -72,6 +84,9 @@ importers:
       '@package-first/agent-tools':
         specifier: workspace:*
         version: link:../../packages/agent-tools
+      '@package-first/component-pack-antd':
+        specifier: workspace:*
+        version: link:../../packages/component-pack-antd
       '@package-first/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -90,6 +105,9 @@ importers:
       '@package-first/tauri':
         specifier: workspace:*
         version: link:../../packages/tauri
+      antd:
+        specifier: ^6.5.3
+        version: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8

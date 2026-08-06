@@ -1,4 +1,6 @@
 import { AgentUIToolRuntime } from "@package-first/agent-tools";
+import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
+import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
@@ -6,14 +8,27 @@ import {
 } from "@package-first/core";
 import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
 
+import {
+  teaBusinessReactPack,
+  teaProductCardDefinition,
+} from "./tea-component-pack.js";
+
 export const componentRegistry = createStandardComponentRegistry();
+componentRegistry.register(teaProductCardDefinition);
 export const surfaceStore = new InMemorySurfaceStore(componentRegistry);
+export const reactComponents =
+  createStandardReactComponentRegistry(componentRegistry);
+reactComponents.registerPack(createReactAriaComponentPack({ locale: "zh-CN" }));
+reactComponents.registerPack(
+  createAntDesignComponentPack({
+    theme: { token: { colorPrimary: "#294b32" } },
+  }),
+);
+reactComponents.registerPack(teaBusinessReactPack);
 export const agentTools = new AgentUIToolRuntime(
   componentRegistry,
   surfaceStore,
 );
-export const reactComponents =
-  createStandardReactComponentRegistry(componentRegistry);
 
 export const teaToolResult = {
   teas: [
@@ -64,6 +79,7 @@ const teaSurface = agentTools.createSurface({
     title: "选择茶叶",
     itemsPath: "teas",
     selectionPath: "selectedTeaIds",
+    rootComponent: "TeaProductCard",
   },
   context: { source: "tea.search" },
 });

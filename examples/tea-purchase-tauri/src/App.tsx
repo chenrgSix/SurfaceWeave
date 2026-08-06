@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { createExampleRuntime, type TauriExampleRuntime } from "./runtime.js";
 
+type PackChoice = "default" | "antd";
+
 let runtimePromise: Promise<TauriExampleRuntime> | undefined;
 
 function getRuntime(): Promise<TauriExampleRuntime> {
@@ -38,6 +40,7 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
   const [surfaceId, setSurfaceId] = useState("tea-selection");
   const [lastIntent, setLastIntent] = useState<ActionIntent>();
   const [lastResult, setLastResult] = useState<ActionResult>();
+  const [pack, setPack] = useState<PackChoice>("default");
   const [message, setMessage] = useState(
     runtime.initialPreferenceError === undefined
       ? "偏好已从 Tauri Store 恢复；业务表单数据未恢复"
@@ -145,6 +148,23 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
         </code>
       </section>
 
+      <section className="pack-switcher" aria-label="Component Pack">
+        <strong>WebView Component Pack</strong>
+        {(["default", "antd"] as const).map((packId) => (
+          <button
+            type="button"
+            key={packId}
+            aria-pressed={pack === packId}
+            onClick={() => {
+              setPack(packId);
+              setMessage(`已切换到 ${packId} Pack；Surface 和数据保持不变`);
+            }}
+          >
+            {packId}
+          </button>
+        ))}
+      </section>
+
       <section className="views">
         {(["compact", "workspace"] as const).map((mode) => (
           <article className="view-card" key={mode}>
@@ -160,6 +180,9 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
               componentRegistry={runtime.componentRegistry}
               reactComponents={runtime.reactComponents}
               mode={mode}
+              preferredPack={pack}
+              enabledPackIds={[pack]}
+              capabilities={["web", "desktop"]}
               onActionIntent={(intent) => void handleAction(intent)}
               onError={(error) => setMessage(`${error.code}: ${error.message}`)}
             />
