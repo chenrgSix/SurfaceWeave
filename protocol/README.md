@@ -8,3 +8,7 @@ npm install @surfaceweave/protocol@next
 ```
 
 Import the normative schema from `@surfaceweave/protocol/schema`.
+
+The schema has the stable, non-resolvable identity
+`urn:surfaceweave:schema:dynamic-ui-wire:1.0`. Consumers must not require a
+TypeScript package or an owned web domain to implement the protocol.

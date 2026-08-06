@@ -1,31 +1,28 @@
 # npm Release Candidate Checklist
 
-## Proposed Version
+## Release Candidate Version
 
-No published npm release is recorded in this repository. If the `@surfaceweave`
-scope confirms that these names have never shipped, use a synchronized first
-suite version of `0.1.0-rc.1` and publish it under the `next` tag. Do not change
-wire protocol `1.0` or Tool/Component Pack manifest versions when setting npm
-package versions.
+All publishable packages are synchronized at `0.1.0-rc.1` and configured for
+the `next` tag on the official npm registry. The wire protocol remains `1.0`;
+npm package versions do not change Tool or Component Pack manifest versions.
 
 If any package name already has a published version, derive its RC from that
-package's highest published SemVer instead of resetting it. Current workspace
-versions are intentionally unchanged until release approval.
+package's highest published SemVer instead of publishing this candidate.
 
 ## Release Inventory
 
-| Package                     | Current workspace version | RC proposal |
-| --------------------------- | ------------------------: | ----------: |
-| `@surfaceweave/protocol`    |                     0.4.0 |  0.1.0-rc.1 |
-| `@surfaceweave/core`        |                     0.1.0 |  0.1.0-rc.1 |
-| `@surfaceweave/storage`     |                     0.2.0 |  0.1.0-rc.1 |
-| `@surfaceweave/preferences` |                     0.2.0 |  0.1.0-rc.1 |
-| `@surfaceweave/generator`   |                     0.1.0 |  0.1.0-rc.1 |
-| `@surfaceweave/agent-tools` |                     0.1.0 |  0.1.0-rc.1 |
-| `@surfaceweave/react`       |                     0.1.0 |  0.1.0-rc.1 |
-| `@surfaceweave/react-aria`  |                     0.4.0 |  0.1.0-rc.1 |
-| `@surfaceweave/antd`        |                     0.4.0 |  0.1.0-rc.1 |
-| `@surfaceweave/tauri`       |                     0.3.0 |  0.1.0-rc.1 |
+| Package                     | Workspace version | Publish tag |
+| --------------------------- | ----------------: | ----------- |
+| `@surfaceweave/protocol`    |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/core`        |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/storage`     |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/preferences` |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/generator`   |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/agent-tools` |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/react`       |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/react-aria`  |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/antd`        |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/tauri`       |        0.1.0-rc.1 | `next`      |
 
 ## Package Name Migration
 
@@ -44,6 +41,14 @@ real publish.
 
 ## Completed Checks
 
+- Every package declares MIT, includes an identical `LICENSE`, and records the
+  canonical GitHub repository and package directory.
+- Internal package dependencies use the exact prerelease range
+  `0.1.0-rc.1`; the lockfile records the same suite version.
+- Release metadata fixes the official registry, public access, and `next` tag.
+- The protocol Schema uses the stable URN
+  `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain
+  ownership.
 - Explicit files, exports, ESM/default entry, types where applicable,
   side-effects, dependencies, peer ranges, and `publishConfig` are audited.
 - Internal dependency ranges are npm-compatible SemVer, while pnpm links local
@@ -60,16 +65,17 @@ real publish.
 
 Do not perform a real publish until all items are resolved:
 
-- choose a public license and replace `UNLICENSED` plus add the license file;
-- provide the canonical Git repository URL for every package's `repository`
-  metadata;
-- confirm ownership and availability of the `@surfaceweave` npm scope/names;
-- confirm ownership of `surfaceweave.dev` before treating the protocol Schema
-  `$id` as a resolvable canonical URL;
-- confirm the intended registry. The dry-run observed the developer's current
-  `https://registry.npmmirror.com/` configuration; this repository did not
-  modify npm account, organization, authentication, or registry settings;
-- approve the package versions and `next` tag.
+- confirm ownership of the `@surfaceweave` npm organization and availability
+  of all ten package names on the official registry;
+- confirm npm authentication and organization publish permissions without
+  changing them from this repository task;
+- grant explicit approval for the `0.1.0-rc.1` / `next` release.
+
+## Publication Order
+
+Publish in the order encoded by `scripts/release-packages.mjs`: Protocol, Core,
+Storage, Preferences, Generator, Agent Tools, React, React Aria, Ant Design,
+then Tauri. Each downstream package therefore resolves its exact RC dependency.
 
 ## Commands After Approval
 

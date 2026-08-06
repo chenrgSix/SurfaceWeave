@@ -2,7 +2,7 @@
 
 ## Status and Scope
 
-This document is the language- and framework-independent definition of the Dynamic UI wire contract. The normative machine-readable artifact is [`schemas/dynamic-ui-wire.schema.json`](schemas/dynamic-ui-wire.schema.json), using JSON Schema Draft 2020-12. TypeScript types in `@surfaceweave/core` are a reference implementation, not the protocol definition.
+This document is the language- and framework-independent definition of the Dynamic UI wire contract. The normative machine-readable artifact is [`schemas/dynamic-ui-wire.schema.json`](schemas/dynamic-ui-wire.schema.json), using JSON Schema Draft 2020-12 and the stable identifier `urn:surfaceweave:schema:dynamic-ui-wire:1.0`. TypeScript types in `@surfaceweave/core` are a reference implementation, not the protocol definition.
 
 Both files are also published without runtime dependencies as `@surfaceweave/protocol`; JSON consumers can load the Schema from the `@surfaceweave/protocol/schema` export.
 

@@ -10,12 +10,13 @@ Place unit tests in each package's `tests/` directory and renderer assets beside
 
 Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 
-- `pnpm build` — build all packages and the Vite example.
+- `pnpm build` — cold-build all packages in dependency-safe workspace order and build the Vite example.
 - `pnpm typecheck` — type-check every workspace project in strict mode.
 - `pnpm lint` — run ESLint and Prettier checks.
 - `pnpm test` — run Vitest across package tests.
 - `pnpm verify:packages` — run `npm pack` and test isolated clean consumers.
-- `pnpm verify:release` — audit package metadata and run npm publish dry-runs.
+- `pnpm audit:release` — audit release metadata, package boundaries, and tarball contents without registry access.
+- `pnpm verify:release` — run the release audit and npm publish dry-runs against the official registry.
 - `pnpm dev` — start the tea-purchase example.
 - `pnpm dev:tauri` — start the Tauri 2 desktop example.
 - `pnpm check:tauri` — compile-check the Rust host commands.

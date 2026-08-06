@@ -1,12 +1,45 @@
 # SurfaceWeave
 
+[![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.1%20experimental-orange.svg)
+
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
+> **Status:** `0.1.0-rc.1` release candidate, experimental, and not yet
+> published to npm.
+
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
 Milestones 1–5 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, and language-neutral wire protocols. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
+
+SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
+declarative component-tree ideas in A2UI, but is not protocol-compatible with
+either project.
+
+![Tea purchase Tool-to-UI demo](docs/assets/tea-purchase-demo.jpg)
+
+## SurfaceWeave in 30 Seconds
+
+1. A business Agent or backend selects a registered Tool and may adjust its
+   generated semantic Surface through typed UI tools.
+2. SurfaceWeave validates and renders the Surface, retains interaction data,
+   and emits structured `ActionIntent` values.
+3. The host-owned executor authorizes side effects, invokes business APIs, and
+   returns a result or the next Surface. SurfaceWeave does not run workflows.
+
+## Three-Step Quick Start
+
+```bash
+nvm use 22
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+Open the Vite URL printed by the final command. The example runs entirely with
+mock Tool results and a mock Host executor.
 
 ## Packages
 

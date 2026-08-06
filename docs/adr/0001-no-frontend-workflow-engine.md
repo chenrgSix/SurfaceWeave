@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-08-06
-- Baseline: Milestone 5 (`603e029`)
+- Baseline: Milestone 5 (`e232b1f`)
 
 ## Context
 

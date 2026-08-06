@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a scoped protocol, runtime, renderer, or host improvement
+title: "[Proposal]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user or integrator problem without prescribing a workflow engine.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Proposed package boundary
+      description: Explain whether this belongs to Protocol, Core, a Renderer, a Pack, or a host adapter.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and alternatives
+      description: Note wire, public API, framework, security, and migration impact.
+    validations:
+      required: true

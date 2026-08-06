@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible SurfaceWeave defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report security vulnerabilities here. Use private vulnerability
+        reporting from SECURITY.md.
+  - type: input
+    id: package
+    attributes:
+      label: Affected package
+      placeholder: "@surfaceweave/core"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.1.0-rc.1 or commit SHA"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the Surface, Tool definition, or repository link.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Environment and verification output
+      placeholder: "Node, pnpm, framework/Pack, host, and relevant command output"
+    validations:
+      required: true

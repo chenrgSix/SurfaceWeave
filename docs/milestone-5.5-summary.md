@@ -17,13 +17,15 @@
 
 ## Release Status
 
-The code and package boundaries are RC-ready, but a real publish remains blocked
-on owner-provided license, canonical repository URL, npm scope/name ownership,
-intended registry, and version approval. No package was published and workspace
-versions were not changed.
+The Release Gate synchronized all packages at `0.1.0-rc.1`, repaired cold-build
+ordering, adopted MIT across every tarball, fixed the official registry and
+repository metadata, replaced the unowned Schema URL with a stable URN, and
+added clean-checkout CI. Declaration validation now rejects executable values
+and dangerous structure without rejecting inert text that resembles code.
 
-The recommended first-public-suite version is `0.1.0-rc.1` under `next`, only if
-none of these names has an existing published history.
+A real publish remains blocked only on confirming npm organization/name
+ownership, authentication permissions, and explicit release approval. No
+package was published.
 
 ## Explicit Non-goals
 
