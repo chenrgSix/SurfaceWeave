@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdtempSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   rmSync,
   writeFileSync,
@@ -11,7 +12,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import process from "node:process";
 
-import { releasePackages } from "./release-packages.mjs";
+import { npmRegistry, releasePackages } from "./release-packages.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const fixtureRoot = mkdtempSync(join(tmpdir(), "surfaceweave-consumers-"));
@@ -22,7 +23,11 @@ function run(command, arguments_, cwd, capture = false) {
   return execFileSync(command, arguments_, {
     cwd,
     encoding: capture ? "utf8" : undefined,
-    env: { ...process.env, CI: "true" },
+    env: {
+      ...process.env,
+      CI: "true",
+      npm_config_registry: npmRegistry,
+    },
     stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
   });
 }
@@ -49,6 +54,19 @@ function packPackages() {
     const packedManifest = JSON.parse(
       run("tar", ["-xOf", tarball, "package/package.json"], directory, true),
     );
+    const packedLicense = run(
+      "tar",
+      ["-xOf", tarball, "package/LICENSE"],
+      directory,
+      true,
+    );
+    const rootLicense = readFileSync(
+      resolve(repositoryRoot, "LICENSE"),
+      "utf8",
+    );
+    if (packedLicense !== rootLicense) {
+      throw new Error(`${result.name} tarball has no canonical MIT LICENSE`);
+    }
     for (const [name, range] of Object.entries(
       packedManifest.dependencies ?? {},
     )) {

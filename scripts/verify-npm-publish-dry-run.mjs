@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import process from "node:process";
 
-import { releasePackages } from "./release-packages.mjs";
+import { npmRegistry, releasePackages } from "./release-packages.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 
@@ -18,10 +18,16 @@ for (const releasePackage of releasePackages) {
       "public",
       "--tag",
       "next",
+      "--registry",
+      npmRegistry,
     ],
     {
       cwd: directory,
-      env: { ...process.env, CI: "true" },
+      env: {
+        ...process.env,
+        CI: "true",
+        npm_config_registry: npmRegistry,
+      },
       stdio: "inherit",
     },
   );

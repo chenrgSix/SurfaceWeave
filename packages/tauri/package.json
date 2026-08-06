@@ -1,15 +1,16 @@
 {
   "name": "@surfaceweave/tauri",
-  "version": "0.3.0",
+  "version": "0.1.0-rc.1",
   "description": "Controlled Tauri 2 adapters for SurfaceWeave",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -20,17 +21,23 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "next",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "^0.1.0",
-    "@surfaceweave/preferences": "^0.2.0",
-    "@surfaceweave/storage": "^0.2.0",
+    "@surfaceweave/core": "0.1.0-rc.1",
+    "@surfaceweave/preferences": "0.1.0-rc.1",
+    "@surfaceweave/storage": "0.1.0-rc.1",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-store": "^2.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenrgSix/SurfaceWeave.git",
+    "directory": "packages/tauri"
   }
 }

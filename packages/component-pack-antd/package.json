@@ -1,15 +1,16 @@
 {
   "name": "@surfaceweave/antd",
-  "version": "0.4.0",
+  "version": "0.1.0-rc.1",
   "description": "Ant Design bindings for the SurfaceWeave semantic UI protocol",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -20,15 +21,16 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "next",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "^0.1.0",
-    "@surfaceweave/react": "^0.1.0"
+    "@surfaceweave/core": "0.1.0-rc.1",
+    "@surfaceweave/react": "0.1.0-rc.1"
   },
   "peerDependencies": {
     "antd": ">=6.5.3 <7",
@@ -44,5 +46,10 @@
     "jsdom": "^30.0.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenrgSix/SurfaceWeave.git",
+    "directory": "packages/component-pack-antd"
   }
 }

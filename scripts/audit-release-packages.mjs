@@ -2,12 +2,18 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import process from "node:process";
 
-import { releasePackages } from "./release-packages.mjs";
+import {
+  npmRegistry,
+  releasePackages,
+  releaseVersion,
+  repositoryUrl,
+} from "./release-packages.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const manifests = new Map();
 const errors = [];
-const warnings = [];
+const rootLicense = readFileSync(resolve(repositoryRoot, "LICENSE"), "utf8");
+const releasePackageNames = new Set(releasePackages.map((item) => item.name));
 
 const allowedDependencies = {
   "@surfaceweave/protocol": [],
@@ -46,14 +52,38 @@ for (const releasePackage of releasePackages) {
   const manifest = JSON.parse(readFileSync(file, "utf8"));
   manifests.set(manifest.name, manifest);
 
+  if (manifest.name !== releasePackage.name) {
+    fail(
+      `${releasePackage.directory}: expected ${releasePackage.name}, received ${manifest.name}`,
+    );
+  }
+
   for (const field of ["name", "version", "description", "license"]) {
     if (typeof manifest[field] !== "string" || manifest[field].trim() === "") {
       fail(`${releasePackage.directory}: missing ${field}`);
     }
   }
   if (manifest.private === true) fail(`${manifest.name}: must be publishable`);
+  if (manifest.version !== releaseVersion) {
+    fail(`${manifest.name}: version must be ${releaseVersion}`);
+  }
+  if (manifest.license !== "MIT") fail(`${manifest.name}: license must be MIT`);
   if (!Array.isArray(manifest.files) || manifest.files.length === 0) {
     fail(`${manifest.name}: files must be explicit`);
+  }
+  if (!manifest.files?.includes("LICENSE")) {
+    fail(`${manifest.name}: files must include LICENSE`);
+  }
+  try {
+    const packageLicense = readFileSync(
+      resolve(repositoryRoot, releasePackage.directory, "LICENSE"),
+      "utf8",
+    );
+    if (packageLicense !== rootLicense) {
+      fail(`${manifest.name}: LICENSE differs from repository root`);
+    }
+  } catch {
+    fail(`${manifest.name}: package-local LICENSE is missing`);
   }
   if (manifest.exports === undefined) fail(`${manifest.name}: missing exports`);
   if (manifest.sideEffects === undefined) {
@@ -61,9 +91,19 @@ for (const releasePackage of releasePackages) {
   }
   if (
     manifest.publishConfig?.access !== "public" ||
-    manifest.publishConfig?.tag !== "next"
+    manifest.publishConfig?.tag !== "next" ||
+    manifest.publishConfig?.registry !== npmRegistry
   ) {
-    fail(`${manifest.name}: publishConfig must use public/next`);
+    fail(
+      `${manifest.name}: publishConfig must use public/next on ${npmRegistry}`,
+    );
+  }
+  if (
+    manifest.repository?.type !== "git" ||
+    manifest.repository?.url !== repositoryUrl ||
+    manifest.repository?.directory !== releasePackage.directory
+  ) {
+    fail(`${manifest.name}: repository metadata is not canonical`);
   }
 
   if (releasePackage.kind === "typescript") {
@@ -94,13 +134,9 @@ for (const releasePackage of releasePackages) {
         `${manifest.name}: ${name} uses a publish-incompatible workspace range`,
       );
     }
-  }
-
-  if (manifest.repository === undefined) {
-    warnings.push(`${manifest.name}: repository URL awaits owner input`);
-  }
-  if (manifest.license === "UNLICENSED") {
-    warnings.push(`${manifest.name}: public license awaits owner input`);
+    if (releasePackageNames.has(name) && range !== releaseVersion) {
+      fail(`${manifest.name}: ${name} must use exact range ${releaseVersion}`);
+    }
   }
 }
 
@@ -131,5 +167,3 @@ if (errors.length > 0) {
 process.stdout.write(
   `Release package audit passed for ${releasePackages.length} packages.\n`,
 );
-for (const warning of warnings)
-  process.stdout.write(`release-blocker: ${warning}\n`);

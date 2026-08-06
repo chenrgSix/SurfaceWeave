@@ -1,8 +1,8 @@
 {
   "name": "@surfaceweave/react-aria",
-  "version": "0.4.0",
+  "version": "0.1.0-rc.1",
   "description": "Accessible React Aria bindings for the SurfaceWeave semantic UI protocol",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -12,7 +12,8 @@
   ],
   "files": [
     "dist",
-    "styles.css"
+    "styles.css",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -24,15 +25,16 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "next",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "^0.1.0",
-    "@surfaceweave/react": "^0.1.0"
+    "@surfaceweave/core": "0.1.0-rc.1",
+    "@surfaceweave/react": "0.1.0-rc.1"
   },
   "peerDependencies": {
     "react": ">=18.2.0 <20",
@@ -48,5 +50,10 @@
     "react": "^19.2.8",
     "react-aria-components": "^1.20.0",
     "react-dom": "^19.2.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenrgSix/SurfaceWeave.git",
+    "directory": "packages/component-pack-react-aria"
   }
 }

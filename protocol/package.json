@@ -1,8 +1,8 @@
 {
   "name": "@surfaceweave/protocol",
-  "version": "0.4.0",
+  "version": "0.1.0-rc.1",
   "description": "Language-neutral JSON wire protocol for SurfaceWeave",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./schemas/dynamic-ui-wire.schema.json",
   "module": "./schemas/dynamic-ui-wire.schema.json",
@@ -10,7 +10,8 @@
   "files": [
     "component-pack-protocol.md",
     "tool-to-ui-runtime-protocol.md",
-    "schemas"
+    "schemas",
+    "LICENSE"
   ],
   "exports": {
     ".": "./schemas/dynamic-ui-wire.schema.json",
@@ -20,6 +21,12 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "next",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenrgSix/SurfaceWeave.git",
+    "directory": "protocol"
   }
 }

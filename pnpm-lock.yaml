@@ -137,25 +137,25 @@ importers:
   packages/agent-tools:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
       '@surfaceweave/generator':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../generator
       '@surfaceweave/preferences':
-        specifier: ^0.2.0
+        specifier: 0.1.0-rc.1
         version: link:../preferences
       '@surfaceweave/storage':
-        specifier: ^0.2.0
+        specifier: 0.1.0-rc.1
         version: link:../storage
 
   packages/component-pack-antd:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
       '@surfaceweave/react':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../renderer-react
     devDependencies:
       '@testing-library/react':
@@ -186,10 +186,10 @@ importers:
   packages/component-pack-react-aria:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
       '@surfaceweave/react':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../renderer-react
     devDependencies:
       '@testing-library/react':
@@ -230,22 +230,22 @@ importers:
   packages/generator:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
 
   packages/preferences:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
       '@surfaceweave/storage':
-        specifier: ^0.2.0
+        specifier: 0.1.0-rc.1
         version: link:../storage
 
   packages/renderer-react:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
     devDependencies:
       '@testing-library/react':
@@ -275,13 +275,13 @@ importers:
   packages/tauri:
     dependencies:
       '@surfaceweave/core':
-        specifier: ^0.1.0
+        specifier: 0.1.0-rc.1
         version: link:../core
       '@surfaceweave/preferences':
-        specifier: ^0.2.0
+        specifier: 0.1.0-rc.1
         version: link:../preferences
       '@surfaceweave/storage':
-        specifier: ^0.2.0
+        specifier: 0.1.0-rc.1
         version: link:../storage
       '@tauri-apps/api':
         specifier: ^2.8.0

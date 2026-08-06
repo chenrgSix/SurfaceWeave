@@ -1,15 +1,16 @@
 {
   "name": "@surfaceweave/core",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.1",
   "description": "Framework-agnostic protocols and runtime for SurfaceWeave",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -20,7 +21,8 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "next",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -31,5 +33,10 @@
   },
   "devDependencies": {
     "ajv": "^8.17.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenrgSix/SurfaceWeave.git",
+    "directory": "packages/core"
   }
 }
