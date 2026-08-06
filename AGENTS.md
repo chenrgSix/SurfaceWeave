@@ -14,7 +14,8 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm typecheck` — type-check every workspace project in strict mode.
 - `pnpm lint` — run ESLint and Prettier checks.
 - `pnpm test` — run Vitest across package tests.
-- `pnpm verify:packages` — pack publishable artifacts and test a clean consumer.
+- `pnpm verify:packages` — run `npm pack` and test isolated clean consumers.
+- `pnpm verify:release` — audit package metadata and run npm publish dry-runs.
 - `pnpm dev` — start the tea-purchase example.
 - `pnpm dev:tauri` — start the Tauri 2 desktop example.
 - `pnpm check:tauri` — compile-check the Rust host commands.

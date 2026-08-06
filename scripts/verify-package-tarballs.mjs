@@ -276,11 +276,15 @@ if (runtime.createToolSurface({ toolId: "tea.search", surfaceId: "tea-search" })
       "@package-first/preferences",
       "@package-first/tauri",
     ],
-    dependencies: typescript,
+    dependencies: { ...typescript, vite: "8.2.0" },
     consumer: `import { createTauriDynamicUIAdapter } from "@package-first/tauri";
 import type { CreateTauriDynamicUIAdapterOptions, TauriDynamicUIAdapter } from "@package-first/tauri";
 const create: (options: CreateTauriDynamicUIAdapterOptions) => TauriDynamicUIAdapter = createTauriDynamicUIAdapter;
 void create;
+`,
+    viteEntry: `import { createTauriDynamicUIAdapter } from "@package-first/tauri";
+globalThis.createTauriDynamicUIAdapter = createTauriDynamicUIAdapter;
+document.querySelector("#app").textContent = "tauri-adapter-bundled";
 `,
   },
 ];

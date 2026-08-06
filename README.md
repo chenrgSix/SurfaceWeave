@@ -21,6 +21,31 @@ Milestones 1–5 implement the Surface runtime, deterministic Tool Schema genera
 | `@package-first/tea-purchase`              | Runnable Vite acceptance example                                                                 |
 | `@package-first/tea-purchase-tauri`        | Runnable Tauri 2 desktop acceptance example                                                      |
 
+## npm Installation
+
+After an approved RC is published under the `next` tag, install only the layers
+used by the host:
+
+```bash
+# Framework-independent Tool-to-UI runtime
+npm install @package-first/core@next @package-first/generator@next @package-first/agent-tools@next
+
+# Default React renderer
+npm install react react-dom @package-first/renderer-react@next
+
+# Choose zero or one optional third-party Pack
+npm install react-aria-components @package-first/component-pack-react-aria@next
+# or
+npm install antd @package-first/component-pack-antd@next
+
+# Optional Tauri 2 host adapter
+npm install @package-first/storage@next @package-first/preferences@next @package-first/tauri@next
+```
+
+The Protocol and Core packages never install React, DOM bindings, a Component
+Pack, or Tauri. Installing the default renderer does not install React Aria or
+Ant Design.
+
 ## Development
 
 Use Node 22.13 or newer and pnpm 10:
@@ -33,6 +58,7 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm verify:packages
+pnpm verify:release
 pnpm dev
 ```
 
@@ -107,10 +133,10 @@ const agentTools = new AgentUIToolRuntime(
 Install only the bindings used by the host:
 
 ```bash
-pnpm add @package-first/core @package-first/renderer-react react react-dom
-pnpm add @package-first/component-pack-react-aria react-aria-components
+npm install @package-first/core @package-first/renderer-react react react-dom
+npm install @package-first/component-pack-react-aria react-aria-components
 # or
-pnpm add @package-first/component-pack-antd antd
+npm install @package-first/component-pack-antd antd
 ```
 
 The serializable Manifest and local React bindings are separate. Registering a Pack adds its trusted semantic schemas to Core, while the binding stays in the React package.
@@ -243,16 +269,31 @@ In Tauri, register semantic host actions and let trusted handlers choose fixed R
 import { createTauriDynamicUIAdapter } from "@package-first/tauri";
 
 const desktop = createTauriDynamicUIAdapter({
-  preferenceNamespace: "tea-purchase",
-  preferenceUserId: currentUser.id,
+  namespace: "tea-purchase",
+  userId: currentUser.id,
+  capabilities: {
+    platform: "macos",
+    desktop: true,
+    filePicker: false,
+    notifications: false,
+    localStorage: true,
+    nativeCommands: true,
+  },
 });
 
-desktop.actionExecutor.register("tea.search", async ({ intent, invoke }) => ({
-  status: "success",
-  output: await invoke("search_teas", { query: intent.payload }),
-}));
+desktop.actionExecutor.register("tea.search", async (input, { invoke }) =>
+  invoke("search_teas", { query: input }),
+);
 ```
 
 The security chain is: trusted component emits an `ActionIntent` → semantic action allow-list validates it → host handler selects a fixed command → Tauri capability authorizes that command → Rust validates the payload. A capability descriptor is UI discovery metadata, not authorization. The example grants only its two application commands and the Store operations it uses; it does not grant shell, filesystem, HTTP, or arbitrary command access, and its CSP permits only bundled assets, IPC, and the local Vite development endpoint.
 
-See the [Tool-to-UI guide](docs/tool-to-ui-runtime.md), [wire protocol](protocol/tool-to-ui-runtime-protocol.md), [Component Pack protocol](protocol/component-pack-protocol.md), [Milestone 5 summary](docs/milestone-5-summary.md), and [architecture baseline](docs/dynamic-ui-architecture.md).
+## Peer Dependencies
+
+The default renderer supports React `>=18.2 <20`. React Aria additionally needs
+React DOM `>=18.2 <20` and `react-aria-components >=1.20 <2`. Ant Design needs
+React DOM `>=18.2 <20` and `antd >=6.5.3 <7`. These libraries are peers of their
+optional Pack and are not pulled into Core or unrelated consumers. Tauri is a
+separate package and installs only its Tauri 2 API/Store dependencies.
+
+See the [public API baseline](docs/public-api.md), [compatibility matrix](docs/npm-compatibility-matrix.md), [release checklist](docs/npm-release-checklist.md), [Tool-to-UI guide](docs/tool-to-ui-runtime.md), [no-workflow ADR](docs/adr/0001-no-frontend-workflow-engine.md), and [architecture baseline](docs/dynamic-ui-architecture.md).
