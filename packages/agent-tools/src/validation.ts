@@ -1,6 +1,7 @@
 import type {
   DataBinding,
   DeveloperHardConstraints,
+  JsonObject,
   JsonValue,
   SchemaFieldAliases,
   SurfaceContext,
@@ -95,8 +96,8 @@ function jsonValue(value: unknown, path: string): JsonValue {
   );
 }
 
-function jsonRecord(value: unknown, path: string): Record<string, JsonValue> {
-  return jsonValue(value, path) as Record<string, JsonValue>;
+function jsonRecord(value: unknown, path: string): JsonObject {
+  return jsonValue(value, path) as JsonObject;
 }
 
 function intentValue(value: unknown, path: string): UIIntent {
@@ -405,6 +406,7 @@ function nodeValue(value: unknown, path: string): UINode {
       "children",
       "layout",
       "visible",
+      "extensions",
     ],
     path,
   );
@@ -432,6 +434,35 @@ function nodeValue(value: unknown, path: string): UINode {
   }
   if (object.visible !== undefined) {
     node.visible = booleanValue(object.visible, `${path}.visible`);
+  }
+  if (object.extensions !== undefined) {
+    const extensions = record(object.extensions, `${path}.extensions`);
+    node.extensions = Object.fromEntries(
+      Object.entries(extensions).map(([namespace, rawExtension]) => {
+        const extension = record(
+          rawExtension,
+          `${path}.extensions.${namespace}`,
+        );
+        allowedKeys(
+          extension,
+          ["version", "value"],
+          `${path}.extensions.${namespace}`,
+        );
+        return [
+          namespace,
+          {
+            version: stringValue(
+              extension.version,
+              `${path}.extensions.${namespace}.version`,
+            ),
+            value: jsonValue(
+              extension.value,
+              `${path}.extensions.${namespace}.value`,
+            ),
+          },
+        ];
+      }),
+    );
   }
   return node;
 }
@@ -586,6 +617,7 @@ export function parseCreateSurface(value: unknown): CreateSurfaceToolInput {
       "toolId",
       "fieldAliases",
       "context",
+      "presentation",
     ],
     "arguments",
   );
@@ -618,6 +650,20 @@ export function parseCreateSurface(value: unknown): CreateSurfaceToolInput {
       object.context,
       "arguments.context",
     ) as SurfaceContext;
+  }
+  if (object.presentation !== undefined) {
+    const presentation = record(object.presentation, "arguments.presentation");
+    allowedKeys(presentation, ["preferredPack"], "arguments.presentation");
+    input.presentation = {
+      ...(presentation.preferredPack === undefined
+        ? {}
+        : {
+            preferredPack: stringValue(
+              presentation.preferredPack,
+              "arguments.presentation.preferredPack",
+            ),
+          }),
+    };
   }
   return input;
 }
@@ -654,7 +700,7 @@ export function parseReplaceSurface(value: unknown): ReplaceSurfaceToolInput {
   const replacement = record(object.surface, "arguments.surface");
   allowedKeys(
     replacement,
-    ["intent", "schemaRef", "tree", "data", "context"],
+    ["intent", "schemaRef", "tree", "data", "context", "presentation"],
     "arguments.surface",
   );
   const surface: ReplaceSurfaceToolInput["surface"] = {
@@ -671,6 +717,27 @@ export function parseReplaceSurface(value: unknown): ReplaceSurfaceToolInput {
       replacement.schemaRef,
       "arguments.surface.schemaRef",
     );
+  }
+  if (replacement.presentation !== undefined) {
+    const presentation = record(
+      replacement.presentation,
+      "arguments.surface.presentation",
+    );
+    allowedKeys(
+      presentation,
+      ["preferredPack"],
+      "arguments.surface.presentation",
+    );
+    surface.presentation = {
+      ...(presentation.preferredPack === undefined
+        ? {}
+        : {
+            preferredPack: stringValue(
+              presentation.preferredPack,
+              "arguments.surface.presentation.preferredPack",
+            ),
+          }),
+    };
   }
   return {
     surfaceId: stringValue(object.surfaceId, "arguments.surfaceId"),

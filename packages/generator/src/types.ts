@@ -1,9 +1,11 @@
 import type {
   DeveloperHardConstraints,
+  JsonObject,
   JsonValue,
   SchemaRef,
   Surface,
   SurfaceContext,
+  SurfacePresentation,
   UIIntent,
 } from "@package-first/core";
 
@@ -54,13 +56,14 @@ export interface DeveloperUIConfiguration {
 export interface GenerateSurfaceInput {
   surfaceId: string;
   schema: SimpleJsonSchema;
-  data: Record<string, unknown>;
+  data: JsonObject;
   intent: UIIntent;
   developer?: DeveloperUIConfiguration;
   /** @deprecated Use developer.softHints. */
   metadata?: GeneratorMetadata;
   schemaRef?: SchemaRef;
   context?: SurfaceContext;
+  presentation?: SurfacePresentation;
 }
 
 export type GeneratedSurface = Omit<Surface, "revision">;

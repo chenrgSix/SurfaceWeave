@@ -3,10 +3,12 @@ import type {
   PreferenceConflict,
   PreferencePatch,
   JsonValue,
+  JsonObject,
   SchemaFieldAliases,
   SchemaRef,
   Surface,
   SurfaceContext,
+  SurfacePresentation,
   UINode,
   UIOperation,
   UIIntent,
@@ -46,7 +48,7 @@ export type ToolResult<T> =
 export interface CreateSurfaceToolInput {
   surfaceId: string;
   schema: SimpleJsonSchema;
-  data: Record<string, unknown>;
+  data: JsonObject;
   intent: UIIntent;
   developer?: DeveloperUIConfiguration;
   metadata?: GeneratorMetadata;
@@ -54,6 +56,7 @@ export interface CreateSurfaceToolInput {
   toolId?: string;
   fieldAliases?: SchemaFieldAliases;
   context?: SurfaceContext;
+  presentation?: SurfacePresentation;
 }
 
 export interface InspectSurfaceToolInput {
@@ -74,8 +77,9 @@ export interface ReplaceSurfaceToolInput {
     intent: UIIntent;
     schemaRef?: SchemaRef;
     tree: UINode;
-    data: Record<string, unknown>;
+    data: JsonObject;
     context: SurfaceContext;
+    presentation?: SurfacePresentation;
   };
 }
 

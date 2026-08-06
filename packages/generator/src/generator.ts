@@ -10,6 +10,7 @@ import type {
   ComponentRegistry,
   DeveloperHardConstraints,
   FieldHardConstraint,
+  JsonObject,
   JsonValue,
   Surface,
   UINode,
@@ -111,7 +112,7 @@ function componentForField(
       registry,
       hardConstraint?.component,
       metadata?.component,
-      ["Select"],
+      ["ChoiceField"],
       constraints,
     );
   }
@@ -128,7 +129,7 @@ function componentForField(
       defaults = ["Checkbox"];
       break;
     case "array":
-      defaults = ["Select"];
+      defaults = ["ChoiceField"];
       break;
     case "object":
       defaults = ["Accordion", "Stack"];
@@ -258,7 +259,7 @@ function createFieldNode(
 
 function applySchemaDefaults(
   schema: SimpleJsonSchema,
-  data: Record<string, unknown>,
+  data: JsonObject,
   path = "",
 ): void {
   if (
@@ -340,7 +341,7 @@ function generateCollection(
     registry,
     constraints?.rootComponent,
     metadata?.rootComponent,
-    input.intent === "browse" ? ["Table", "CardList"] : ["CardList", "Select"],
+    input.intent === "browse" ? ["DataTable", "Card"] : ["Card", "ChoiceField"],
     constraints,
   );
   const items = jsonValue(
@@ -354,8 +355,9 @@ function generateCollection(
     props: {
       title: metadata?.title ?? input.schema.title ?? input.surfaceId,
       items,
-      multiple: input.intent === "multi-select",
-      ...(metadata?.itemComponent === undefined ||
+      ...(isSelection ? { multiple: input.intent === "multi-select" } : {}),
+      ...(component !== "Card" ||
+      metadata?.itemComponent === undefined ||
       !registry.has(metadata.itemComponent) ||
       !componentIsAllowed(metadata.itemComponent, constraints)
         ? {}
@@ -382,7 +384,7 @@ function generateConfirm(
     registry,
     constraints?.rootComponent,
     metadata?.rootComponent,
-    ["Confirm"],
+    ["Dialog"],
     constraints,
   );
   return {
@@ -426,6 +428,9 @@ export function generateSurface(
   };
   if (input.schemaRef !== undefined) {
     surface.schemaRef = cloneValue(input.schemaRef);
+  }
+  if (input.presentation !== undefined) {
+    surface.presentation = cloneValue(input.presentation);
   }
   validateSurface(surface, registry);
   const generated = cloneValue(surface) as Partial<Surface>;

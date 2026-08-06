@@ -1,5 +1,10 @@
-export { ReactComponentRegistry } from "./react-component-registry.js";
 export {
+  ReactComponentRegistry,
+  validateReactComponentPack,
+} from "./react-component-registry.js";
+export type { ReactComponentPackValidationResult } from "./react-component-registry.js";
+export {
+  createDefaultReactComponentPack,
   createStandardReactComponentRegistry,
   registerStandardReactComponents,
   safeLayoutStyle,

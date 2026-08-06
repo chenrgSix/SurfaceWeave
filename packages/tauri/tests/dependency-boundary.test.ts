@@ -8,6 +8,10 @@ describe("Tauri dependency boundary", () => {
     ) as Record<string, unknown>;
 
     expect(JSON.stringify(corePackage)).not.toContain("@tauri-apps/");
-    expect(corePackage.dependencies).toBeUndefined();
+    expect(
+      Object.keys(corePackage.dependencies ?? {}).some((dependency) =>
+        /react|react-dom|react-aria|antd|tauri/i.test(dependency),
+      ),
+    ).toBe(false);
   });
 });

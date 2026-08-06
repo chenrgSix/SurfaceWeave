@@ -85,7 +85,7 @@ describe("generateSurface", () => {
 
       expect(registry.has(surface.tree.component)).toBe(true);
       expect(surface.tree.component).toBe(
-        intent === "browse" ? "Table" : "CardList",
+        intent === "browse" ? "DataTable" : "Card",
       );
       expect(surface.tree.props.items).toHaveLength(2);
       expect(surface.tree.binding?.path).toBe(
@@ -106,7 +106,7 @@ describe("generateSurface", () => {
       registry,
     );
 
-    expect(surface.tree.component).toBe("Confirm");
+    expect(surface.tree.component).toBe("Dialog");
     expect(surface.tree.props.summary).toEqual({ quantity: 2 });
   });
 

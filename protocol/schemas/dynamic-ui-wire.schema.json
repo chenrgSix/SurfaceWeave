@@ -1,0 +1,547 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json",
+  "title": "Package First Dynamic UI Wire Protocol 1.0",
+  "description": "Language- and framework-independent Dynamic UI wire documents.",
+  "oneOf": [
+    { "$ref": "#/$defs/surface" },
+    { "$ref": "#/$defs/componentPackManifest" },
+    { "$ref": "#/$defs/uiOperation" },
+    { "$ref": "#/$defs/uiEvent" },
+    { "$ref": "#/$defs/actionIntent" },
+    { "$ref": "#/$defs/actionResult" },
+    { "$ref": "#/$defs/preferenceDocument" }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "semanticType": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "safePropertyName": {
+      "type": "string",
+      "not": {
+        "pattern": "^(?:__proto__|prototype|constructor|className|dangerouslySetInnerHTML|antdProps|reactAriaProps|code|command|eval|function|handler|javascript|script)$"
+      }
+    },
+    "safeString": {
+      "type": "string",
+      "not": {
+        "pattern": "(?:javascript\\s*:|<\\s*script\\b|\\beval\\s*\\(|\\bfunction\\s*\\(|=>|\\bimport\\s*\\()"
+      }
+    },
+    "jsonValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/jsonValue" } },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": { "enum": ["__proto__", "prototype", "constructor"] }
+          },
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "declarationValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "$ref": "#/$defs/safeString" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/declarationValue" }
+        },
+        {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/safePropertyName" },
+          "additionalProperties": { "$ref": "#/$defs/declarationValue" }
+        }
+      ]
+    },
+    "declarationObject": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/safePropertyName" },
+      "additionalProperties": { "$ref": "#/$defs/declarationValue" }
+    },
+    "jsonSchema": {
+      "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/declarationObject" }]
+    },
+    "schemaRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "dataBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "valueType"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "valueType": {
+          "enum": ["string", "number", "boolean", "object", "array", "unknown"]
+        },
+        "semantic": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" }
+      }
+    },
+    "componentExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "value"],
+      "properties": {
+        "version": { "$ref": "#/$defs/semver" },
+        "value": { "$ref": "#/$defs/declarationValue" }
+      }
+    },
+    "uiNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "component", "props"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "stableId": { "type": "string", "minLength": 1 },
+        "component": { "$ref": "#/$defs/semanticType" },
+        "props": { "$ref": "#/$defs/declarationObject" },
+        "binding": { "$ref": "#/$defs/dataBinding" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/uiNode" }
+        },
+        "layout": { "$ref": "#/$defs/declarationObject" },
+        "visible": { "type": "boolean" },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"
+          },
+          "additionalProperties": { "$ref": "#/$defs/componentExtension" }
+        }
+      }
+    },
+    "uiIntent": {
+      "enum": ["form", "browse", "single-select", "multi-select", "confirm"]
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "revision", "intent", "tree", "data", "context"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 0 },
+        "intent": { "$ref": "#/$defs/uiIntent" },
+        "schemaRef": { "$ref": "#/$defs/schemaRef" },
+        "tree": { "$ref": "#/$defs/uiNode" },
+        "data": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        },
+        "context": { "$ref": "#/$defs/declarationObject" },
+        "presentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "preferredPack": { "$ref": "#/$defs/identifier" }
+          }
+        }
+      }
+    },
+    "moveNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "position"],
+      "properties": {
+        "type": { "const": "moveNode" },
+        "target": { "type": "string", "minLength": 1 },
+        "parent": { "type": "string", "minLength": 1 },
+        "position": {
+          "oneOf": [
+            { "enum": ["first", "last"] },
+            { "type": "integer", "minimum": 0 }
+          ]
+        }
+      }
+    },
+    "replaceComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "component"],
+      "properties": {
+        "type": { "const": "replaceComponent" },
+        "target": { "type": "string", "minLength": 1 },
+        "component": { "$ref": "#/$defs/semanticType" },
+        "props": { "$ref": "#/$defs/declarationObject" },
+        "binding": { "$ref": "#/$defs/dataBinding" }
+      }
+    },
+    "setProps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "props"],
+      "properties": {
+        "type": { "const": "setProps" },
+        "target": { "type": "string", "minLength": 1 },
+        "props": { "$ref": "#/$defs/declarationObject" },
+        "replace": { "type": "boolean" }
+      }
+    },
+    "setLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "layout"],
+      "properties": {
+        "type": { "const": "setLayout" },
+        "target": { "type": "string", "minLength": 1 },
+        "layout": { "$ref": "#/$defs/declarationObject" }
+      }
+    },
+    "setVisibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "visible"],
+      "properties": {
+        "type": { "const": "setVisibility" },
+        "target": { "type": "string", "minLength": 1 },
+        "visible": { "type": "boolean" }
+      }
+    },
+    "groupNodes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "targets", "group"],
+      "properties": {
+        "type": { "const": "groupNodes" },
+        "targets": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "group": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "component"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "stableId": { "type": "string", "minLength": 1 },
+            "component": { "$ref": "#/$defs/semanticType" },
+            "props": { "$ref": "#/$defs/declarationObject" },
+            "layout": { "$ref": "#/$defs/declarationObject" },
+            "visible": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "uiOperation": {
+      "oneOf": [
+        { "$ref": "#/$defs/moveNode" },
+        { "$ref": "#/$defs/replaceComponent" },
+        { "$ref": "#/$defs/setProps" },
+        { "$ref": "#/$defs/setLayout" },
+        { "$ref": "#/$defs/setVisibility" },
+        { "$ref": "#/$defs/groupNodes" }
+      ]
+    },
+    "actionIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "surfaceId", "nodeId", "action", "input"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "surfaceId": { "type": "string", "minLength": 1 },
+        "nodeId": { "type": "string", "minLength": 1 },
+        "action": { "$ref": "#/$defs/identifier" },
+        "input": { "$ref": "#/$defs/declarationValue" },
+        "idempotencyKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "actionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intentId", "status"],
+      "properties": {
+        "intentId": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["success", "error", "cancelled"] },
+        "output": { "$ref": "#/$defs/jsonValue" },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "type": "string", "minLength": 1 },
+            "message": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "componentBindingDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valueTypes"],
+      "properties": {
+        "valueTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "object",
+              "array",
+              "unknown"
+            ]
+          }
+        },
+        "semantics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "componentActionDefinition": {
+      "oneOf": [
+        { "$ref": "#/$defs/identifier" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "$ref": "#/$defs/identifier" },
+            "sideEffect": { "type": "boolean" },
+            "requiresConfirmation": { "type": "boolean" },
+            "inputSchema": { "$ref": "#/$defs/jsonSchema" }
+          }
+        }
+      ]
+    },
+    "componentManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semanticType", "propsSchema"],
+      "properties": {
+        "semanticType": { "$ref": "#/$defs/semanticType" },
+        "description": { "$ref": "#/$defs/safeString" },
+        "propsSchema": { "$ref": "#/$defs/jsonSchema" },
+        "actionSchema": { "$ref": "#/$defs/jsonSchema" },
+        "binding": { "$ref": "#/$defs/componentBindingDefinition" },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentActionDefinition" }
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "fallback": { "$ref": "#/$defs/semanticType" },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version", "schema"],
+            "properties": {
+              "version": { "$ref": "#/$defs/semver" },
+              "schema": { "$ref": "#/$defs/jsonSchema" }
+            }
+          }
+        }
+      }
+    },
+    "agentGuidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary"],
+      "properties": {
+        "summary": { "$ref": "#/$defs/safeString" },
+        "usage": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/safeString" }
+        },
+        "avoid": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/safeString" }
+        }
+      }
+    },
+    "componentPackManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocolVersion",
+        "id",
+        "version",
+        "rendererKind",
+        "components"
+      ],
+      "properties": {
+        "protocolVersion": { "const": "1.0" },
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "rendererKind": { "$ref": "#/$defs/identifier" },
+        "priority": { "type": "integer" },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/componentManifest" }
+        },
+        "agentGuidance": { "$ref": "#/$defs/agentGuidance" }
+      }
+    },
+    "preferencePatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scope", "targetStableId", "operation"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "scope": { "enum": ["global", "intent", "tool"] },
+        "targetStableId": { "type": "string", "minLength": 1 },
+        "operation": {
+          "oneOf": [
+            { "$ref": "#/$defs/moveNode" },
+            { "$ref": "#/$defs/replaceComponent" },
+            { "$ref": "#/$defs/setProps" },
+            { "$ref": "#/$defs/setLayout" },
+            { "$ref": "#/$defs/setVisibility" }
+          ]
+        },
+        "schemaRef": { "$ref": "#/$defs/schemaRef" },
+        "intent": { "$ref": "#/$defs/uiIntent" },
+        "toolId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "preferenceDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "patches"],
+      "properties": {
+        "version": { "const": 1 },
+        "patches": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferencePatch" }
+        }
+      }
+    },
+    "uiEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sequence", "surfaceId", "revision", "surface"],
+          "properties": {
+            "type": { "const": "surface.created" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "surfaceId": { "type": "string", "minLength": 1 },
+            "revision": { "type": "integer", "minimum": 0 },
+            "surface": { "$ref": "#/$defs/surface" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "sequence",
+            "surfaceId",
+            "revision",
+            "operations"
+          ],
+          "properties": {
+            "type": { "const": "surface.operationsApplied" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "surfaceId": { "type": "string", "minLength": 1 },
+            "revision": { "type": "integer", "minimum": 0 },
+            "operations": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/uiOperation" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "sequence",
+            "surfaceId",
+            "revision",
+            "previousRevision",
+            "surface"
+          ],
+          "properties": {
+            "type": { "const": "surface.replaced" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "surfaceId": { "type": "string", "minLength": 1 },
+            "revision": { "type": "integer", "minimum": 0 },
+            "previousRevision": { "type": "integer", "minimum": 0 },
+            "surface": { "$ref": "#/$defs/surface" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sequence", "surfaceId", "revision", "changes"],
+          "properties": {
+            "type": { "const": "surface.dataChanged" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "surfaceId": { "type": "string", "minLength": 1 },
+            "revision": { "type": "integer", "minimum": 0 },
+            "changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["path", "value"],
+                "properties": {
+                  "path": { "type": "string", "minLength": 1 },
+                  "value": { "$ref": "#/$defs/jsonValue" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "sequence"],
+          "properties": {
+            "type": {
+              "enum": [
+                "preference.saved",
+                "preference.migrated",
+                "preference.discarded",
+                "preference.conflicted"
+              ]
+            },
+            "sequence": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

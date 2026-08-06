@@ -1,8 +1,18 @@
-import { cloneValue } from "./data.js";
+import { assertSafeDeclaration, cloneValue } from "./data.js";
 import { DynamicUIError } from "./errors.js";
+import {
+  assertComponentExtension,
+  componentManifestToDefinition,
+  parseComponentPackManifest,
+} from "./component-pack.js";
+import {
+  assertMatchesJsonSchema,
+  assertValidJsonSchema,
+} from "./json-schema.js";
 import type {
   ComponentActionDefinition,
   ComponentDefinition,
+  ComponentPackManifest,
   ComponentRegistry,
   DataBinding,
   UINode,
@@ -42,8 +52,10 @@ function bindingIsAccepted(
 /** In-memory allow-list used at every component and action trust boundary. */
 export class InMemoryComponentRegistry implements ComponentRegistry {
   readonly #definitions = new Map<string, ComponentDefinition>();
+  readonly #packs = new Map<string, ComponentPackManifest>();
 
   register(definition: ComponentDefinition): void {
+    assertSafeDeclaration(definition, "componentDefinition");
     assertIdentifier(definition.type, "Component type");
     if (this.#definitions.has(definition.type)) {
       throw new DynamicUIError(
@@ -62,8 +74,66 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
         );
       }
       names.add(name);
+      if (typeof action === "object" && action.inputSchema !== undefined) {
+        assertValidJsonSchema(
+          action.inputSchema,
+          `Action schema for ${definition.type}.${name}`,
+        );
+      }
+    }
+    if (definition.propsSchema !== undefined) {
+      assertValidJsonSchema(
+        definition.propsSchema,
+        `Props schema for ${definition.type}`,
+      );
+    }
+    if (definition.actionSchema !== undefined) {
+      assertValidJsonSchema(
+        definition.actionSchema,
+        `Action schema for ${definition.type}`,
+      );
+    }
+    if (
+      definition.fallback !== undefined &&
+      !this.#definitions.has(definition.fallback)
+    ) {
+      throw new DynamicUIError(
+        "INVALID_COMPONENT_PACK",
+        `Fallback "${definition.fallback}" for "${definition.type}" is not registered`,
+      );
     }
     this.#definitions.set(definition.type, cloneValue(definition));
+  }
+
+  registerPack(input: ComponentPackManifest): void {
+    const manifest = parseComponentPackManifest(input, {
+      knownComponents: this.list(),
+    });
+    const existingPack = this.#packs.get(manifest.id);
+    if (existingPack !== undefined) {
+      if (canonicalValue(existingPack) === canonicalValue(manifest)) {
+        return;
+      }
+      throw new DynamicUIError(
+        "INVALID_COMPONENT_PACK",
+        `Component pack "${manifest.id}" conflicts with an existing version`,
+      );
+    }
+    for (const component of manifest.components) {
+      const definition = componentManifestToDefinition(component);
+      const existing = this.#definitions.get(definition.type);
+      if (existing === undefined) {
+        this.register(definition);
+        continue;
+      }
+      if (semanticSignature(existing) !== semanticSignature(definition)) {
+        throw new DynamicUIError(
+          "INVALID_COMPONENT_PACK",
+          `Component pack "${manifest.id}" conflicts with semantic definition "${definition.type}"`,
+        );
+      }
+    }
+    this.#packs.set(manifest.id, cloneValue(manifest));
   }
 
   has(type: string): boolean {
@@ -93,8 +163,35 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
       .map((definition) => cloneValue(definition));
   }
 
+  listPacks(): ComponentPackManifest[] {
+    return [...this.#packs.values()]
+      .sort(
+        (left, right) =>
+          left.id.localeCompare(right.id) ||
+          left.version.localeCompare(right.version),
+      )
+      .map((manifest) => cloneValue(manifest));
+  }
+
   assertNode(node: UINode): void {
     const definition = this.require(node.component);
+    if (definition.propsSchema !== undefined) {
+      assertMatchesJsonSchema(
+        definition.propsSchema,
+        node.props,
+        `Props for component "${node.component}"`,
+      );
+    }
+    for (const [namespace, extension] of Object.entries(
+      node.extensions ?? {},
+    )) {
+      assertComponentExtension(
+        definition,
+        namespace,
+        extension.version,
+        extension.value,
+      );
+    }
     if (
       node.binding !== undefined &&
       !bindingIsAccepted(definition, node.binding)
@@ -119,4 +216,29 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
       );
     }
   }
+}
+
+function canonicalValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalValue).join(",")}]`;
+  }
+  if (typeof value === "object" && value !== null) {
+    return `{${Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${canonicalValue(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function semanticSignature(definition: ComponentDefinition): string {
+  return canonicalValue({
+    type: definition.type,
+    propsSchema: definition.propsSchema ?? true,
+    actionSchema: definition.actionSchema,
+    binding: definition.binding,
+    actions: definition.actions,
+    fallback: definition.fallback,
+    extensions: definition.extensions,
+  });
 }

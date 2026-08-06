@@ -1,4 +1,6 @@
 import {
+  assertJsonValue,
+  assertSafeDeclaration,
   bindingValueTypeMatches,
   cloneValue,
   readDataPath,
@@ -204,6 +206,17 @@ export function validateSurface(
       "Surface revision must be a non-negative integer",
     );
   }
+  assertJsonValue(surface.data, "surface.data");
+  assertJsonValue(surface.context, "surface.context");
+  if (
+    surface.presentation?.preferredPack !== undefined &&
+    surface.presentation.preferredPack.trim() === ""
+  ) {
+    throw new DynamicUIError(
+      "INVALID_SURFACE",
+      "surface.presentation.preferredPack cannot be empty",
+    );
+  }
   const ids = new Set<string>();
   const stableIds = new Set<string>();
   walkNodes(surface.tree, (node) => {
@@ -214,6 +227,18 @@ export function validateSurface(
       );
     }
     ids.add(node.id);
+    assertSafeDeclaration(
+      node.props,
+      `node[${node.id}].props`,
+      "INVALID_SURFACE",
+    );
+    if (node.layout !== undefined) {
+      assertSafeDeclaration(
+        node.layout,
+        `node[${node.id}].layout`,
+        "INVALID_SURFACE",
+      );
+    }
     if (node.stableId !== undefined) {
       if (node.stableId.trim() === "" || stableIds.has(node.stableId)) {
         throw new DynamicUIError(

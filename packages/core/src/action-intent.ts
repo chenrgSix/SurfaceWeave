@@ -1,5 +1,6 @@
 import { cloneValue, walkNodes } from "./data.js";
 import { DynamicUIError } from "./errors.js";
+import { assertMatchesJsonSchema } from "./json-schema.js";
 import type {
   ActionIntent,
   ComponentRegistry,
@@ -97,6 +98,28 @@ export function createActionIntent(
   }
   registry.assertAction(node.component, request.action);
   assertSafeJson(request.input);
+  const definition = registry.require(node.component);
+  const action = (definition.actions ?? []).find((item) =>
+    typeof item === "string"
+      ? item === request.action
+      : item.name === request.action,
+  );
+  if (typeof action === "object" && action.inputSchema !== undefined) {
+    assertMatchesJsonSchema(
+      action.inputSchema,
+      request.input,
+      `Input for action "${request.action}"`,
+      "INVALID_ACTION_INTENT",
+    );
+  }
+  if (definition.actionSchema !== undefined) {
+    assertMatchesJsonSchema(
+      definition.actionSchema,
+      { action: request.action, input: request.input },
+      `Action "${request.action}"`,
+      "INVALID_ACTION_INTENT",
+    );
+  }
   const intent: ActionIntent = {
     id: request.id,
     surfaceId: surface.id,

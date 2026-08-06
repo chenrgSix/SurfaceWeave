@@ -23,6 +23,9 @@ export interface SurfaceRendererProps {
   componentRegistry: ComponentRegistry;
   reactComponents: ReactComponentRegistry;
   mode?: RendererMode;
+  preferredPack?: string;
+  capabilities?: string[];
+  packPriorities?: Record<string, number>;
   onActionIntent?: ActionIntentHandler;
   onError?: (error: DynamicUIError) => void;
 }
@@ -43,6 +46,9 @@ export function SurfaceRenderer({
   componentRegistry,
   reactComponents,
   mode = "workspace",
+  preferredPack,
+  capabilities,
+  packPriorities,
   onActionIntent,
   onError,
 }: SurfaceRendererProps) {
@@ -62,7 +68,16 @@ export function SurfaceRenderer({
     if (node.visible === false) {
       return null;
     }
-    const Component = reactComponents.require(node.component);
+    const selectedPreferredPack =
+      preferredPack ?? surface.presentation?.preferredPack;
+    const resolved = reactComponents.resolve(node.component, {
+      ...(selectedPreferredPack === undefined
+        ? {}
+        : { preferredPack: selectedPreferredPack }),
+      ...(capabilities === undefined ? {} : { capabilities }),
+      ...(packPriorities === undefined ? {} : { packPriorities }),
+    });
+    const Component = resolved.component;
     const value =
       node.binding === undefined
         ? undefined
@@ -70,7 +85,7 @@ export function SurfaceRenderer({
     const children = node.children?.map((child) => (
       <Fragment key={child.id}>{renderNode(child)}</Fragment>
     ));
-    const rendered = (
+    const component = (
       <Component
         node={node}
         value={value}
@@ -117,6 +132,12 @@ export function SurfaceRenderer({
         {children}
       </Component>
     );
+    const rendered =
+      resolved.Provider === undefined ? (
+        component
+      ) : (
+        <resolved.Provider>{component}</resolved.Provider>
+      );
     const layoutStyle = safeLayoutStyle(node.layout);
     return Object.keys(layoutStyle).length === 0 ? (
       rendered

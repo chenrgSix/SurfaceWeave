@@ -1,8 +1,9 @@
+import { cloneValue, standardComponentManifests } from "@package-first/core";
 import type { JsonValue } from "@package-first/core";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 
 import { ReactComponentRegistry } from "./react-component-registry.js";
-import type { RendererComponentProps } from "./types.js";
+import type { ReactComponentPack, RendererComponentProps } from "./types.js";
 
 function stringProp(
   props: Record<string, JsonValue>,
@@ -186,15 +187,16 @@ function SelectComponent({
   node,
   value,
   onValueChange,
+  onAction,
 }: RendererComponentProps) {
   const options = Array.isArray(node.props.options) ? node.props.options : [];
   const multiple = node.props.multiple === true;
   function change(event: ChangeEvent<HTMLSelectElement>) {
-    onValueChange(
-      multiple
-        ? [...event.currentTarget.selectedOptions].map((option) => option.value)
-        : event.currentTarget.value,
-    );
+    const nextValue = multiple
+      ? [...event.currentTarget.selectedOptions].map((option) => option.value)
+      : event.currentTarget.value;
+    onValueChange(nextValue);
+    onAction("select", { value: nextValue });
   }
   return (
     <Field node={node}>
@@ -336,23 +338,44 @@ function ErrorStateComponent({ node }: RendererComponentProps) {
 export function registerStandardReactComponents(
   registry: ReactComponentRegistry,
 ): void {
-  registry.register("Text", TextComponent);
-  registry.register("Image", ImageComponent);
-  registry.register("Badge", BadgeComponent);
-  registry.register("Stack", StackComponent);
-  registry.register("Grid", GridComponent);
-  registry.register("Accordion", AccordionComponent);
-  registry.register("TextInput", TextInputComponent);
-  registry.register("NumberInput", NumberInputComponent);
-  registry.register("Select", SelectComponent);
-  registry.register("Checkbox", CheckboxComponent);
-  registry.register("Form", FormComponent);
-  registry.register("Table", TableComponent);
-  registry.register("CardList", CardListComponent);
-  registry.register("Button", ButtonComponent);
-  registry.register("Confirm", ConfirmComponent);
-  registry.register("EmptyState", EmptyStateComponent);
-  registry.register("ErrorState", ErrorStateComponent);
+  registry.registerPack(createDefaultReactComponentPack());
+}
+
+/** Built-in React runtime binding for the canonical semantic catalog. */
+export function createDefaultReactComponentPack(): ReactComponentPack {
+  return {
+    manifest: {
+      protocolVersion: "1.0",
+      id: "default",
+      version: "1.0.0",
+      rendererKind: "react",
+      priority: 0,
+      components: cloneValue(standardComponentManifests),
+      agentGuidance: {
+        summary:
+          "Portable baseline rendering for the standard semantic UI catalog.",
+      },
+    },
+    bindings: {
+      Text: TextComponent,
+      Image: ImageComponent,
+      Badge: BadgeComponent,
+      Stack: StackComponent,
+      Grid: GridComponent,
+      Accordion: AccordionComponent,
+      Form: FormComponent,
+      TextInput: TextInputComponent,
+      NumberInput: NumberInputComponent,
+      ChoiceField: SelectComponent,
+      Checkbox: CheckboxComponent,
+      DataTable: TableComponent,
+      Card: CardListComponent,
+      Action: ButtonComponent,
+      Dialog: ConfirmComponent,
+      EmptyState: EmptyStateComponent,
+      ErrorState: ErrorStateComponent,
+    },
+  };
 }
 
 export function createStandardReactComponentRegistry(

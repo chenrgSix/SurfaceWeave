@@ -2,8 +2,15 @@
 export type JsonPrimitive = string | number | boolean | null;
 
 /** JSON-compatible value accepted at SDK trust boundaries. */
-export type JsonValue =
-  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+
+/** JSON-compatible object used by every wire-level record. */
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
+
+/** JSON Schema document. The protocol uses the 2020-12 dialect. */
+export type JsonSchema = boolean | JsonObject;
 
 /** Supported interaction modes for default UI generation. */
 export type UIIntent =
@@ -30,6 +37,17 @@ export interface SurfaceContext {
   [key: string]: JsonValue | undefined;
 }
 
+/** Namespaced, versioned vendor data validated by the selected component pack. */
+export interface ComponentExtension {
+  version: string;
+  value: JsonValue;
+}
+
+export interface SurfacePresentation {
+  /** A renderer hint only; changing it must not rewrite the semantic tree. */
+  preferredPack?: string;
+}
+
 /** Declarative node. The component name must exist in ComponentRegistry. */
 export interface UINode {
   id: string;
@@ -40,6 +58,7 @@ export interface UINode {
   children?: UINode[];
   layout?: Record<string, JsonValue>;
   visible?: boolean;
+  extensions?: Record<string, ComponentExtension>;
 }
 
 /** A logical UI shared by every renderer connected to the same store. */
@@ -49,8 +68,9 @@ export interface Surface {
   intent: UIIntent;
   schemaRef?: SchemaRef;
   tree: UINode;
-  data: Record<string, unknown>;
+  data: JsonObject;
   context: SurfaceContext;
+  presentation?: SurfacePresentation;
 }
 
 export type NodePosition = "first" | "last" | number;
@@ -199,7 +219,7 @@ export interface SurfaceReplacedEvent {
 
 export interface DataChange {
   path: string;
-  value: unknown;
+  value: JsonValue;
 }
 
 export interface SurfaceDataChangedEvent {
@@ -282,6 +302,7 @@ export interface ComponentActionDefinition {
   name: string;
   sideEffect?: boolean;
   requiresConfirmation?: boolean;
+  inputSchema?: JsonSchema;
 }
 
 export interface ComponentBindingDefinition {
@@ -289,23 +310,98 @@ export interface ComponentBindingDefinition {
   semantics?: string[];
 }
 
-/** Data-only description of a trusted component available to generators and tools. */
-export interface ComponentDefinition {
-  type: string;
+export interface ComponentExtensionSchema {
+  version: string;
+  schema: JsonSchema;
+}
+
+/** Concise model-facing guidance. It is advisory and never overrides schemas. */
+export interface AgentGuidance {
+  summary: string;
+  usage?: string[];
+  avoid?: string[];
+}
+
+/** Serializable semantic component declaration shared across renderers. */
+export interface ComponentManifest {
+  semanticType: string;
   description?: string;
-  propsSchema?: Record<string, JsonValue>;
+  propsSchema: JsonSchema;
+  actionSchema?: JsonSchema;
   binding?: ComponentBindingDefinition;
   actions?: Array<string | ComponentActionDefinition>;
   capabilities?: string[];
   fallback?: string;
+  extensions?: Record<string, ComponentExtensionSchema>;
+}
+
+/** Serializable pack metadata. Runtime component bindings live outside Core. */
+export interface ComponentPackManifest {
+  protocolVersion: "1.0";
+  id: string;
+  version: string;
+  rendererKind: string;
+  priority?: number;
+  capabilities?: string[];
+  components: ComponentManifest[];
+  agentGuidance?: AgentGuidance;
+}
+
+export type ComponentPackDiagnosticCode =
+  | "PREFERRED_PACK_UNAVAILABLE"
+  | "PACK_CAPABILITY_MISMATCH"
+  | "COMPONENT_CAPABILITY_MISMATCH"
+  | "FALLBACK_APPLIED";
+
+export interface ComponentPackDiagnostic {
+  code: ComponentPackDiagnosticCode;
+  message: string;
+  packId?: string;
+  semanticType?: string;
+}
+
+export interface ComponentResolutionRequest {
+  semanticType: string;
+  rendererKind: string;
+  preferredPack?: string;
+  capabilities?: string[];
+  packPriorities?: Record<string, number>;
+  /** Runtime registries use this to exclude manifests without local bindings. */
+  availablePackIds?: string[];
+}
+
+/** Deterministic data-only result consumed by a framework-specific registry. */
+export interface ComponentResolution {
+  requestedSemanticType: string;
+  resolvedSemanticType: string;
+  rendererKind: string;
+  packId: string;
+  packVersion: string;
+  fallbackChain: string[];
+  diagnostics: ComponentPackDiagnostic[];
+}
+
+/** Data-only description of a trusted component available to generators and tools. */
+export interface ComponentDefinition {
+  type: string;
+  description?: string;
+  propsSchema?: JsonSchema;
+  actionSchema?: JsonSchema;
+  binding?: ComponentBindingDefinition;
+  actions?: Array<string | ComponentActionDefinition>;
+  capabilities?: string[];
+  fallback?: string;
+  extensions?: Record<string, ComponentExtensionSchema>;
 }
 
 export interface ComponentRegistry {
   register(definition: ComponentDefinition): void;
+  registerPack(manifest: ComponentPackManifest): void;
   has(type: string): boolean;
   get(type: string): ComponentDefinition | undefined;
   require(type: string): ComponentDefinition;
   list(): ComponentDefinition[];
+  listPacks(): ComponentPackManifest[];
   assertNode(node: UINode): void;
   assertAction(component: string, action: string): void;
 }

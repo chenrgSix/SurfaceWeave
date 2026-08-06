@@ -114,7 +114,15 @@ function teaSurface(
           },
         },
       },
-      data: { teas, selectedTeaIds: [] },
+      data: {
+        teas: teas.map((tea) => ({
+          id: tea.id,
+          name: tea.name,
+          origin: tea.origin,
+          price: tea.price,
+        })),
+        selectedTeaIds: [],
+      },
       intent: "multi-select",
       developer: {
         softHints: {
