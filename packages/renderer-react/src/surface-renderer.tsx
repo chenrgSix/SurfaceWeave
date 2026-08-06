@@ -28,6 +28,7 @@ export interface SurfaceRendererProps {
   enabledPackIds?: string[];
   capabilities?: string[];
   packPriorities?: Record<string, number>;
+  supportedPackVersions?: Record<string, string[]>;
   onActionIntent?: ActionIntentHandler;
   onError?: (error: DynamicUIError) => void;
 }
@@ -52,6 +53,7 @@ export function SurfaceRenderer({
   enabledPackIds,
   capabilities,
   packPriorities,
+  supportedPackVersions,
   onActionIntent,
   onError,
 }: SurfaceRendererProps) {
@@ -82,6 +84,7 @@ export function SurfaceRenderer({
         ? {}
         : { availablePackIds: enabledPackIds }),
       ...(packPriorities === undefined ? {} : { packPriorities }),
+      ...(supportedPackVersions === undefined ? {} : { supportedPackVersions }),
     });
     const Component = resolved.component;
     const value =

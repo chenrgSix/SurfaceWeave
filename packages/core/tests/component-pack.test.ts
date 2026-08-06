@@ -93,6 +93,27 @@ describe("Component Pack Protocol", () => {
     ).toMatchObject({ packId: "desktop-only" });
   });
 
+  it("diagnoses a pack version rejected by the host", () => {
+    const registry = createStandardComponentRegistry();
+    registry.registerPack(pack("candidate", 10));
+    registry.registerPack(pack("fallback", 0));
+
+    const resolution = new ComponentPackResolver(registry).resolve({
+      semanticType: "TextInput",
+      rendererKind: "fake",
+      preferredPack: "candidate",
+      supportedPackVersions: { candidate: ["2.0.0"] },
+    });
+
+    expect(resolution.packId).toBe("fallback");
+    expect(resolution.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "PACK_VERSION_INCOMPATIBLE",
+        packId: "candidate",
+      }),
+    );
+  });
+
   it("uses semantic fallback without rewriting the Surface node", () => {
     const registry = createStandardComponentRegistry();
     registry.register({

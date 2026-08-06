@@ -2,21 +2,24 @@
 
 A package-first, framework-agnostic conversational UI runtime. JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
-Milestones 1–3 implement the in-memory runtime, deterministic generator, Agent tools, React renderer, storage adapters, durable preference patches, and a controlled Tauri 2 host bridge. The core package has no React, storage, or Tauri dependency.
+Milestones 1–4 implement the runtime, deterministic generator, Agent tools, preferences, controlled Tauri bridge, and a language-neutral Component Pack Protocol. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, component-library, or Tauri dependency.
 
 ## Packages
 
-| Package                             | Responsibility                                                                                       |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `@package-first/core`               | Protocol types, component allow-list, Surface Store, Operations, events, and ActionIntent validation |
-| `@package-first/generator`          | Deterministic generation from a small JSON Schema subset                                             |
-| `@package-first/agent-tools`        | Portable JSON Schema tool definitions, validation, and handlers                                      |
-| `@package-first/preferences`        | Scoped preference composition, conflict detection, migration, and events                             |
-| `@package-first/renderer-react`     | Trusted React implementations and shared Store rendering                                             |
-| `@package-first/storage`            | LocalStorage, memory, and host-transport persistence adapters                                        |
-| `@package-first/tauri`              | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                    |
-| `@package-first/tea-purchase`       | Runnable Vite acceptance example                                                                     |
-| `@package-first/tea-purchase-tauri` | Runnable Tauri 2 desktop acceptance example                                                          |
+| Package                                    | Responsibility                                                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `@package-first/core`                      | Protocol types, component allow-list, Surface Store, Operations, events, and ActionIntent validation |
+| `@package-first/generator`                 | Deterministic generation from a small JSON Schema subset                                             |
+| `@package-first/agent-tools`               | Portable JSON Schema tool definitions, validation, and handlers                                      |
+| `@package-first/preferences`               | Scoped preference composition, conflict detection, migration, and events                             |
+| `@package-first/renderer-react`            | Trusted React implementations and shared Store rendering                                             |
+| `@package-first/protocol`                  | Standalone JSON Schema and language-neutral Component Pack specification                             |
+| `@package-first/component-pack-react-aria` | Accessible React Aria runtime bindings and styles                                                    |
+| `@package-first/component-pack-antd`       | Ant Design runtime bindings and ConfigProvider theme integration                                     |
+| `@package-first/storage`                   | LocalStorage, memory, and host-transport persistence adapters                                        |
+| `@package-first/tauri`                     | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                    |
+| `@package-first/tea-purchase`              | Runnable Vite acceptance example                                                                     |
+| `@package-first/tea-purchase-tauri`        | Runnable Tauri 2 desktop acceptance example                                                          |
 
 ## Development
 
@@ -29,10 +32,11 @@ pnpm build
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm verify:packages
 pnpm dev
 ```
 
-`pnpm dev` starts the tea-purchase example. It demonstrates multi-selection, a validated ActionIntent, schema-generated purchase form, shared chat/workspace state, and Agent-driven layout changes that preserve entered data.
+`pnpm dev` starts the tea-purchase example. Switch among `default`, `react-aria`, and `antd`; all views keep one Surface and Data Model. `pnpm verify:packages` packs the protocol, Core, React renderer, and both third-party Packs, installs them in a clean fixture, type-checks imports, and runs smoke tests.
 
 After installing the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/), validate or run the desktop example with:
 
@@ -45,34 +49,31 @@ pnpm build:tauri --no-bundle
 
 The desktop flow proves that Rust supplies tea results, both views share one Surface Store, Agent operations preserve form data, preferences survive through Tauri Store, session form values do not persist, and unknown semantic actions are rejected.
 
-## Register Trusted Components
+## Register a Component Pack
 
-The Core definition controls which component names, bindings, and actions may enter a Surface. React implementations are registered separately.
+Install only the bindings used by the host:
+
+```bash
+pnpm add @package-first/core @package-first/renderer-react react react-dom
+pnpm add @package-first/component-pack-react-aria react-aria-components
+# or
+pnpm add @package-first/component-pack-antd antd
+```
+
+The serializable Manifest and local React bindings are separate. Registering a Pack adds its trusted semantic schemas to Core, while the binding stays in the React package.
 
 ```tsx
 import { createStandardComponentRegistry } from "@package-first/core";
-import {
-  createStandardReactComponentRegistry,
-  type RendererComponentProps,
-} from "@package-first/renderer-react";
+import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
+import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
+import "@package-first/component-pack-react-aria/styles.css";
 
 const components = createStandardComponentRegistry();
-components.register({
-  type: "TeaProductCard",
-  binding: { valueTypes: ["string"], semantics: ["productId"] },
-  actions: ["select", "preview"],
-});
-
 const reactComponents = createStandardReactComponentRegistry(components);
-reactComponents.register("TeaProductCard", (props: RendererComponentProps) => {
-  const value = typeof props.value === "string" ? props.value : null;
-  return (
-    <button onClick={() => props.onAction("select", { value })}>
-      {String(props.node.props.label ?? "Tea")}
-    </button>
-  );
-});
+reactComponents.registerPack(createReactAriaComponentPack({ locale: "en-US" }));
 ```
+
+Ant Design accepts host-only `ConfigProvider` options through `createAntDesignComponentPack({ theme, locale })`; those values never enter the Surface or Manifest. See [Component Pack authoring](docs/component-pack-authoring.md) for custom semantic components and fallback.
 
 ## Create and Render a Surface
 
@@ -113,6 +114,9 @@ export function Profile() {
       store={store}
       componentRegistry={components}
       reactComponents={reactComponents}
+      preferredPack="react-aria"
+      enabledPackIds={["react-aria", "default"]}
+      capabilities={["web"]}
       onActionIntent={(intent) => hostActionExecutor.execute(intent)}
     />
   );
@@ -134,6 +138,8 @@ if (!result.ok) {
   console.error(result.error.code, result.error.message);
 }
 ```
+
+Call `ui.inspectComponentPacks` to give an Agent the current semantic component schemas, capabilities, fallback, renderer/pack identifiers, and concise `agentGuidance`. The result is JSON-only and never exposes React components or vendor APIs.
 
 `ui.applyOperations` and `ui.replaceSurface` are session-only overrides: they update the Surface Store but never persist user preferences. Use the separate async preference runtime for confirmed long-term changes.
 
@@ -196,4 +202,4 @@ desktop.actionExecutor.register("tea.search", async ({ intent, invoke }) => ({
 
 The security chain is: trusted component emits an `ActionIntent` → semantic action allow-list validates it → host handler selects a fixed command → Tauri capability authorizes that command → Rust validates the payload. A capability descriptor is UI discovery metadata, not authorization. The example grants only its two application commands and the Store operations it uses; it does not grant shell, filesystem, HTTP, or arbitrary command access, and its CSP permits only bundled assets, IPC, and the local Vite development endpoint.
 
-See the [Milestone 3 summary](docs/milestone-3-summary.md), [Milestone 2 decisions](docs/milestone-2-decisions.md), [Milestone 1 decisions](docs/milestone-1-decisions.md), and the [architecture baseline](docs/dynamic-ui-architecture.md) for protocol boundaries and explicit non-goals.
+See the [wire protocol](protocol/component-pack-protocol.md), [Component Pack authoring guide](docs/component-pack-authoring.md), [migration guide](docs/component-pack-migration.md), [Milestone 4 summary](docs/milestone-4-summary.md), and [architecture baseline](docs/dynamic-ui-architecture.md).

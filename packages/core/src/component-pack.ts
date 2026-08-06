@@ -562,12 +562,23 @@ export class ComponentPackResolver {
         const component = pack.components.find(
           (item) => item.semanticType === semanticType,
         );
+        const supportedVersions = request.supportedPackVersions?.[pack.id];
+        const versionAccepted =
+          supportedVersions === undefined ||
+          supportedVersions.includes(pack.version);
         const packAccepted = supportsCapabilities(pack.capabilities, available);
         const componentAccepted = supportsCapabilities(
           component?.capabilities,
           available,
         );
-        if (!packAccepted) {
+        if (!versionAccepted) {
+          diagnostics.push({
+            code: "PACK_VERSION_INCOMPATIBLE",
+            message: `Pack "${pack.id}" version "${pack.version}" is not accepted by this host`,
+            packId: pack.id,
+            semanticType,
+          });
+        } else if (!packAccepted) {
           diagnostics.push({
             code: "PACK_CAPABILITY_MISMATCH",
             message: `Pack "${pack.id}" requires unavailable capabilities`,
@@ -582,7 +593,7 @@ export class ComponentPackResolver {
             semanticType,
           });
         }
-        return packAccepted && componentAccepted;
+        return versionAccepted && packAccepted && componentAccepted;
       });
       const preferred =
         request.preferredPack === undefined

@@ -448,6 +448,40 @@
         }
       }
     },
+    "preferenceConflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "patchId",
+        "surfaceId",
+        "code",
+        "targetStableId",
+        "message"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "patchId": { "type": "string", "minLength": 1 },
+        "surfaceId": { "type": "string", "minLength": 1 },
+        "code": {
+          "enum": [
+            "TARGET_MISSING",
+            "SCHEMA_VERSION_MISMATCH",
+            "ALIAS_AMBIGUOUS",
+            "HARD_CONSTRAINT",
+            "INVALID_OPERATION"
+          ]
+        },
+        "targetStableId": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 },
+        "schemaRef": { "$ref": "#/$defs/schemaRef" },
+        "suggestedStableIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
     "uiEvent": {
       "oneOf": [
         {
@@ -528,17 +562,49 @@
         },
         {
           "type": "object",
-          "required": ["type", "sequence"],
+          "additionalProperties": false,
+          "required": ["type", "sequence", "preference"],
           "properties": {
-            "type": {
-              "enum": [
-                "preference.saved",
-                "preference.migrated",
-                "preference.discarded",
-                "preference.conflicted"
-              ]
-            },
-            "sequence": { "type": "integer", "minimum": 1 }
+            "type": { "const": "preference.saved" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "preference": { "$ref": "#/$defs/preferencePatch" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "sequence",
+            "preference",
+            "previousTargetStableId"
+          ],
+          "properties": {
+            "type": { "const": "preference.migrated" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "preference": { "$ref": "#/$defs/preferencePatch" },
+            "previousTargetStableId": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sequence", "preferenceId"],
+          "properties": {
+            "type": { "const": "preference.discarded" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "preferenceId": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sequence", "surfaceId", "conflict"],
+          "properties": {
+            "type": { "const": "preference.conflicted" },
+            "sequence": { "type": "integer", "minimum": 1 },
+            "surfaceId": { "type": "string", "minLength": 1 },
+            "conflict": { "$ref": "#/$defs/preferenceConflict" }
           }
         }
       ]

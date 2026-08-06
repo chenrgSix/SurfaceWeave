@@ -19,7 +19,8 @@
     "lint:format": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "verify:packages": "node scripts/verify-package-tarballs.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

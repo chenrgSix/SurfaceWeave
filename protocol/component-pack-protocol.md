@@ -4,6 +4,8 @@
 
 This document is the language- and framework-independent definition of the Dynamic UI wire contract. The normative machine-readable artifact is [`schemas/dynamic-ui-wire.schema.json`](schemas/dynamic-ui-wire.schema.json), using JSON Schema Draft 2020-12. TypeScript types in `@package-first/core` are a reference implementation, not the protocol definition.
 
+Both files are also published without runtime dependencies as `@package-first/protocol`; JSON consumers can load the Schema from the `@package-first/protocol/schema` export.
+
 The protocol covers `Surface`, `UINode`, `DataBinding`, semantic operations, UI events, `ActionIntent`, preferences, and Component Pack Manifests. Every value crossing a trust boundary is JSON. Implementations in Rust, Java, Dart, Python, or another language can validate and process these documents without installing any JavaScript package.
 
 ## Three-layer Boundary
@@ -31,7 +33,7 @@ A `ComponentPackManifest` declares:
 - a semantic fallback;
 - short, non-authoritative Agent guidance.
 
-Resolution filters by `rendererKind`, locally installed bindings, terminal capabilities, Surface or host `preferredPack`, and developer priority. Ties are resolved deterministically by priority, pack id, and version. An incompatible preferred pack produces a diagnostic. Fallback chains are semantic, must terminate, and must not contain cycles.
+Resolution filters by `rendererKind`, locally installed bindings, terminal capabilities, Surface or host `preferredPack`, host-accepted Pack versions, and developer priority. Ties are resolved deterministically by priority, pack id, and version. An incompatible preferred Pack or version produces a diagnostic. Fallback chains are semantic, must terminate, and must not contain cycles.
 
 Developer hard constraints apply to the semantic Surface before rendering. A pack cannot relax them because pack resolution never changes the stored semantic component.
 

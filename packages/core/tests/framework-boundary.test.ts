@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -24,5 +24,24 @@ describe("Core framework boundary", () => {
       buildConfig.compilerOptions?.lib?.some((name) => /dom/i.test(name)),
     ).toBe(false);
     expect(fileURLToPath(packageRoot)).toContain("packages/core");
+  });
+
+  it("does not leak framework, JSX, or DOM types through source or declarations", () => {
+    const packageRoot = new URL("../", import.meta.url);
+    const files = ["src", "dist"].flatMap((directory) => {
+      const directoryUrl = new URL(`${directory}/`, packageRoot);
+      if (!existsSync(directoryUrl)) return [];
+      return readdirSync(directoryUrl)
+        .filter((file) => /\.(?:ts|d\.ts)$/.test(file))
+        .map((file) => new URL(file, directoryUrl));
+    });
+    const source = files.map((file) => readFileSync(file, "utf8")).join("\n");
+
+    expect(source).not.toMatch(
+      /from ["'](?:react|react-dom|react-aria-components|antd|@tauri-apps)/,
+    );
+    expect(source).not.toMatch(
+      /\b(?:ReactNode|JSX\.|HTMLElement|MouseEvent|KeyboardEvent)\b/,
+    );
   });
 });

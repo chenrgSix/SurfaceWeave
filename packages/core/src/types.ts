@@ -349,6 +349,7 @@ export interface ComponentPackManifest {
 
 export type ComponentPackDiagnosticCode =
   | "PREFERRED_PACK_UNAVAILABLE"
+  | "PACK_VERSION_INCOMPATIBLE"
   | "PACK_CAPABILITY_MISMATCH"
   | "COMPONENT_CAPABILITY_MISMATCH"
   | "FALLBACK_APPLIED";
@@ -366,6 +367,8 @@ export interface ComponentResolutionRequest {
   preferredPack?: string;
   capabilities?: string[];
   packPriorities?: Record<string, number>;
+  /** Optional exact versions accepted by this host for specific pack ids. */
+  supportedPackVersions?: Record<string, string[]>;
   /** Runtime registries use this to exclude manifests without local bindings. */
   availablePackIds?: string[];
 }

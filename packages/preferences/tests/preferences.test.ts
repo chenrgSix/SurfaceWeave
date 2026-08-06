@@ -1,6 +1,8 @@
 import {
+  ComponentPackResolver,
   applyOperationsToSurface,
   createStandardComponentRegistry,
+  standardComponentManifests,
   type PreferenceDocument,
   type PreferenceEvent,
   type PreferencePatch,
@@ -164,6 +166,54 @@ describe("PreferenceService", () => {
       "Temporary Agent override",
     );
     expect(service.listPreferences()).toEqual(before);
+  });
+
+  it("keeps applied preference patches and data when the renderer pack changes", async () => {
+    const { registry, service } = await createService([
+      {
+        id: "collapse-remark",
+        scope: "global",
+        targetStableId: "purchase.remark",
+        operation: {
+          type: "setProps",
+          target: "purchase.remark",
+          props: { collapsed: true },
+        },
+      },
+    ]);
+    const textInput = standardComponentManifests.find(
+      (component) => component.semanticType === "TextInput",
+    );
+    expect(textInput).toBeDefined();
+    for (const id of ["plain", "material"] as const) {
+      registry.registerPack({
+        protocolVersion: "1.0",
+        id,
+        version: "1.0.0",
+        rendererKind: "fake",
+        components: [textInput!],
+      });
+    }
+    const personalized = service.applyPreferences(defaultSurface()).surface;
+    const resolver = new ComponentPackResolver(registry);
+
+    expect(
+      resolver.resolve({
+        semanticType: "TextInput",
+        rendererKind: "fake",
+        preferredPack: "plain",
+      }).packId,
+    ).toBe("plain");
+    expect(
+      resolver.resolve({
+        semanticType: "TextInput",
+        rendererKind: "fake",
+        preferredPack: "material",
+      }).packId,
+    ).toBe("material");
+    expect(personalized.tree.children?.[0]?.props.collapsed).toBe(true);
+    expect(personalized.data).toEqual({ remark: "Keep dry" });
+    expect(service.listPreferences()).toHaveLength(1);
   });
 
   it("detects schema aliases and persists only an explicit migration", async () => {

@@ -1,0 +1,16 @@
+{
+  "name": "@package-first/protocol",
+  "version": "0.4.0",
+  "description": "Language-neutral JSON wire protocol for Package First Dynamic UI",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "component-pack-protocol.md",
+    "schemas"
+  ],
+  "exports": {
+    ".": "./schemas/dynamic-ui-wire.schema.json",
+    "./schema": "./schemas/dynamic-ui-wire.schema.json",
+    "./component-pack": "./component-pack-protocol.md"
+  }
+}

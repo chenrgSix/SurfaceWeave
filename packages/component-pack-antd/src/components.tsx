@@ -11,7 +11,6 @@ import {
   Image,
   Input,
   InputNumber,
-  List,
   Modal,
   Select,
   Space,
@@ -277,24 +276,25 @@ export function AntCard({
     Array.isArray(value) ? value.map(String) : [String(value ?? "")],
   );
   return (
-    <List
-      header={
-        <Typography.Title level={4}>
-          {stringProp(node.props, "title")}
-        </Typography.Title>
-      }
-      dataSource={items}
-      renderItem={(item, index) => {
-        const itemValue = valueForItem(item, index);
-        const key = String(itemValue);
-        return (
-          <List.Item key={key}>
-            <Card
-              size="small"
-              style={{ width: "100%" }}
-              actions={[
+    <section aria-label={stringProp(node.props, "title", "Items")}>
+      <Typography.Title level={4}>
+        {stringProp(node.props, "title")}
+      </Typography.Title>
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        }}
+      >
+        {items.map((item, index) => {
+          const itemValue = valueForItem(item, index);
+          const key = String(itemValue);
+          return (
+            <Card size="small" key={key}>
+              <Space orientation="vertical">
+                <Typography.Text>{labelForItem(item, index)}</Typography.Text>
                 <Button
-                  key="select"
                   type={selected.has(key) ? "primary" : "default"}
                   aria-pressed={selected.has(key)}
                   onClick={() => {
@@ -308,15 +308,13 @@ export function AntCard({
                   }}
                 >
                   {selected.has(key) ? "Selected" : "Select"}
-                </Button>,
-              ]}
-            >
-              {labelForItem(item, index)}
+                </Button>
+              </Space>
             </Card>
-          </List.Item>
-        );
-      }}
-    />
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

@@ -43,6 +43,16 @@ flowchart TD
 
 Agent 不直接生产底层事件，也不直接执行组件动作。
 
+### Component Pack Protocol（Milestone 4）
+
+组件系统分为三个不可混合的层次：
+
+1. `@package-first/protocol` 提供语言无关的 JSON Wire Protocol 和 Draft 2020-12 JSON Schema；
+2. `ComponentPackManifest` 是可序列化组件能力、Schema、fallback 和 Agent 提示；
+3. `ReactComponentPack` 等 Runtime Binding 才包含本地框架组件与 Provider。
+
+TypeScript Core 是参考实现，不是协议定义。Surface 只保存 `TextInput`、`ChoiceField`、`Card` 等语义类型；切换 `react/default`、`react/react-aria`、`react/antd`，以及未来的 `vue/element-plus` 或 `flutter/material` 时，不改写 Surface、DataBinding、`stableId` 或 Preference Patch。Renderer 只能启用宿主明确许可且能力兼容的 Pack；缺少业务组件实现时沿语义 fallback 降级。
+
 ## 三、建议包结构
 
 | 包                               | 职责                                |
@@ -54,6 +64,8 @@ Agent 不直接生产底层事件，也不直接执行组件动作。
 | `@scope/dynamic-ui-storage`     | Memory、LocalStorage 和自定义后端存储接口    |
 | `@scope/dynamic-ui-tauri`       | Tauri Action Executor、Store 与事件桥接 |
 | `@scope/dynamic-ui-devtools`    | 查看 Surface、Operations、事件和偏好应用过程   |
+
+当前仓库还提供 `@package-first/protocol`、`@package-first/component-pack-react-aria` 和 `@package-first/component-pack-antd`。第三方 UI 库只存在于各自 Pack 的 peer/dev dependencies；Core 不依赖 React、DOM、Tauri 或任何组件库。
 
 核心包不依赖 React、Tauri 或特定 Agent SDK。
 
@@ -183,9 +195,13 @@ registry.register({
 
 Agent 只能组合已注册组件，不能生成 React 代码。
 
+Manifest 由 `validateComponentPack` 校验，Runtime Binding 由对应 Renderer 校验。解析顺序考虑 `rendererKind`、宿主启用列表、终端 capabilities、`preferredPack`、开发者优先级、宿主接受的 Pack 版本和 fallback 链，并为不兼容选择产生诊断。`agentGuidance` 只帮助 Agent 选择语义组件，不能覆盖 JSON Schema、hard constraints、安全策略或 ActionIntent 执行规则。厂商特性只能进入带 namespace、版本和 JSON Schema 的 `extensions`；默认 Generator 和 Agent 不主动生成这些扩展。
+
 ## 七、Agent UI Tools
 
 建议提供四个主要工具。
+
+Milestone 4 额外提供 `ui.inspectComponentPacks`，只返回可序列化的语义组件目录和 Manifest，不返回 React 绑定或第三方库 API。
 
 ### `ui.createSurface`
 

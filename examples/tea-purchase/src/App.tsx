@@ -62,7 +62,7 @@ export function App() {
   return (
     <main>
       <header className="hero">
-        <p className="eyebrow">PACKAGE-FIRST · MILESTONE 1</p>
+        <p className="eyebrow">PACKAGE-FIRST · MILESTONE 4</p>
         <h1>对话式动态 UI SDK</h1>
         <p>
           Tool Schema 生成可信 Surface，业务 Agent 只发送语义

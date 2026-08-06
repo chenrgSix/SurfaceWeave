@@ -74,4 +74,29 @@ describe("language-independent wire schema", () => {
       }),
     ).toBe(false);
   });
+
+  it("fully validates preference events instead of accepting partial envelopes", () => {
+    const ajv = new Ajv2020({ strict: true, validateFormats: false });
+    ajv.addSchema(wireSchema);
+    const validate = ajv.getSchema(
+      "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/uiEvent",
+    );
+    const event = {
+      type: "preference.saved",
+      sequence: 1,
+      preference: {
+        id: "collapse-remark",
+        scope: "global",
+        targetStableId: "purchase.remark",
+        operation: {
+          type: "setProps",
+          target: "purchase.remark",
+          props: { collapsed: true },
+        },
+      },
+    };
+
+    expect(validate?.(event)).toBe(true);
+    expect(validate?.({ type: "preference.saved", sequence: 1 })).toBe(false);
+  });
 });
