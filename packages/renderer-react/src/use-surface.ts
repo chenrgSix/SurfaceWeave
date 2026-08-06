@@ -1,4 +1,4 @@
-import type { Surface, SurfaceStore } from "@package-first/core";
+import type { Surface, SurfaceStore } from "@surfaceweave/core";
 import { useEffect, useState } from "react";
 
 /** React subscription adapter; multiple views receive the same committed Store state. */

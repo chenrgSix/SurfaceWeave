@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/component-pack-react-aria",
+  "name": "@surfaceweave/react-aria",
   "version": "0.4.0",
-  "description": "Accessible React Aria bindings for the Package First semantic UI protocol",
+  "description": "Accessible React Aria bindings for the SurfaceWeave semantic UI protocol",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -31,8 +31,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "^0.1.0",
-    "@package-first/renderer-react": "^0.1.0"
+    "@surfaceweave/core": "^0.1.0",
+    "@surfaceweave/react": "^0.1.0"
   },
   "peerDependencies": {
     "react": ">=18.2.0 <20",

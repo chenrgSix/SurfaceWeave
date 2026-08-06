@@ -1,4 +1,4 @@
-import { createStandardComponentRegistry } from "@package-first/core";
+import { createStandardComponentRegistry } from "@surfaceweave/core";
 import { describe, expect, it } from "vitest";
 
 import { generateResultSurface } from "../src/index.js";

@@ -1,16 +1,16 @@
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
-} from "@package-first/core";
-import type { PreferenceDocument } from "@package-first/core";
+} from "@surfaceweave/core";
+import type { PreferenceDocument } from "@surfaceweave/core";
 import {
   PreferenceRepository,
   PreferenceService,
-} from "@package-first/preferences";
+} from "@surfaceweave/preferences";
 import {
   MemoryStorageAdapter,
   StorageAdapterError,
-} from "@package-first/storage";
+} from "@surfaceweave/storage";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {

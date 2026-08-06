@@ -1,15 +1,15 @@
-import type { PreferenceDocument, PreferencePatch } from "@package-first/core";
-import { cloneValue } from "@package-first/core";
+import type { PreferenceDocument, PreferencePatch } from "@surfaceweave/core";
+import { cloneValue } from "@surfaceweave/core";
 import {
   parsePreferenceDocument,
   parsePreferencePatch,
-} from "@package-first/preferences";
+} from "@surfaceweave/preferences";
 import {
   StorageAdapterError,
   decodeStorageValue,
   encodeStorageValue,
-} from "@package-first/storage";
-import type { StorageAdapter } from "@package-first/storage";
+} from "@surfaceweave/storage";
+import type { StorageAdapter } from "@surfaceweave/storage";
 import { load as loadTauriStore } from "@tauri-apps/plugin-store";
 
 export interface TauriStoreLike {

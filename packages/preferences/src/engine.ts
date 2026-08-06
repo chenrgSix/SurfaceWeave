@@ -3,7 +3,7 @@ import {
   applyOperationsToSurface,
   cloneValue,
   walkNodes,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   DeveloperHardConstraints,
@@ -18,7 +18,7 @@ import type {
   UINode,
   UIOperation,
   UIConstraintAspect,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 import type { PreferenceRepository } from "./repository.js";
 import type {

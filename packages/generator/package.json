@@ -1,5 +1,5 @@
 {
-  "name": "@package-first/generator",
+  "name": "@surfaceweave/generator",
   "version": "0.1.0",
   "description": "Deterministic schema-driven Surface generator",
   "license": "UNLICENSED",
@@ -27,6 +27,6 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "^0.1.0"
+    "@surfaceweave/core": "^0.1.0"
   }
 }

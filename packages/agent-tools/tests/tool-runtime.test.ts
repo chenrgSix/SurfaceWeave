@@ -4,7 +4,7 @@ import {
   type ActionIntent,
   type ToolRuntimeEvent,
   type ToolSubmissionRequest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import { describe, expect, it, vi } from "vitest";
 
 import { ToolToUIRuntime } from "../src/index.js";

@@ -3,11 +3,11 @@ import {
   DynamicUIError,
   cloneValue,
   parseComponentPackManifest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   ComponentResolutionRequest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 import type {
   ReactComponentPack,

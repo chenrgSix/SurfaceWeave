@@ -3,13 +3,13 @@
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
-} from "@package-first/core";
-import type { ActionIntent } from "@package-first/core";
+} from "@surfaceweave/core";
+import type { ActionIntent } from "@surfaceweave/core";
 import {
   SurfaceRenderer,
   createStandardReactComponentRegistry,
   validateReactComponentPack,
-} from "@package-first/renderer-react";
+} from "@surfaceweave/react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";

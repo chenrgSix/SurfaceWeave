@@ -9,13 +9,13 @@ import type {
   UINode,
   UIOperation,
   UIIntent,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   DeveloperUIConfiguration,
   FieldMetadata,
   GeneratorMetadata,
   SimpleJsonSchema,
-} from "@package-first/generator";
+} from "@surfaceweave/generator";
 
 import type {
   ApplyOperationsToolInput,

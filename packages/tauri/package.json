@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/tauri",
+  "name": "@surfaceweave/tauri",
   "version": "0.3.0",
-  "description": "Controlled Tauri 2 adapters for Package First Dynamic UI",
+  "description": "Controlled Tauri 2 adapters for SurfaceWeave",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,9 +27,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "^0.1.0",
-    "@package-first/preferences": "^0.2.0",
-    "@package-first/storage": "^0.2.0",
+    "@surfaceweave/core": "^0.1.0",
+    "@surfaceweave/preferences": "^0.2.0",
+    "@surfaceweave/storage": "^0.2.0",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-store": "^2.4.0"
   }

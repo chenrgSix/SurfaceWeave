@@ -1,9 +1,9 @@
-import type { ComponentManifest, JsonValue } from "@package-first/core";
-import { componentManifestToDefinition } from "@package-first/core";
+import type { ComponentManifest, JsonValue } from "@surfaceweave/core";
+import { componentManifestToDefinition } from "@surfaceweave/core";
 import type {
   ReactComponentPack,
   RendererComponentProps,
-} from "@package-first/renderer-react";
+} from "@surfaceweave/react";
 
 /** Cross-framework semantic declaration; renderers may bind or fall back from it. */
 export const teaProductCardManifest: ComponentManifest = {

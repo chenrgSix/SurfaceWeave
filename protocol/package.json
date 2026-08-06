@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/protocol",
+  "name": "@surfaceweave/protocol",
   "version": "0.4.0",
-  "description": "Language-neutral JSON wire protocol for Package First Dynamic UI",
+  "description": "Language-neutral JSON wire protocol for SurfaceWeave",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./schemas/dynamic-ui-wire.schema.json",

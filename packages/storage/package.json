@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/storage",
+  "name": "@surfaceweave/storage",
   "version": "0.2.0",
-  "description": "Pluggable JSON storage adapters for Package First Dynamic UI",
+  "description": "Pluggable JSON storage adapters for SurfaceWeave",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",

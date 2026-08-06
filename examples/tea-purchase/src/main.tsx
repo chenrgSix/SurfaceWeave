@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App.js";
-import "@package-first/component-pack-react-aria/styles.css";
+import "@surfaceweave/react-aria/styles.css";
 import "./styles.css";
 
 const root = document.getElementById("root");

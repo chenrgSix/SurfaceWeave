@@ -19,10 +19,10 @@ describe("language-independent wire schema", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const manifestValidator = ajv.getSchema(
-      "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/componentPackManifest",
+      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/componentPackManifest",
     );
     const surfaceValidator = ajv.getSchema(
-      "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
+      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
     );
     expect(manifestValidator).toBeTypeOf("function");
     expect(surfaceValidator).toBeTypeOf("function");
@@ -57,7 +57,7 @@ describe("language-independent wire schema", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const validate = ajv.getSchema(
-      "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
+      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/surface",
     );
     expect(
       validate?.({
@@ -79,7 +79,7 @@ describe("language-independent wire schema", () => {
     const ajv = new Ajv2020({ strict: true, validateFormats: false });
     ajv.addSchema(wireSchema);
     const validate = ajv.getSchema(
-      "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/uiEvent",
+      "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json#/$defs/uiEvent",
     );
     const event = {
       type: "preference.saved",

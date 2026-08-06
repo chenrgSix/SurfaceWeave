@@ -1,4 +1,4 @@
-import type { PreferenceDocument, PreferencePatch } from "@package-first/core";
+import type { PreferenceDocument, PreferencePatch } from "@surfaceweave/core";
 import { describe, expect, it } from "vitest";
 
 import {

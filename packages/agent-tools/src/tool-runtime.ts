@@ -6,7 +6,7 @@ import {
   cloneValue,
   migrateSurfaceData,
   readDataPath,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   ActionError,
   ActionIntent,
@@ -24,12 +24,12 @@ import type {
   ToolRegistry,
   ToolRuntimeEvent,
   ToolSubmissionRequest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import {
   generateResultSurface,
   generateSurface,
   generateToolSurface,
-} from "@package-first/generator";
+} from "@surfaceweave/generator";
 
 export interface CreateToolSurfaceInput {
   toolId: string;

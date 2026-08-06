@@ -1,5 +1,5 @@
 {
-  "name": "@package-first/preferences",
+  "name": "@surfaceweave/preferences",
   "version": "0.2.0",
   "description": "Structured preference repository and personalization engine",
   "license": "UNLICENSED",
@@ -27,7 +27,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "^0.1.0",
-    "@package-first/storage": "^0.2.0"
+    "@surfaceweave/core": "^0.1.0",
+    "@surfaceweave/storage": "^0.2.0"
   }
 }

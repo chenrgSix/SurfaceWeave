@@ -14,7 +14,7 @@ import process from "node:process";
 import { releasePackages } from "./release-packages.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
-const fixtureRoot = mkdtempSync(join(tmpdir(), "package-first-consumers-"));
+const fixtureRoot = mkdtempSync(join(tmpdir(), "surfaceweave-consumers-"));
 const tarballDirectory = join(fixtureRoot, "tarballs");
 mkdirSync(tarballDirectory);
 
@@ -81,7 +81,7 @@ function verifyFixture(tarballs, fixture) {
   );
   Object.assign(dependencies, fixture.dependencies ?? {});
   writeJson(join(directory, "package.json"), {
-    name: `package-first-${fixture.name}`,
+    name: `surfaceweave-${fixture.name}`,
     private: true,
     type: "module",
     dependencies,
@@ -107,16 +107,16 @@ function verifyFixture(tarballs, fixture) {
     ["install", "--ignore-scripts", "--no-audit", "--no-fund"],
     directory,
   );
-  const installedScope = join(directory, "node_modules", "@package-first");
+  const installedScope = join(directory, "node_modules", "@surfaceweave");
   const installed = existsSync(installedScope)
     ? readdirSync(installedScope).sort()
     : [];
   const expected = fixture.packages
-    .map((name) => name.replace("@package-first/", ""))
+    .map((name) => name.replace("@surfaceweave/", ""))
     .sort();
   if (JSON.stringify(installed) !== JSON.stringify(expected)) {
     throw new Error(
-      `${fixture.name}: installed Package First packages ${installed.join(", ")}; expected ${expected.join(", ")}`,
+      `${fixture.name}: installed SurfaceWeave packages ${installed.join(", ")}; expected ${expected.join(", ")}`,
     );
   }
   run("npm", ["exec", "tsc", "--", "-p", "tsconfig.json"], directory);
@@ -140,22 +140,22 @@ const react = {
 const fixtures = [
   {
     name: "protocol",
-    packages: ["@package-first/protocol"],
+    packages: ["@surfaceweave/protocol"],
     dependencies: typescript,
-    consumer: `import schema from "@package-first/protocol/schema" with { type: "json" };
+    consumer: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
 const dialect: string = schema.$schema;
 void dialect;
 `,
-    smoke: `import schema from "@package-first/protocol/schema" with { type: "json" };
+    smoke: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
 if (schema.$schema !== "https://json-schema.org/draft/2020-12/schema") throw new Error("protocol");
 `,
   },
   {
     name: "core-only",
-    packages: ["@package-first/core"],
+    packages: ["@surfaceweave/core"],
     dependencies: typescript,
-    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@package-first/core";
-import type { ActionIntent, Surface, ToolDefinition, UINode } from "@package-first/core";
+    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+import type { ActionIntent, Surface, ToolDefinition, UINode } from "@surfaceweave/core";
 const node: UINode = { id: "root", component: "Stack", props: {} };
 const surface: Surface = { id: "surface", revision: 0, intent: "form", tree: node, data: {}, context: {} };
 const tool: ToolDefinition = { id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } };
@@ -163,12 +163,12 @@ const intent: ActionIntent = { id: "intent", surfaceId: surface.id, nodeId: node
 const store = new InMemorySurfaceStore(createStandardComponentRegistry());
 void [tool, intent, store];
 `,
-    smoke: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@package-first/core";
+    smoke: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 const registry = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(registry);
 if (store.getSurface("missing") !== undefined) throw new Error("core");
 try {
-  await import("@package-first/core/types");
+  await import("@surfaceweave/core/types");
   throw new Error("internal Core subpath was exported");
 } catch (error) {
   if (error?.code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw error;
@@ -177,19 +177,19 @@ try {
   },
   {
     name: "react-default",
-    packages: ["@package-first/core", "@package-first/renderer-react"],
+    packages: ["@surfaceweave/core", "@surfaceweave/react"],
     dependencies: react,
-    consumer: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createDefaultReactComponentPack, createStandardReactComponentRegistry } from "@package-first/renderer-react";
-import type { ReactComponentPack, SurfaceRendererProps } from "@package-first/renderer-react";
+    consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createDefaultReactComponentPack, createStandardReactComponentRegistry } from "@surfaceweave/react";
+import type { ReactComponentPack, SurfaceRendererProps } from "@surfaceweave/react";
 const registry = createStandardComponentRegistry();
 const pack: ReactComponentPack = createDefaultReactComponentPack();
 const renderer = createStandardReactComponentRegistry(registry);
 const props = {} as SurfaceRendererProps;
 void [pack, renderer, props];
 `,
-    viteEntry: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
+    viteEntry: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 const runtime = createStandardReactComponentRegistry(createStandardComponentRegistry());
 document.querySelector("#app").textContent = runtime.listPacks()[0].id;
 `,
@@ -197,21 +197,21 @@ document.querySelector("#app").textContent = runtime.listPacks()[0].id;
   {
     name: "react-aria-only",
     packages: [
-      "@package-first/core",
-      "@package-first/renderer-react",
-      "@package-first/component-pack-react-aria",
+      "@surfaceweave/core",
+      "@surfaceweave/react",
+      "@surfaceweave/react-aria",
     ],
     dependencies: { ...react, "react-aria-components": "1.20.0" },
-    consumer: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
-import { validateReactComponentPack } from "@package-first/renderer-react";
+    consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
+import { validateReactComponentPack } from "@surfaceweave/react";
 const registry = createStandardComponentRegistry();
 const result: boolean = validateReactComponentPack(createReactAriaComponentPack(), registry).valid;
 void result;
 `,
-    viteEntry: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
+    viteEntry: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 const runtime = createStandardReactComponentRegistry(createStandardComponentRegistry());
 runtime.registerPack(createReactAriaComponentPack());
 document.querySelector("#app").textContent = runtime.listPacks().map((pack) => pack.id).join(",");
@@ -220,21 +220,21 @@ document.querySelector("#app").textContent = runtime.listPacks().map((pack) => p
   {
     name: "antd-only",
     packages: [
-      "@package-first/core",
-      "@package-first/renderer-react",
-      "@package-first/component-pack-antd",
+      "@surfaceweave/core",
+      "@surfaceweave/react",
+      "@surfaceweave/antd",
     ],
     dependencies: { ...react, antd: "6.5.3" },
-    consumer: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
-import { validateReactComponentPack } from "@package-first/renderer-react";
+    consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createAntDesignComponentPack } from "@surfaceweave/antd";
+import { validateReactComponentPack } from "@surfaceweave/react";
 const registry = createStandardComponentRegistry();
 const result: boolean = validateReactComponentPack(createAntDesignComponentPack(), registry).valid;
 void result;
 `,
-    viteEntry: `import { createStandardComponentRegistry } from "@package-first/core";
-import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
+    viteEntry: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createAntDesignComponentPack } from "@surfaceweave/antd";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 const runtime = createStandardReactComponentRegistry(createStandardComponentRegistry());
 runtime.registerPack(createAntDesignComponentPack());
 document.querySelector("#app").textContent = runtime.listPacks().map((pack) => pack.id).join(",");
@@ -243,16 +243,16 @@ document.querySelector("#app").textContent = runtime.listPacks().map((pack) => p
   {
     name: "tool-runtime",
     packages: [
-      "@package-first/core",
-      "@package-first/storage",
-      "@package-first/preferences",
-      "@package-first/generator",
-      "@package-first/agent-tools",
+      "@surfaceweave/core",
+      "@surfaceweave/storage",
+      "@surfaceweave/preferences",
+      "@surfaceweave/generator",
+      "@surfaceweave/agent-tools",
     ],
     dependencies: typescript,
-    consumer: `import { ToolToUIRuntime } from "@package-first/agent-tools";
-import { InMemorySurfaceStore, createStandardComponentRegistry } from "@package-first/core";
-import type { ToolDefinition, ToolSubmissionRequest } from "@package-first/core";
+    consumer: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+import type { ToolDefinition, ToolSubmissionRequest } from "@surfaceweave/core";
 const definition: ToolDefinition = { id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } };
 const components = createStandardComponentRegistry();
 const runtime = new ToolToUIRuntime(components, new InMemorySurfaceStore(components));
@@ -260,8 +260,8 @@ runtime.registerTool(definition);
 runtime.onInvocationRequested((request: ToolSubmissionRequest) => void request);
 runtime.createToolSurface({ toolId: definition.id, surfaceId: "tea-search" });
 `,
-    smoke: `import { ToolToUIRuntime } from "@package-first/agent-tools";
-import { InMemorySurfaceStore, createStandardComponentRegistry } from "@package-first/core";
+    smoke: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 const components = createStandardComponentRegistry();
 const runtime = new ToolToUIRuntime(components, new InMemorySurfaceStore(components));
 runtime.registerTool({ id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } });
@@ -271,18 +271,18 @@ if (runtime.createToolSurface({ toolId: "tea.search", surfaceId: "tea-search" })
   {
     name: "tauri-adapter",
     packages: [
-      "@package-first/core",
-      "@package-first/storage",
-      "@package-first/preferences",
-      "@package-first/tauri",
+      "@surfaceweave/core",
+      "@surfaceweave/storage",
+      "@surfaceweave/preferences",
+      "@surfaceweave/tauri",
     ],
     dependencies: { ...typescript, vite: "8.2.0" },
-    consumer: `import { createTauriDynamicUIAdapter } from "@package-first/tauri";
-import type { CreateTauriDynamicUIAdapterOptions, TauriDynamicUIAdapter } from "@package-first/tauri";
+    consumer: `import { createTauriDynamicUIAdapter } from "@surfaceweave/tauri";
+import type { CreateTauriDynamicUIAdapterOptions, TauriDynamicUIAdapter } from "@surfaceweave/tauri";
 const create: (options: CreateTauriDynamicUIAdapterOptions) => TauriDynamicUIAdapter = createTauriDynamicUIAdapter;
 void create;
 `,
-    viteEntry: `import { createTauriDynamicUIAdapter } from "@package-first/tauri";
+    viteEntry: `import { createTauriDynamicUIAdapter } from "@surfaceweave/tauri";
 globalThis.createTauriDynamicUIAdapter = createTauriDynamicUIAdapter;
 document.querySelector("#app").textContent = "tauri-adapter-bundled";
 `,

@@ -1,4 +1,4 @@
-import type { ReactComponentPack } from "@package-first/renderer-react";
+import type { ReactComponentPack } from "@surfaceweave/react";
 import { I18nProvider } from "react-aria-components";
 
 import {

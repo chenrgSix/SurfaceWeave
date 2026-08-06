@@ -1,5 +1,5 @@
-import { createStandardComponentRegistry } from "@package-first/core";
-import type { DynamicUIError } from "@package-first/core";
+import { createStandardComponentRegistry } from "@surfaceweave/core";
+import type { DynamicUIError } from "@surfaceweave/core";
 import { describe, expect, it } from "vitest";
 
 import { generateSurface } from "../src/index.js";

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://package-first.dev/schemas/dynamic-ui-wire-1.0.schema.json",
-  "title": "Package First Dynamic UI Wire Protocol 1.0",
+  "$id": "https://surfaceweave.dev/schemas/dynamic-ui-wire-1.0.schema.json",
+  "title": "SurfaceWeave Wire Protocol 1.0",
   "description": "Language- and framework-independent Dynamic UI wire documents.",
   "oneOf": [
     { "$ref": "#/$defs/surface" },

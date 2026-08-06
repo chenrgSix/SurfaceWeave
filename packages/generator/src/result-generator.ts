@@ -1,11 +1,11 @@
-import { cloneValue, validateSurface } from "@package-first/core";
+import { cloneValue, validateSurface } from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   JsonObject,
   JsonValue,
   Surface,
   UINode,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 import type { GenerateResultSurfaceInput, GeneratedSurface } from "./types.js";
 

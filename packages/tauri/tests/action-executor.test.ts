@@ -1,4 +1,4 @@
-import type { ActionIntent } from "@package-first/core";
+import type { ActionIntent } from "@surfaceweave/core";
 import { describe, expect, it, vi } from "vitest";
 
 import { TauriActionExecutor, type TauriInvoke } from "../src/index.js";

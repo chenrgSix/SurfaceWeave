@@ -1,6 +1,6 @@
-import { DynamicUIError, cloneValue } from "@package-first/core";
-import type { PreferenceDocument, PreferencePatch } from "@package-first/core";
-import type { StorageAdapter } from "@package-first/storage";
+import { DynamicUIError, cloneValue } from "@surfaceweave/core";
+import type { PreferenceDocument, PreferencePatch } from "@surfaceweave/core";
+import type { StorageAdapter } from "@surfaceweave/storage";
 
 import { parsePreferenceDocument, parsePreferencePatch } from "./validation.js";
 

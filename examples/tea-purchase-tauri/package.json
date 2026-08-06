@@ -1,5 +1,5 @@
 {
-  "name": "@package-first/tea-purchase-tauri",
+  "name": "@surfaceweave/tea-purchase-tauri",
   "version": "0.3.0",
   "private": true,
   "type": "module",
@@ -13,14 +13,14 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/agent-tools": "workspace:*",
-    "@package-first/component-pack-antd": "workspace:*",
-    "@package-first/core": "workspace:*",
-    "@package-first/generator": "workspace:*",
-    "@package-first/preferences": "workspace:*",
-    "@package-first/renderer-react": "workspace:*",
-    "@package-first/storage": "workspace:*",
-    "@package-first/tauri": "workspace:*",
+    "@surfaceweave/agent-tools": "workspace:*",
+    "@surfaceweave/antd": "workspace:*",
+    "@surfaceweave/core": "workspace:*",
+    "@surfaceweave/generator": "workspace:*",
+    "@surfaceweave/preferences": "workspace:*",
+    "@surfaceweave/react": "workspace:*",
+    "@surfaceweave/storage": "workspace:*",
+    "@surfaceweave/tauri": "workspace:*",
     "antd": "^6.5.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

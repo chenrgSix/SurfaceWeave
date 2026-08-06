@@ -7,8 +7,8 @@ import {
   type PreferenceEvent,
   type PreferencePatch,
   type Surface,
-} from "@package-first/core";
-import { MemoryStorageAdapter } from "@package-first/storage";
+} from "@surfaceweave/core";
+import { MemoryStorageAdapter } from "@surfaceweave/storage";
 import { describe, expect, it } from "vitest";
 
 import { PreferenceRepository, PreferenceService } from "../src/index.js";

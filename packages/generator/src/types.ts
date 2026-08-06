@@ -9,7 +9,7 @@ import type {
   SurfacePresentation,
   UIIntent,
   ToolDefinition,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 export type JsonSchemaType =
   "object" | "array" | "string" | "number" | "integer" | "boolean";

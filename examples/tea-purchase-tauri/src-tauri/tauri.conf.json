@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Dynamic UI Tea Purchase",
+  "productName": "SurfaceWeave Tea Purchase",
   "version": "0.3.0",
-  "identifier": "dev.package-first.tea-purchase",
+  "identifier": "dev.surfaceweave.tea-purchase",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://127.0.0.1:1421",

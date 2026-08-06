@@ -1,6 +1,6 @@
-import { DynamicUIError, cloneValue } from "@package-first/core";
-import type { PreferenceService } from "@package-first/preferences";
-import { StorageAdapterError } from "@package-first/storage";
+import { DynamicUIError, cloneValue } from "@surfaceweave/core";
+import type { PreferenceService } from "@surfaceweave/preferences";
+import { StorageAdapterError } from "@surfaceweave/storage";
 
 import { preferenceToolDefinitions } from "./definitions.js";
 import {

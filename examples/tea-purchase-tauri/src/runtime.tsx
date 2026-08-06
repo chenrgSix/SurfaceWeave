@@ -2,22 +2,22 @@ import {
   AgentUIToolRuntime,
   PreferenceAgentToolRuntime,
   ToolToUIRuntime,
-} from "@package-first/agent-tools";
-import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
+} from "@surfaceweave/agent-tools";
+import { createAntDesignComponentPack } from "@surfaceweave/antd";
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   readDataPath,
-} from "@package-first/core";
-import type { PreferenceDocument } from "@package-first/core";
-import { generateSurface } from "@package-first/generator";
+} from "@surfaceweave/core";
+import type { PreferenceDocument } from "@surfaceweave/core";
+import { generateSurface } from "@surfaceweave/generator";
 import {
   PreferenceRepository,
   PreferenceService,
-} from "@package-first/preferences";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
-import { MemoryStorageAdapter } from "@package-first/storage";
-import { createTauriDynamicUIAdapter } from "@package-first/tauri";
+} from "@surfaceweave/preferences";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { MemoryStorageAdapter } from "@surfaceweave/storage";
+import { createTauriDynamicUIAdapter } from "@surfaceweave/tauri";
 
 import {
   MockTeaHostExecutor,

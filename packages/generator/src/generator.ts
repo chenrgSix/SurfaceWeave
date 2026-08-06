@@ -4,7 +4,7 @@ import {
   readDataPath,
   validateSurface,
   writeDataPath,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   BindingValueType,
   ComponentRegistry,
@@ -14,7 +14,7 @@ import type {
   JsonValue,
   Surface,
   UINode,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 import type {
   FieldMetadata,

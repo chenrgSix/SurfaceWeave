@@ -1,8 +1,8 @@
 {
-  "name": "package-first-dynamic-ui",
+  "name": "surfaceweave",
   "version": "0.0.0",
   "private": true,
-  "description": "Package-first, framework-agnostic conversational dynamic UI SDK",
+  "description": "A protocol-first runtime for agent-generated, tool-driven UI",
   "type": "module",
   "packageManager": "pnpm@10.34.4",
   "engines": {
@@ -10,10 +10,10 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
-    "build:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:build",
-    "check:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:check",
-    "dev": "pnpm --filter @package-first/tea-purchase dev",
-    "dev:tauri": "pnpm --filter @package-first/tea-purchase-tauri tauri:dev",
+    "build:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:build",
+    "check:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:check",
+    "dev": "pnpm --filter @surfaceweave/tea-purchase dev",
+    "dev:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:dev",
     "lint": "pnpm lint:code && pnpm lint:format",
     "lint:code": "eslint . --max-warnings 0",
     "lint:format": "prettier --check .",

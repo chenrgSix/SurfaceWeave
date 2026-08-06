@@ -2,7 +2,7 @@ import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   standardComponentManifests,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import { describe, expect, it } from "vitest";
 
 import {

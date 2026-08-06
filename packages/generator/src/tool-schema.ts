@@ -2,13 +2,13 @@ import {
   DynamicUIError,
   assertValidJsonSchema,
   cloneValue,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   JsonObject,
   JsonSchema,
   JsonValue,
   ToolDefinition,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 import type {
   AgentToolDefinitionInput,

@@ -1,4 +1,4 @@
-import { cloneValue } from "@package-first/core";
+import { cloneValue } from "@surfaceweave/core";
 
 export type TauriPlatform =
   "windows" | "macos" | "linux" | "android" | "ios" | "unknown";

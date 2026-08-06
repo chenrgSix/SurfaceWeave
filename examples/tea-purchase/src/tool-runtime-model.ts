@@ -3,7 +3,7 @@ import type {
   ToolDefinition,
   ToolHostExecutor,
   ToolSubmissionRequest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 export interface TeaProduct {
   id: string;

@@ -2,13 +2,13 @@ import {
   DynamicUIError,
   createActionIntent,
   readDataPath,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   JsonValue,
   SurfaceStore,
   UINode,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import { Fragment, useRef } from "react";
 import type { ReactNode } from "react";
 

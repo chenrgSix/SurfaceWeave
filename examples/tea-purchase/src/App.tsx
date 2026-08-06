@@ -1,5 +1,5 @@
-import type { ActionIntent } from "@package-first/core";
-import { SurfaceRenderer, useSurface } from "@package-first/renderer-react";
+import type { ActionIntent } from "@surfaceweave/core";
+import { SurfaceRenderer, useSurface } from "@surfaceweave/react";
 import { useEffect, useState } from "react";
 
 import {

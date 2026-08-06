@@ -4,7 +4,7 @@ import type {
   ComponentResolution,
   JsonValue,
   UINode,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type { ComponentType, ReactNode } from "react";
 
 export type RendererMode = "compact" | "workspace";

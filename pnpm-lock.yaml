@@ -38,24 +38,24 @@ importers:
 
   examples/tea-purchase:
     dependencies:
-      '@package-first/agent-tools':
+      '@surfaceweave/agent-tools':
         specifier: workspace:*
         version: link:../../packages/agent-tools
-      '@package-first/component-pack-antd':
+      '@surfaceweave/antd':
         specifier: workspace:*
         version: link:../../packages/component-pack-antd
-      '@package-first/component-pack-react-aria':
-        specifier: workspace:*
-        version: link:../../packages/component-pack-react-aria
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@package-first/generator':
+      '@surfaceweave/generator':
         specifier: workspace:*
         version: link:../../packages/generator
-      '@package-first/renderer-react':
+      '@surfaceweave/react':
         specifier: workspace:*
         version: link:../../packages/renderer-react
+      '@surfaceweave/react-aria':
+        specifier: workspace:*
+        version: link:../../packages/component-pack-react-aria
       antd:
         specifier: ^6.5.3
         version: 6.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -84,28 +84,28 @@ importers:
 
   examples/tea-purchase-tauri:
     dependencies:
-      '@package-first/agent-tools':
+      '@surfaceweave/agent-tools':
         specifier: workspace:*
         version: link:../../packages/agent-tools
-      '@package-first/component-pack-antd':
+      '@surfaceweave/antd':
         specifier: workspace:*
         version: link:../../packages/component-pack-antd
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@package-first/generator':
+      '@surfaceweave/generator':
         specifier: workspace:*
         version: link:../../packages/generator
-      '@package-first/preferences':
+      '@surfaceweave/preferences':
         specifier: workspace:*
         version: link:../../packages/preferences
-      '@package-first/renderer-react':
+      '@surfaceweave/react':
         specifier: workspace:*
         version: link:../../packages/renderer-react
-      '@package-first/storage':
+      '@surfaceweave/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      '@package-first/tauri':
+      '@surfaceweave/tauri':
         specifier: workspace:*
         version: link:../../packages/tauri
       antd:
@@ -136,25 +136,25 @@ importers:
 
   packages/agent-tools:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
-      '@package-first/generator':
+      '@surfaceweave/generator':
         specifier: ^0.1.0
         version: link:../generator
-      '@package-first/preferences':
+      '@surfaceweave/preferences':
         specifier: ^0.2.0
         version: link:../preferences
-      '@package-first/storage':
+      '@surfaceweave/storage':
         specifier: ^0.2.0
         version: link:../storage
 
   packages/component-pack-antd:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
-      '@package-first/renderer-react':
+      '@surfaceweave/react':
         specifier: ^0.1.0
         version: link:../renderer-react
     devDependencies:
@@ -185,10 +185,10 @@ importers:
 
   packages/component-pack-react-aria:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
-      '@package-first/renderer-react':
+      '@surfaceweave/react':
         specifier: ^0.1.0
         version: link:../renderer-react
     devDependencies:
@@ -229,22 +229,22 @@ importers:
 
   packages/generator:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
 
   packages/preferences:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
-      '@package-first/storage':
+      '@surfaceweave/storage':
         specifier: ^0.2.0
         version: link:../storage
 
   packages/renderer-react:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
     devDependencies:
@@ -274,13 +274,13 @@ importers:
 
   packages/tauri:
     dependencies:
-      '@package-first/core':
+      '@surfaceweave/core':
         specifier: ^0.1.0
         version: link:../core
-      '@package-first/preferences':
+      '@surfaceweave/preferences':
         specifier: ^0.2.0
         version: link:../preferences
-      '@package-first/storage':
+      '@surfaceweave/storage':
         specifier: ^0.2.0
         version: link:../storage
       '@tauri-apps/api':

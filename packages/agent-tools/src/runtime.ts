@@ -1,17 +1,17 @@
-import { DynamicUIError, cloneValue, walkNodes } from "@package-first/core";
+import { DynamicUIError, cloneValue, walkNodes } from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   DeveloperHardConstraints,
   JsonObject,
   Surface,
   SurfaceStore,
-} from "@package-first/core";
-import { generateSurface } from "@package-first/generator";
+} from "@surfaceweave/core";
+import { generateSurface } from "@surfaceweave/generator";
 import {
   assertOperationsAllowedByHardConstraints,
   assertSurfaceSatisfiesHardConstraints,
-} from "@package-first/preferences";
-import type { PreferenceService } from "@package-first/preferences";
+} from "@surfaceweave/preferences";
+import type { PreferenceService } from "@surfaceweave/preferences";
 
 import {
   surfaceToolDefinitions,

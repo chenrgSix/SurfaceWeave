@@ -1,11 +1,11 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import { cloneValue } from "@package-first/core";
+import { cloneValue } from "@surfaceweave/core";
 import type {
   ActionExecutor,
   ActionIntent,
   ActionResult,
   JsonValue,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 export type TauriInvoke = <T>(
   command: string,

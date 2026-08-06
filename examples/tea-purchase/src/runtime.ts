@@ -1,16 +1,13 @@
-import {
-  AgentUIToolRuntime,
-  ToolToUIRuntime,
-} from "@package-first/agent-tools";
-import { createAntDesignComponentPack } from "@package-first/component-pack-antd";
-import { createReactAriaComponentPack } from "@package-first/component-pack-react-aria";
+import { AgentUIToolRuntime, ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import { createAntDesignComponentPack } from "@surfaceweave/antd";
+import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   readDataPath,
-} from "@package-first/core";
-import { generateSurface } from "@package-first/generator";
-import { createStandardReactComponentRegistry } from "@package-first/renderer-react";
+} from "@surfaceweave/core";
+import { generateSurface } from "@surfaceweave/generator";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 
 import {
   teaBusinessReactPack,

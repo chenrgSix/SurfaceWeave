@@ -1,5 +1,5 @@
-import type { JsonValue } from "@package-first/core";
-import type { RendererComponentProps } from "@package-first/renderer-react";
+import type { JsonValue } from "@surfaceweave/core";
+import type { RendererComponentProps } from "@surfaceweave/react";
 import {
   Alert,
   Button,

@@ -5,7 +5,7 @@ import type {
   SchemaFieldAliases,
   SchemaRef,
   Surface,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 export interface PreferenceApplicationContext {
   toolId?: string;

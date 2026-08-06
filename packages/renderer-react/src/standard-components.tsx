@@ -1,5 +1,5 @@
-import { cloneValue, standardComponentManifests } from "@package-first/core";
-import type { JsonValue } from "@package-first/core";
+import { cloneValue, standardComponentManifests } from "@surfaceweave/core";
+import type { JsonValue } from "@surfaceweave/core";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 
 import { ReactComponentRegistry } from "./react-component-registry.js";

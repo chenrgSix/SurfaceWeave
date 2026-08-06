@@ -10,33 +10,24 @@ const errors = [];
 const warnings = [];
 
 const allowedDependencies = {
-  "@package-first/protocol": [],
-  "@package-first/core": ["@cfworker/json-schema"],
-  "@package-first/storage": [],
-  "@package-first/preferences": [
-    "@package-first/core",
-    "@package-first/storage",
+  "@surfaceweave/protocol": [],
+  "@surfaceweave/core": ["@cfworker/json-schema"],
+  "@surfaceweave/storage": [],
+  "@surfaceweave/preferences": ["@surfaceweave/core", "@surfaceweave/storage"],
+  "@surfaceweave/generator": ["@surfaceweave/core"],
+  "@surfaceweave/agent-tools": [
+    "@surfaceweave/core",
+    "@surfaceweave/generator",
+    "@surfaceweave/preferences",
+    "@surfaceweave/storage",
   ],
-  "@package-first/generator": ["@package-first/core"],
-  "@package-first/agent-tools": [
-    "@package-first/core",
-    "@package-first/generator",
-    "@package-first/preferences",
-    "@package-first/storage",
-  ],
-  "@package-first/renderer-react": ["@package-first/core"],
-  "@package-first/component-pack-react-aria": [
-    "@package-first/core",
-    "@package-first/renderer-react",
-  ],
-  "@package-first/component-pack-antd": [
-    "@package-first/core",
-    "@package-first/renderer-react",
-  ],
-  "@package-first/tauri": [
-    "@package-first/core",
-    "@package-first/preferences",
-    "@package-first/storage",
+  "@surfaceweave/react": ["@surfaceweave/core"],
+  "@surfaceweave/react-aria": ["@surfaceweave/core", "@surfaceweave/react"],
+  "@surfaceweave/antd": ["@surfaceweave/core", "@surfaceweave/react"],
+  "@surfaceweave/tauri": [
+    "@surfaceweave/core",
+    "@surfaceweave/preferences",
+    "@surfaceweave/storage",
     "@tauri-apps/api",
     "@tauri-apps/plugin-store",
   ],
@@ -113,8 +104,8 @@ for (const releasePackage of releasePackages) {
   }
 }
 
-const core = manifests.get("@package-first/core");
-const protocol = manifests.get("@package-first/protocol");
+const core = manifests.get("@surfaceweave/core");
+const protocol = manifests.get("@surfaceweave/protocol");
 for (const [name, manifest] of [
   ["Core", core],
   ["Protocol", protocol],

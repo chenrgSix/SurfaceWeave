@@ -7,7 +7,7 @@ import {
   standardComponentManifests,
   type ActionIntent,
   type ComponentManifest,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";

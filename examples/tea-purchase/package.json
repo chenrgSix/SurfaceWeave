@@ -1,5 +1,5 @@
 {
-  "name": "@package-first/tea-purchase",
+  "name": "@surfaceweave/tea-purchase",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,12 +9,12 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/agent-tools": "workspace:*",
-    "@package-first/component-pack-antd": "workspace:*",
-    "@package-first/component-pack-react-aria": "workspace:*",
-    "@package-first/core": "workspace:*",
-    "@package-first/generator": "workspace:*",
-    "@package-first/renderer-react": "workspace:*",
+    "@surfaceweave/agent-tools": "workspace:*",
+    "@surfaceweave/antd": "workspace:*",
+    "@surfaceweave/react-aria": "workspace:*",
+    "@surfaceweave/core": "workspace:*",
+    "@surfaceweave/generator": "workspace:*",
+    "@surfaceweave/react": "workspace:*",
     "antd": "^6.5.3",
     "react": "^19.2.8",
     "react-aria-components": "^1.20.0",

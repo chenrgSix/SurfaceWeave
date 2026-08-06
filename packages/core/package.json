@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/core",
+  "name": "@surfaceweave/core",
   "version": "0.1.0",
-  "description": "Framework-agnostic protocols and runtime for Package First Dynamic UI",
+  "description": "Framework-agnostic protocols and runtime for SurfaceWeave",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",

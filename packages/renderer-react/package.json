@@ -1,7 +1,7 @@
 {
-  "name": "@package-first/renderer-react",
+  "name": "@surfaceweave/react",
   "version": "0.1.0",
-  "description": "Trusted React renderer for Package First Dynamic UI",
+  "description": "Trusted React renderer for SurfaceWeave",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,7 +27,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@package-first/core": "^0.1.0"
+    "@surfaceweave/core": "^0.1.0"
   },
   "peerDependencies": {
     "react": ">=18.2.0 <20"

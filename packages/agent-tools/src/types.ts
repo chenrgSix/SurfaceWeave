@@ -16,12 +16,12 @@ import type {
   UIIntent,
   ToolDefinition,
   ToolInvocation,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 import type {
   DeveloperUIConfiguration,
   GeneratorMetadata,
   SimpleJsonSchema,
-} from "@package-first/generator";
+} from "@surfaceweave/generator";
 
 export type UIToolName =
   | "ui.createSurface"

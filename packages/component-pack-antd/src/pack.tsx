@@ -1,4 +1,4 @@
-import type { ReactComponentPack } from "@package-first/renderer-react";
+import type { ReactComponentPack } from "@surfaceweave/react";
 import { ConfigProvider } from "antd";
 import type { ConfigProviderProps } from "antd";
 

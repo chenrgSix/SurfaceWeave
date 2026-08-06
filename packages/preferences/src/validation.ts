@@ -1,4 +1,4 @@
-import { DynamicUIError, cloneValue } from "@package-first/core";
+import { DynamicUIError, cloneValue } from "@surfaceweave/core";
 import type {
   JsonValue,
   PreferenceDocument,
@@ -7,7 +7,7 @@ import type {
   PreferenceScope,
   SchemaRef,
   UIIntent,
-} from "@package-first/core";
+} from "@surfaceweave/core";
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (

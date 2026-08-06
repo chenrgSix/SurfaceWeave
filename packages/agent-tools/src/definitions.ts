@@ -1,4 +1,4 @@
-import type { JsonValue } from "@package-first/core";
+import type { JsonValue } from "@surfaceweave/core";
 
 import type { UIToolDefinition } from "./types.js";
 

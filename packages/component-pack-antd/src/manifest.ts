@@ -1,5 +1,5 @@
-import { cloneValue, standardComponentManifests } from "@package-first/core";
-import type { ComponentPackManifest } from "@package-first/core";
+import { cloneValue, standardComponentManifests } from "@surfaceweave/core";
+import type { ComponentPackManifest } from "@surfaceweave/core";
 
 /** Serializable protocol declaration; Ant Design runtime values live elsewhere. */
 export const antDesignComponentPackManifest: ComponentPackManifest = {

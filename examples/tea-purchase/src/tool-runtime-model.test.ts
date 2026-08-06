@@ -1,4 +1,4 @@
-import type { ToolSubmissionRequest } from "@package-first/core";
+import type { ToolSubmissionRequest } from "@surfaceweave/core";
 import { describe, expect, it } from "vitest";
 
 import { MockTeaHostExecutor } from "./tool-runtime-model.js";

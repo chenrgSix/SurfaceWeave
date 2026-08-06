@@ -1,5 +1,5 @@
-import { cloneValue } from "@package-first/core";
-import type { ComponentRegistry, JsonObject } from "@package-first/core";
+import { cloneValue } from "@surfaceweave/core";
+import type { ComponentRegistry, JsonObject } from "@surfaceweave/core";
 
 import { generateSurface } from "./generator.js";
 import { normalizeToolSchema } from "./tool-schema.js";

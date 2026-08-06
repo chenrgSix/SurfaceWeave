@@ -1,4 +1,4 @@
-import { parsePreferencePatch } from "@package-first/preferences";
+import { parsePreferencePatch } from "@surfaceweave/preferences";
 
 import type {
   DiscardPreferenceToolInput,
