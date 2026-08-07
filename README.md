@@ -10,7 +10,8 @@
 
 > **Status:** npm `next` still points to the experimental `0.1.0-rc.1`.
 > Repository source is prepared for `0.1.0-rc.2`, which is not published.
-> Review the [post-publish report](docs/rc-post-publish-validation.md) before
+> Review the [post-publish report](docs/rc-post-publish-validation.md) and
+> [RC.2 candidate summary](docs/rc2-release-candidate-summary.md) before
 > production use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.

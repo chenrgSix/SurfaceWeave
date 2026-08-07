@@ -98,3 +98,14 @@ Fix only nested result node identity, add the two regression levels, bump all
 ten packages and exact internal dependencies atomically to `0.1.0-rc.2`, run
 all local and Registry gates, then release through Trusted Publishing. Do not
 add product features, workflow behavior, or new renderers.
+
+## RC.2 Remediation Status
+
+The code and package preparation portion of this scope is complete. The nested
+result identity regression is fixed, both test levels pass, and the synchronized
+RC.2 tarballs pass the local, clean-clone, consumer, Registry dry-run, and Tauri
+gates. See the [RC.2 candidate summary](rc2-release-candidate-summary.md).
+
+RC.2 remains unpublished. Trusted Publisher and protected GitHub Environment
+configuration, reviewed push, annotated tag, and release workflow approval are
+still owner-controlled release steps.
