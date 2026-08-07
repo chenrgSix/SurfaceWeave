@@ -9,8 +9,10 @@ import type {
 
 import type { GenerateResultSurfaceInput, GeneratedSurface } from "./types.js";
 
-function nodeId(surfaceId: string, path: string): string {
-  return `${surfaceId}--${path.replace(/[^A-Za-z0-9._-]/g, "-")}`;
+type ResultNodeRole = "action" | "group" | "root" | "state" | "value";
+
+function nodeId(surfaceId: string, role: ResultNodeRole, path: string): string {
+  return `${surfaceId}--${role}--${encodeURIComponent(path)}`;
 }
 
 function label(name: string): string {
@@ -28,7 +30,7 @@ function summaryNodes(
   if (Array.isArray(value)) {
     return [
       {
-        id: nodeId(surfaceId, path),
+        id: nodeId(surfaceId, "value", path),
         stableId: path,
         component: value.length === 0 ? "EmptyState" : "DataTable",
         props:
@@ -59,15 +61,15 @@ function summaryNodes(
       const childPath = `${path}.${name}`;
       if (typeof item === "object" && item !== null) {
         return {
-          id: nodeId(surfaceId, childPath),
-          stableId: childPath,
+          id: nodeId(surfaceId, "group", childPath),
+          stableId: `ui.group:${childPath}`,
           component: "Accordion",
           props: { label: label(name) },
           children: summaryNodes(surfaceId, item, childPath),
         };
       }
       return {
-        id: nodeId(surfaceId, childPath),
+        id: nodeId(surfaceId, "value", childPath),
         stableId: childPath,
         component: "Text",
         props: {
@@ -78,7 +80,7 @@ function summaryNodes(
   }
   return [
     {
-      id: nodeId(surfaceId, path),
+      id: nodeId(surfaceId, "value", path),
       stableId: path,
       component: "Text",
       props: { text: value === null ? "Completed" : String(value) },
@@ -94,7 +96,7 @@ export function generateResultSurface(
   const children: UINode[] = [];
   if (input.status === "error") {
     children.push({
-      id: nodeId(input.surfaceId, "error"),
+      id: nodeId(input.surfaceId, "state", "error"),
       stableId: "result.error",
       component: "ErrorState",
       props: { message: input.errors?.[0]?.message ?? "Tool execution failed" },
@@ -108,7 +110,7 @@ export function generateResultSurface(
       Object.keys(input.result).length === 0)
   ) {
     children.push({
-      id: nodeId(input.surfaceId, "empty"),
+      id: nodeId(input.surfaceId, "state", "empty"),
       stableId: "result.empty",
       component: "EmptyState",
       props: {
@@ -124,7 +126,7 @@ export function generateResultSurface(
   for (const [index, error] of (input.errors ?? []).entries()) {
     if (input.status === "error" && index === 0) continue;
     children.push({
-      id: nodeId(input.surfaceId, `error-${index}`),
+      id: nodeId(input.surfaceId, "state", `error-${index}`),
       stableId: `result.error.${index}`,
       component: "ErrorState",
       props: { message: `${error.code}: ${error.message}` },
@@ -132,7 +134,7 @@ export function generateResultSurface(
   }
   if (input.retryable === true) {
     children.push({
-      id: nodeId(input.surfaceId, "retry"),
+      id: nodeId(input.surfaceId, "action", "retry"),
       stableId: "result.retry",
       component: "Action",
       props: {
@@ -152,7 +154,7 @@ export function generateResultSurface(
     intent: "browse",
     schemaRef: { id: input.definition.id, version: input.definition.version },
     tree: {
-      id: nodeId(input.surfaceId, "root"),
+      id: nodeId(input.surfaceId, "root", "result"),
       stableId: `${input.definition.id}.result`,
       component: "Stack",
       props: {},

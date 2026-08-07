@@ -128,6 +128,52 @@ describe("ToolToUIRuntime", () => {
     );
   });
 
+  it("resolves nested array results into a valid result Surface", () => {
+    const components = createStandardComponentRegistry();
+    const surfaces = new InMemorySurfaceStore(components);
+    const runtime = new ToolToUIRuntime(components, surfaces);
+    runtime.registerTool({
+      id: "tea.search",
+      version: "1.0.0",
+      inputSchema: {
+        type: "object",
+        required: ["query"],
+        properties: { query: { type: "string" } },
+      },
+      outputSchema: {
+        type: "object",
+        required: ["teas"],
+        properties: {
+          teas: { type: "array", items: { type: "string" } },
+        },
+      },
+    });
+    const requests: ToolSubmissionRequest[] = [];
+    runtime.onInvocationRequested((request) => requests.push(request));
+    const { invocation, surface } = runtime.createToolSurface({
+      toolId: "tea.search",
+      surfaceId: "tea-search",
+      initialValues: { query: "green" },
+    });
+
+    const outcome = runtime.handleAction(
+      action(surface.id, "tool.submit", invocation.id),
+    );
+    expect(outcome.kind).toBe("invocation-requested");
+    runtime.markInvocationStarted(invocation.id);
+    const resolved = runtime.resolveInvocation(invocation.id, {
+      teas: ["Longjing"],
+    });
+
+    expect(requests).toHaveLength(1);
+    expect(resolved.status).toBe("success");
+    const resultSurface = surfaces.requireSurface(resolved.resultSurfaceId!);
+    const group = resultSurface.tree.children?.[0];
+    expect(group?.component).toBe("Accordion");
+    expect(group?.id).not.toBe(group?.children?.[0]?.id);
+    expect(group?.children?.[0]?.stableId).toBe("result.teas");
+  });
+
   it("reports invalid input and rejects read-only tampering", () => {
     const { runtime, surfaces } = runtimeFixture();
     const events: ToolRuntimeEvent[] = [];

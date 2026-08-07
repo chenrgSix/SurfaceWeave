@@ -34,6 +34,46 @@ describe("generateResultSurface", () => {
     expect(JSON.stringify(first)).not.toMatch(/Ant|ReactAria|JSX/);
   });
 
+  it("assigns distinct deterministic identities to nested result groups and values", () => {
+    const input = {
+      definition: {
+        ...definition,
+        outputSchema: { type: "object" },
+      },
+      surfaceId: "tea-result",
+      invocationId: "inv-nested",
+      correlationId: "corr-nested",
+      status: "success" as const,
+      result: { teas: ["Longjing"] },
+    };
+
+    const first = generateResultSurface(
+      input,
+      createStandardComponentRegistry(),
+    );
+    const second = generateResultSurface(
+      input,
+      createStandardComponentRegistry(),
+    );
+    const group = first.tree.children?.[0];
+    const value = group?.children?.[0];
+
+    expect(first).toEqual(second);
+    expect(group).toMatchObject({
+      component: "Accordion",
+      stableId: "ui.group:result.teas",
+    });
+    expect(value).toMatchObject({
+      component: "DataTable",
+      stableId: "result.teas",
+      binding: {
+        path: "projection.result.teas",
+        valueType: "array",
+      },
+    });
+    expect(group?.id).not.toBe(value?.id);
+  });
+
   it.each([
     ["success", undefined, "EmptyState"],
     ["partial", { id: "one" }, "Text"],
