@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import process from "node:process";
+import { parseArgs } from "node:util";
 
 import { npmRegistry, releasePackages } from "./release-packages.mjs";
 
@@ -18,6 +19,16 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const fixtureRoot = mkdtempSync(join(tmpdir(), "surfaceweave-consumers-"));
 const tarballDirectory = join(fixtureRoot, "tarballs");
 mkdirSync(tarballDirectory);
+const { values } = parseArgs({
+  args: process.argv.slice(2).filter((value, index) => {
+    return index !== 0 || value !== "--";
+  }),
+  options: {
+    fixture: { type: "string" },
+    published: { type: "boolean", default: false },
+    tag: { type: "string", default: "next" },
+  },
+});
 
 function run(command, arguments_, cwd, capture = false) {
   return execFileSync(command, arguments_, {
@@ -26,7 +37,9 @@ function run(command, arguments_, cwd, capture = false) {
     env: {
       ...process.env,
       CI: "true",
+      npm_config_cache: join(fixtureRoot, "npm-cache"),
       npm_config_registry: npmRegistry,
+      npm_config_userconfig: "/dev/null",
     },
     stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
   });
@@ -91,11 +104,11 @@ const commonCompilerOptions = {
   skipLibCheck: true,
 };
 
-function verifyFixture(tarballs, fixture) {
+function verifyFixture(packageSpecs, fixture) {
   const directory = join(fixtureRoot, fixture.name);
   mkdirSync(directory);
   const dependencies = Object.fromEntries(
-    fixture.packages.map((name) => [name, `file:${tarballs.get(name)}`]),
+    fixture.packages.map((name) => [name, packageSpecs.get(name)]),
   );
   Object.assign(dependencies, fixture.dependencies ?? {});
   writeJson(join(directory, "package.json"), {
@@ -109,8 +122,12 @@ function verifyFixture(tarballs, fixture) {
     include: ["consumer.ts"],
   });
   writeFileSync(join(directory, "consumer.ts"), fixture.consumer);
-  if (fixture.smoke !== undefined) {
-    writeFileSync(join(directory, "smoke.mjs"), fixture.smoke);
+  const smoke =
+    values.published && fixture.publishedSmoke !== undefined
+      ? fixture.publishedSmoke
+      : fixture.smoke;
+  if (smoke !== undefined) {
+    writeFileSync(join(directory, "smoke.mjs"), smoke);
   }
   if (fixture.viteEntry !== undefined) {
     writeFileSync(
@@ -125,6 +142,29 @@ function verifyFixture(tarballs, fixture) {
     ["install", "--ignore-scripts", "--no-audit", "--no-fund"],
     directory,
   );
+  if (values.published) {
+    const lockText = readFileSync(join(directory, "package-lock.json"), "utf8");
+    if (
+      lockText.includes("file:") ||
+      lockText.includes("link:") ||
+      lockText.includes(repositoryRoot)
+    ) {
+      throw new Error(
+        `${fixture.name}: Registry consumer contains a local reference`,
+      );
+    }
+    const lock = JSON.parse(lockText);
+    for (const item of Object.values(lock.packages ?? {})) {
+      if (
+        typeof item.resolved === "string" &&
+        !item.resolved.startsWith(npmRegistry)
+      ) {
+        throw new Error(
+          `${fixture.name}: dependency resolved outside the official npm Registry`,
+        );
+      }
+    }
+  }
   const installedScope = join(directory, "node_modules", "@surfaceweave");
   const installed = existsSync(installedScope)
     ? readdirSync(installedScope).sort()
@@ -138,11 +178,13 @@ function verifyFixture(tarballs, fixture) {
     );
   }
   run("npm", ["exec", "tsc", "--", "-p", "tsconfig.json"], directory);
-  if (fixture.smoke !== undefined) run("node", ["smoke.mjs"], directory);
+  if (smoke !== undefined) run("node", ["smoke.mjs"], directory);
   if (fixture.viteEntry !== undefined) {
     run("npm", ["exec", "vite", "--", "build"], directory);
   }
-  process.stdout.write(`consumer:${fixture.name}:passed\n`);
+  process.stdout.write(
+    `consumer:${values.published ? "registry" : "tarball"}:${fixture.name}:passed\n`,
+  );
 }
 
 const typescript = { typescript: "6.0.2" };
@@ -270,13 +312,38 @@ document.querySelector("#app").textContent = runtime.listPacks().map((pack) => p
     dependencies: typescript,
     consumer: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
-import type { ToolDefinition, ToolSubmissionRequest } from "@surfaceweave/core";
-const definition: ToolDefinition = { id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } };
+import type { ActionIntent, ToolDefinition, ToolSubmissionRequest } from "@surfaceweave/core";
+const definition: ToolDefinition = {
+  id: "tea.search",
+  version: "1.0.0",
+  inputSchema: {
+    type: "object",
+    required: ["query"],
+    properties: { query: { type: "string" } },
+  },
+  outputSchema: { type: "object" },
+};
 const components = createStandardComponentRegistry();
-const runtime = new ToolToUIRuntime(components, new InMemorySurfaceStore(components));
+const store = new InMemorySurfaceStore(components);
+const runtime = new ToolToUIRuntime(components, store);
 runtime.registerTool(definition);
-runtime.onInvocationRequested((request: ToolSubmissionRequest) => void request);
-runtime.createToolSurface({ toolId: definition.id, surfaceId: "tea-search" });
+runtime.onInvocationRequested((request: ToolSubmissionRequest) => {
+  runtime.markInvocationStarted(request.invocationId);
+  runtime.resolveInvocation(request.invocationId, { teas: ["Longjing"] });
+});
+const { invocation, surface } = runtime.createToolSurface({
+  toolId: definition.id,
+  surfaceId: "tea-search",
+  initialValues: { query: "green" },
+});
+const intent: ActionIntent = {
+  id: "submit-tea-search",
+  surfaceId: surface.id,
+  nodeId: surface.tree.id,
+  action: "tool.submit",
+  input: { invocationId: invocation.id },
+};
+runtime.handleAction(intent);
 `,
     smoke: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
@@ -284,6 +351,37 @@ const components = createStandardComponentRegistry();
 const runtime = new ToolToUIRuntime(components, new InMemorySurfaceStore(components));
 runtime.registerTool({ id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } });
 if (runtime.createToolSurface({ toolId: "tea.search", surfaceId: "tea-search" }).surface.id !== "tea-search") throw new Error("tool runtime");
+`,
+    publishedSmoke: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+const components = createStandardComponentRegistry();
+const surfaces = new InMemorySurfaceStore(components);
+const runtime = new ToolToUIRuntime(components, surfaces);
+runtime.registerTool({
+  id: "tea.search",
+  version: "1.0.0",
+  inputSchema: { type: "object", required: ["query"], properties: { query: { type: "string" } } },
+  outputSchema: { type: "object" },
+});
+runtime.onInvocationRequested((request) => {
+  runtime.markInvocationStarted(request.invocationId);
+  runtime.resolveInvocation(request.invocationId, { teas: ["Longjing"] });
+});
+const { invocation, surface } = runtime.createToolSurface({
+  toolId: "tea.search",
+  surfaceId: "tea-search",
+  initialValues: { query: "green" },
+});
+runtime.handleAction({
+  id: "submit-tea-search",
+  surfaceId: surface.id,
+  nodeId: surface.tree.id,
+  action: "tool.submit",
+  input: { invocationId: invocation.id },
+});
+const resolved = runtime.inspectInvocation(invocation.id);
+if (resolved.status !== "success" || !resolved.resultSurfaceId) throw new Error("tool runtime");
+if (!surfaces.getSurface(resolved.resultSurfaceId)) throw new Error("result surface");
 `,
   },
   {
@@ -308,10 +406,26 @@ document.querySelector("#app").textContent = "tauri-adapter-bundled";
 ];
 
 try {
-  const tarballs = packPackages();
-  for (const fixture of fixtures) verifyFixture(tarballs, fixture);
+  const packageSpecs = values.published
+    ? new Map(
+        releasePackages.map((releasePackage) => [
+          releasePackage.name,
+          values.tag,
+        ]),
+      )
+    : new Map(
+        [...packPackages()].map(([name, tarball]) => [name, `file:${tarball}`]),
+      );
+  const selectedFixtures =
+    values.fixture === undefined
+      ? fixtures
+      : fixtures.filter((fixture) => fixture.name === values.fixture);
+  if (selectedFixtures.length === 0) {
+    throw new Error(`Unknown consumer fixture: ${values.fixture}`);
+  }
+  for (const fixture of selectedFixtures) verifyFixture(packageSpecs, fixture);
   process.stdout.write(
-    `npm tarball verification passed for ${releasePackages.length} packages and ${fixtures.length} clean consumers.\n`,
+    `npm ${values.published ? "Registry" : "tarball"} verification passed for ${releasePackages.length} packages and ${selectedFixtures.length} clean consumers.\n`,
   );
 } finally {
   if (existsSync(fixtureRoot)) rmSync(fixtureRoot, { recursive: true });

@@ -24,6 +24,8 @@
     "test:watch": "vitest",
     "typecheck": "pnpm -r --if-present typecheck",
     "verify:packages": "node scripts/verify-package-tarballs.mjs",
+    "verify:published-consumers": "node scripts/verify-package-tarballs.mjs --published --tag next",
+    "verify:published": "node scripts/verify-published-packages.mjs",
     "verify:release": "pnpm audit:release && node scripts/verify-npm-publish-dry-run.mjs"
   },
   "devDependencies": {
