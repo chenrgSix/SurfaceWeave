@@ -26,7 +26,7 @@ jobs:
       - name: Require annotated release tag on main
         run: |
           test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = tag
-          git fetch origin main
+          git fetch origin main:refs/remotes/origin/main
           git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
           node -e 'import("./scripts/release-packages.mjs").then(({ releaseVersion }) => { if (process.env.GITHUB_REF_NAME !== `v${releaseVersion}`) throw new Error(`Tag ${process.env.GITHUB_REF_NAME} does not match v${releaseVersion}`); })'
 
@@ -90,7 +90,6 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org/
 
       - name: Require Trusted Publishing-capable npm
         run: |
