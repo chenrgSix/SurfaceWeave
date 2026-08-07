@@ -61,15 +61,16 @@ real publish.
 - `npm publish --dry-run --ignore-scripts --tag next --access public` succeeds
   for all ten packages and does not publish anything.
 
-## Blocking Owner Decisions
+## Post-RC Trusted Publishing Gate
 
-Do not perform a real publish until all items are resolved:
+`0.1.0-rc.1` was published manually. Future releases use the protected OIDC
+workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md).
+Before pushing a release tag, the owner must:
 
-- confirm ownership of the `@surfaceweave` npm organization and availability
-  of all ten package names on the official registry;
-- confirm npm authentication and organization publish permissions without
-  changing them from this repository task;
-- grant explicit approval for the `0.1.0-rc.1` / `next` release.
+- configure the same trusted publisher for all ten packages;
+- configure required reviewers on the `npm-release` GitHub Environment;
+- revoke the temporary publish token after OIDC is verified;
+- explicitly approve the exact version and annotated Git tag.
 
 ## Publication Order
 
@@ -77,7 +78,7 @@ Publish in the order encoded by `scripts/release-packages.mjs`: Protocol, Core,
 Storage, Preferences, Generator, Agent Tools, React, React Aria, Ant Design,
 then Tauri. Each downstream package therefore resolves its exact RC dependency.
 
-## Commands After Approval
+## Commands Before Tag Approval
 
 Before any real publish, start from a clean commit and rerun:
 
@@ -94,5 +95,6 @@ pnpm check:tauri
 pnpm build:tauri --no-bundle
 ```
 
-This checklist does not authorize `npm publish`, Git push, a PR, a tag, a
-GitHub Release, or npm account/organization changes.
+The release workflow is the only repository path authorized to call real
+`npm publish`; this checklist alone does not authorize a push, tag, npm
+organization change, or release.

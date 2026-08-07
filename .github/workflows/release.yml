@@ -1,0 +1,157 @@
+name: Release npm
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify tagged source
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Require annotated release tag on main
+        run: |
+          test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = tag
+          git fetch origin main
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
+          node -e 'import("./scripts/release-packages.mjs").then(({ releaseVersion }) => { if (process.env.GITHUB_REF_NAME !== `v${releaseVersion}`) throw new Error(`Tag ${process.env.GITHUB_REF_NAME} does not match v${releaseVersion}`); })'
+
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            wget
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.23.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release gates
+        run: |
+          pnpm build
+          pnpm typecheck
+          pnpm lint
+          pnpm test
+          pnpm verify:packages
+          pnpm audit:release
+          pnpm check:tauri
+          pnpm build:tauri --no-bundle
+
+  publish:
+    name: Publish with npm OIDC
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.4
+
+      - name: Install Node.js and npm 11
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+
+      - name: Require Trusted Publishing-capable npm
+        run: |
+          node -e 'const [major, minor] = require("node:child_process").execFileSync("npm", ["--version"], { encoding: "utf8" }).trim().split(".").map(Number); if (major < 11 || (major === 11 && minor < 5)) throw new Error("npm >=11.5.1 is required for Trusted Publishing");'
+
+      - name: Build publishable packages from source
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm audit:release
+
+      - name: Publish packages in dependency order
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "${VERSION}" == *-* ]]; then DIST_TAG=next; else DIST_TAG=latest; fi
+          for PACKAGE_DIRECTORY in \
+            protocol \
+            packages/core \
+            packages/storage \
+            packages/preferences \
+            packages/generator \
+            packages/agent-tools \
+            packages/renderer-react \
+            packages/component-pack-react-aria \
+            packages/component-pack-antd \
+            packages/tauri
+          do
+            npm publish "./${PACKAGE_DIRECTORY}" \
+              --access public \
+              --tag "${DIST_TAG}" \
+              --provenance \
+              --registry https://registry.npmjs.org/
+          done
+          echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
+          echo "DIST_TAG=${DIST_TAG}" >> "${GITHUB_ENV}"
+
+      - name: Verify official Registry artifacts
+        run: |
+          pnpm verify:published -- \
+            --version "${VERSION}" \
+            --tag "${DIST_TAG}" \
+            --commit "${GITHUB_SHA}"
+          node scripts/verify-package-tarballs.mjs \
+            --published \
+            --tag "${DIST_TAG}"
+
+  github-release:
+    name: Record GitHub prerelease
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create release for the published tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then PRERELEASE=--prerelease; else PRERELEASE=; fi
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --generate-notes \
+            --verify-tag \
+            ${PRERELEASE}
