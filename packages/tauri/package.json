@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/tauri",
-  "version": "0.1.0-rc.1",
+  "version": "0.1.0-rc.2",
   "description": "Controlled Tauri 2 adapters for SurfaceWeave",
   "license": "MIT",
   "type": "module",
@@ -29,9 +29,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "0.1.0-rc.1",
-    "@surfaceweave/preferences": "0.1.0-rc.1",
-    "@surfaceweave/storage": "0.1.0-rc.1",
+    "@surfaceweave/core": "0.1.0-rc.2",
+    "@surfaceweave/preferences": "0.1.0-rc.2",
+    "@surfaceweave/storage": "0.1.0-rc.2",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-store": "^2.4.0"
   },

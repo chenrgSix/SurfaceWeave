@@ -6,6 +6,16 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Prepared all public packages as the synchronized, unpublished
+  `0.1.0-rc.2` suite.
+
+### Fixed
+
+- Assigned distinct deterministic identities to nested result groups and
+  values so Tool Runtime array results produce valid Surfaces.
+
 ## [0.1.0-rc.1] - 2026-08-07
 
 ### Added

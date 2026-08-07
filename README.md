@@ -2,15 +2,16 @@
 
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.1%20experimental-orange.svg)
+![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.2%20candidate-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** `0.1.0-rc.1` is published to npm under the `next` tag and remains
-> experimental. Review the [post-publish report](docs/rc-post-publish-validation.md)
-> before production use.
+> **Status:** npm `next` still points to the experimental `0.1.0-rc.1`.
+> Repository source is prepared for `0.1.0-rc.2`, which is not published.
+> Review the [post-publish report](docs/rc-post-publish-validation.md) before
+> production use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 

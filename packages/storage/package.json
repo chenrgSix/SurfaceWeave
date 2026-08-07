@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/storage",
-  "version": "0.1.0-rc.1",
+  "version": "0.1.0-rc.2",
   "description": "Pluggable JSON storage adapters for SurfaceWeave",
   "license": "MIT",
   "type": "module",

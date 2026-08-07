@@ -2,7 +2,7 @@
 
 ## Release Candidate Version
 
-All publishable packages are synchronized at `0.1.0-rc.1` and configured for
+All publishable packages are synchronized at `0.1.0-rc.2` and configured for
 the `next` tag on the official npm registry. The wire protocol remains `1.0`;
 npm package versions do not change Tool or Component Pack manifest versions.
 
@@ -13,16 +13,16 @@ package's highest published SemVer instead of publishing this candidate.
 
 | Package                     | Workspace version | Publish tag |
 | --------------------------- | ----------------: | ----------- |
-| `@surfaceweave/protocol`    |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/core`        |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/storage`     |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/preferences` |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/generator`   |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/agent-tools` |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/react`       |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/react-aria`  |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/antd`        |        0.1.0-rc.1 | `next`      |
-| `@surfaceweave/tauri`       |        0.1.0-rc.1 | `next`      |
+| `@surfaceweave/protocol`    |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/core`        |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/storage`     |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/preferences` |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/generator`   |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/agent-tools` |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/react`       |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/react-aria`  |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/antd`        |        0.1.0-rc.2 | `next`      |
+| `@surfaceweave/tauri`       |        0.1.0-rc.2 | `next`      |
 
 ## Package Name Migration
 
@@ -44,7 +44,7 @@ real publish.
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
 - Internal package dependencies use the exact prerelease range
-  `0.1.0-rc.1`; the lockfile records the same suite version.
+  `0.1.0-rc.2`; the lockfile records the same suite version.
 - Release metadata fixes the official registry, public access, and `next` tag.
 - The protocol Schema uses the stable URN
   `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain

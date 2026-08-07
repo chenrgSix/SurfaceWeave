@@ -1,4 +1,4 @@
-export const releaseVersion = "0.1.0-rc.1";
+export const releaseVersion = "0.1.0-rc.2";
 export const npmRegistry = "https://registry.npmjs.org/";
 export const repositoryUrl =
   "git+https://github.com/chenrgSix/SurfaceWeave.git";
