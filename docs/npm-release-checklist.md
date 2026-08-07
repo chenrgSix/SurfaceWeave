@@ -2,27 +2,29 @@
 
 ## Release Candidate Version
 
-All publishable packages are synchronized at `0.1.0-rc.2` and configured for
-the `next` tag on the official npm registry. The wire protocol remains `1.0`;
-npm package versions do not change Tool or Component Pack manifest versions.
+All publishable packages are synchronized and published at `0.1.0-rc.2` on the
+official npm registry. Post-release cleanup keeps `next` and `latest`
+consistent at RC.2; the default tag is necessary for unqualified npm installs.
+The wire protocol remains `1.0`; npm package versions do not change Tool or
+Component Pack manifest versions.
 
 If any package name already has a published version, derive its RC from that
 package's highest published SemVer instead of publishing this candidate.
 
 ## Release Inventory
 
-| Package                     | Workspace version | Publish tag |
-| --------------------------- | ----------------: | ----------- |
-| `@surfaceweave/protocol`    |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/core`        |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/storage`     |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/preferences` |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/generator`   |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/agent-tools` |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/react`       |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/react-aria`  |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/antd`        |        0.1.0-rc.2 | `next`      |
-| `@surfaceweave/tauri`       |        0.1.0-rc.2 | `next`      |
+| Package                     | Workspace version | Public dist-tags |
+| --------------------------- | ----------------: | ---------------- |
+| `@surfaceweave/protocol`    |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/core`        |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/storage`     |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/preferences` |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/generator`   |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/agent-tools` |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/react`       |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/react-aria`  |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/antd`        |        0.1.0-rc.2 | `next`, `latest` |
+| `@surfaceweave/tauri`       |        0.1.0-rc.2 | `next`, `latest` |
 
 ## Package Name Migration
 
@@ -61,15 +63,16 @@ real publish.
 - `npm publish --dry-run --ignore-scripts --tag next --access public` succeeds
   for all ten packages and does not publish anything.
 
-## Post-RC Trusted Publishing Gate
+## Trusted Publishing Status
 
-`0.1.0-rc.1` was published manually. Future releases use the protected OIDC
-workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md).
-Before pushing a release tag, the owner must:
+`0.1.0-rc.1` was published manually. `0.1.0-rc.2` proved the protected OIDC
+workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md): all
+ten packages expose verified provenance for the same tag, release commit, and
+workflow run. Future releases must continue to:
 
-- configure the same trusted publisher for all ten packages;
-- configure required reviewers on the `npm-release` GitHub Environment;
-- revoke the temporary publish token after OIDC is verified;
+- keep the same trusted publisher boundary for all ten packages;
+- require review through the `npm-release` GitHub Environment;
+- avoid restoring token-based publishing after OIDC verification;
 - explicitly approve the exact version and annotated Git tag.
 
 ## Publication Order
@@ -78,7 +81,7 @@ Publish in the order encoded by `scripts/release-packages.mjs`: Protocol, Core,
 Storage, Preferences, Generator, Agent Tools, React, React Aria, Ant Design,
 then Tauri. Each downstream package therefore resolves its exact RC dependency.
 
-## Commands Before Tag Approval
+## Future Release Gate
 
 Before any real publish, start from a clean commit and rerun:
 

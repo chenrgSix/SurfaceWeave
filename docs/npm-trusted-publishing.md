@@ -4,6 +4,11 @@ SurfaceWeave releases should use GitHub Actions OIDC rather than a long-lived
 npm automation token. The release workflow is `.github/workflows/release.yml`;
 it does not run on branches or manual dispatches.
 
+RC.2 successfully used this path for all ten packages. npm provenance ties the
+published artifacts to `refs/tags/v0.1.0-rc.2`, commit
+`860c7e5e128c8f30b89dc2d0a8ccac6d54b27cf8`, and workflow run
+`31196235870`.
+
 ## One-time Owner Setup
 
 1. Create a protected GitHub Environment named `npm-release` and require an
@@ -30,8 +35,8 @@ Official references: [npm Trusted Publishing](https://docs.npmjs.com/trusted-pub
 
 1. Update all package versions and exact internal dependencies atomically.
 2. Run the complete release checklist from a clean checkout and commit it.
-3. Create an annotated tag, for example
-   `git tag -a v0.1.0-rc.2 -m "SurfaceWeave 0.1.0-rc.2"`, on `main`.
+3. Create an annotated tag matching the prepared version, for example
+   `git tag -a v0.1.0-rc.3 -m "SurfaceWeave 0.1.0-rc.3"`, on `main`.
 4. Push only that tag after explicit owner approval.
 5. Review and approve the `npm-release` environment deployment.
 

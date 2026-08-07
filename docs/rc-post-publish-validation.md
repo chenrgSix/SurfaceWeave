@@ -2,10 +2,10 @@
 
 ## Decision
 
-`@surfaceweave/*@0.1.0-rc.1` is installable and its package boundaries are
-sound, but it must not be promoted as the stable release. Publish a new
-`0.1.0-rc.2` after resolving the blockers below; do not overwrite or unpublish
-the immutable RC.
+This report records the validation of `@surfaceweave/*@0.1.0-rc.1`. RC.1 is
+installable and its package boundaries are sound, but it must not be selected
+by a public dist-tag because of the blocker below. RC.2 subsequently fixed the
+defect and was published without overwriting or unpublishing the immutable RC.1.
 
 Validated on 2026-08-07 against npm's official Registry and release commit
 `de83e18d45bd7b9dff7966a6971fa80f2a8ed7e7`.
@@ -101,11 +101,9 @@ add product features, workflow behavior, or new renderers.
 
 ## RC.2 Remediation Status
 
-The code and package preparation portion of this scope is complete. The nested
-result identity regression is fixed, both test levels pass, and the synchronized
-RC.2 tarballs pass the local, clean-clone, consumer, Registry dry-run, and Tauri
-gates. See the [RC.2 candidate summary](rc2-release-candidate-summary.md).
-
-RC.2 remains unpublished. Trusted Publisher and protected GitHub Environment
-configuration, reviewed push, annotated tag, and release workflow approval are
-still owner-controlled release steps.
+The nested result identity regression is fixed, both test levels pass, and the
+synchronized RC.2 tarballs pass the local, clean-clone, consumer, Registry, and
+Tauri gates. RC.2 was published through Trusted Publishing with provenance;
+the annotated tag, GitHub prerelease, npm `gitHead`, and workflow all identify
+commit `860c7e5e128c8f30b89dc2d0a8ccac6d54b27cf8`. See the
+[RC.2 release summary](rc2-release-candidate-summary.md).

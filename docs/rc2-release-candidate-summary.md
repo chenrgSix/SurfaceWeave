@@ -1,9 +1,9 @@
-# RC.2 Release Candidate Summary
+# RC.2 Release Summary
 
 ## Outcome
 
-SurfaceWeave `0.1.0-rc.2` is prepared and verified locally but has not been
-published. This candidate fixes the RC.1 Tool-to-UI blocker where nested
+SurfaceWeave `0.1.0-rc.2` is published on npm and recorded as the GitHub
+prerelease `v0.1.0-rc.2`. It fixes the RC.1 Tool-to-UI blocker where nested
 object and array result nodes could receive the same identity and fail Surface
 validation.
 
@@ -42,14 +42,20 @@ consumers passed; all ten official-Registry publish dry-runs passed; Tauri
 `cargo check` and the optimized no-bundle build passed. One clean-consumer run
 encountered a transient npm `ECONNRESET`; an unchanged retry passed.
 
-## Release Gate
+## Published Artifacts
 
-Before publishing, the owner must configure npm Trusted Publishing for all ten
-packages and required reviewers on the `npm-release` GitHub Environment. Then
-push the reviewed commits, create the approved annotated `v0.1.0-rc.2` tag, and
-use the protected release workflow. The current npm `next` version remains
-`0.1.0-rc.1`; no tag, GitHub Release, push, or npm publication was performed as
-part of this preparation.
+The protected Trusted Publishing workflow published all ten packages with npm
+provenance. The annotated `v0.1.0-rc.2` tag, package `gitHead`, and provenance
+all resolve to commit `860c7e5e128c8f30b89dc2d0a8ccac6d54b27cf8` and
+[workflow run 31196235870](https://github.com/chenrgSix/SurfaceWeave/actions/runs/31196235870).
+The matching [GitHub prerelease](https://github.com/chenrgSix/SurfaceWeave/releases/tag/v0.1.0-rc.2)
+exists without moving or rebuilding the tag.
+
+Post-release cleanup keeps `next` on `0.1.0-rc.2` and moves `latest` from the
+defective RC.1 to the same RC.2. Removing `latest` would make an unqualified
+`npm install @surfaceweave/core` fail, so both tags intentionally resolve to
+one usable release candidate. Every published tarball contains its package
+README and canonical MIT license.
 
 The existing Vite demo and isolated Ant Design chunk warnings remain known,
 non-blocking package-size observations.

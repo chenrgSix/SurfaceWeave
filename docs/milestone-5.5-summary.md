@@ -23,11 +23,12 @@ repository metadata, replaced the unowned Schema URL with a stable URN, and
 added clean-checkout CI. Declaration validation now rejects executable values
 and dangerous structure without rejecting inert text that resembles code.
 
-All ten packages were published as `0.1.0-rc.1`. Post-publish validation found
-that their Registry metadata, tarball integrity, dependencies, license, and
-`gitHead` match the release commit. Promotion is blocked by a nested-array
-result Surface defect and missing Git tag/GitHub Release; use a new RC rather
-than overwriting the immutable npm version.
+All ten packages were initially published as `0.1.0-rc.1`. Post-publish
+validation found that their Registry metadata, tarball integrity, dependencies,
+license, and `gitHead` matched the release commit, but a nested-array result
+Surface defect blocked promotion. The follow-up `0.1.0-rc.2` fixed that defect
+and was published through Trusted Publishing with a matching annotated tag,
+GitHub prerelease, and provenance; RC.1 remains immutable and untagged.
 
 ## Release Gate Verification
 
@@ -46,8 +47,8 @@ than overwriting the immutable npm version.
 
 The GitHub CI badge is passing. The Demo's deliberate multi-Pack preload and
 the Ant Design-only chunk warning remain documented RC limitations. Future npm
-releases use the protected Trusted Publishing workflow and require owner setup
-before its first use.
+releases continue to use the protected Trusted Publishing workflow proven by
+RC.2.
 
 ## Explicit Non-goals
 
