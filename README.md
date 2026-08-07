@@ -8,8 +8,9 @@
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** `0.1.0-rc.1` release candidate, experimental, and not yet
-> published to npm.
+> **Status:** `0.1.0-rc.1` is published to npm under the `next` tag and remains
+> experimental. Review the [post-publish report](docs/rc-post-publish-validation.md)
+> before production use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
@@ -60,8 +61,7 @@ mock Tool results and a mock Host executor.
 
 ## npm Installation
 
-After an approved RC is published under the `next` tag, install only the layers
-used by the host:
+Install only the layers used by the host:
 
 ```bash
 # Framework-independent Tool-to-UI runtime
@@ -117,15 +117,35 @@ The desktop flow reuses the Web Tool Definitions, data model, intents, and mock 
 The host registers serializable definitions. The Runtime generates input UI and emits a request after validation and any mandatory confirmation; it never calls the business API.
 
 ```ts
-import { AgentUIToolRuntime, ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import {
+  AgentUIToolRuntime,
+  ToolToUIRuntime,
+  type ToolExecutionError,
+} from "@surfaceweave/agent-tools";
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  type ToolHostExecutor,
 } from "@surfaceweave/core";
 
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
 const runtime = new ToolToUIRuntime(components, store);
+const hostExecutor: ToolHostExecutor = {
+  async execute(request) {
+    // Perform host authorization and call the registered business API here.
+    return { orderId: `PO-${request.invocationId}` };
+  },
+};
+
+function normalizeError(error: unknown): ToolExecutionError {
+  return {
+    code: "HOST_EXECUTION_FAILED",
+    message: error instanceof Error ? error.message : "Unknown host error",
+    retryable: false,
+  };
+}
+
 runtime.registerTool({
   id: "orders.create",
   version: "1.0.0",
@@ -134,12 +154,18 @@ runtime.registerTool({
     required: ["buyer"],
     properties: { buyer: { type: "string" } },
   },
+  outputSchema: {
+    type: "object",
+    required: ["orderId"],
+    properties: { orderId: { type: "string" } },
+  },
   annotations: { sideEffect: true, confirmation: "required", retry: "safe" },
 });
 
-const { surface } = runtime.createToolSurface({
+const { invocation, surface } = runtime.createToolSurface({
   toolId: "orders.create",
   surfaceId: "order-form",
+  initialValues: { buyer: "Ada" },
 });
 
 runtime.onInvocationRequested(async (request) => {
@@ -158,6 +184,25 @@ const agentTools = new AgentUIToolRuntime(
   undefined,
   runtime,
 );
+
+const confirmation = runtime.handleAction({
+  id: "submit-order",
+  surfaceId: surface.id,
+  nodeId: surface.tree.id,
+  action: "tool.submit",
+  input: { invocationId: invocation.id },
+});
+if (confirmation.kind !== "confirmation-required") {
+  throw new Error("Expected side-effect confirmation");
+}
+runtime.handleAction({
+  id: "confirm-order",
+  surfaceId: confirmation.confirmationSurface.id,
+  nodeId: confirmation.confirmationSurface.tree.id,
+  action: "tool.submit",
+  input: { invocationId: invocation.id, confirmed: true },
+});
+void agentTools;
 ```
 
 `fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
@@ -167,10 +212,10 @@ const agentTools = new AgentUIToolRuntime(
 Install only the bindings used by the host:
 
 ```bash
-npm install @surfaceweave/core @surfaceweave/react react react-dom
-npm install @surfaceweave/react-aria react-aria-components
+npm install @surfaceweave/core@next @surfaceweave/react@next react react-dom
+npm install @surfaceweave/react-aria@next react-aria-components
 # or
-npm install @surfaceweave/antd antd
+npm install @surfaceweave/antd@next antd
 ```
 
 The serializable Manifest and local React bindings are separate. Registering a Pack adds its trusted semantic schemas to Core, while the binding stays in the React package.
@@ -330,4 +375,4 @@ React DOM `>=18.2 <20` and `antd >=6.5.3 <7`. These libraries are peers of their
 optional Pack and are not pulled into Core or unrelated consumers. Tauri is a
 separate package and installs only its Tauri 2 API/Store dependencies.
 
-See the [public API baseline](docs/public-api.md), [compatibility matrix](docs/npm-compatibility-matrix.md), [release checklist](docs/npm-release-checklist.md), [Tool-to-UI guide](docs/tool-to-ui-runtime.md), [no-workflow ADR](docs/adr/0001-no-frontend-workflow-engine.md), and [architecture baseline](docs/dynamic-ui-architecture.md).
+See the [public API baseline](docs/public-api.md), [compatibility matrix](docs/npm-compatibility-matrix.md), [release checklist](docs/npm-release-checklist.md), [Trusted Publishing guide](docs/npm-trusted-publishing.md), [Tool-to-UI guide](docs/tool-to-ui-runtime.md), [no-workflow ADR](docs/adr/0001-no-frontend-workflow-engine.md), and [architecture baseline](docs/dynamic-ui-architecture.md).

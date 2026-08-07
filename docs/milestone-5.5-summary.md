@@ -23,9 +23,11 @@ repository metadata, replaced the unowned Schema URL with a stable URN, and
 added clean-checkout CI. Declaration validation now rejects executable values
 and dangerous structure without rejecting inert text that resembles code.
 
-A real publish remains blocked only on confirming npm organization/name
-ownership, authentication permissions, and explicit release approval. No
-package was published.
+All ten packages were published as `0.1.0-rc.1`. Post-publish validation found
+that their Registry metadata, tarball integrity, dependencies, license, and
+`gitHead` match the release commit. Promotion is blocked by a nested-array
+result Surface defect and missing Git tag/GitHub Release; use a new RC rather
+than overwriting the immutable npm version.
 
 ## Release Gate Verification
 
@@ -42,12 +44,13 @@ package was published.
 - The tea-purchase example was exercised in a real browser and its synchronized
   chat/workspace state is captured in the repository README.
 
-The GitHub Actions definition starts from a clean checkout, but it has not run
-on GitHub because this task did not push. The Demo's deliberate multi-Pack
-preload and the Ant Design-only chunk warning remain documented RC limitations.
+The GitHub CI badge is passing. The Demo's deliberate multi-Pack preload and
+the Ant Design-only chunk warning remain documented RC limitations. Future npm
+releases use the protected Trusted Publishing workflow and require owner setup
+before its first use.
 
 ## Explicit Non-goals
 
-No product behavior, workflow feature, `InteractionSession`, Renderer, dynamic
-Pack downloading, Vue/Flutter integration, push, PR, GitHub Release, or real npm
-publish was added or performed.
+Milestone 5.5 added no workflow feature, `InteractionSession`, Renderer,
+dynamic Pack downloading, or Vue/Flutter integration. Publication and
+post-publish verification were handled as release operations only.

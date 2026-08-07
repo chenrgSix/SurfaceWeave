@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0-rc.1] - 2026-08-07
+
 ### Added
 
 - GitHub CI for cold builds, package consumers, release metadata, and Tauri.
@@ -24,5 +26,5 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Allowed inert code-like text in declarations while preserving JSON,
   prototype, framework, and renderer execution boundaries.
 
-`0.1.0-rc.1` remains unpublished until npm scope ownership and the final
-release are explicitly approved.
+The synchronized package suite is published under the npm `next` tag. It
+remains experimental; see the post-publish validation report before use.
