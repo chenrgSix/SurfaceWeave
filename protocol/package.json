@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/protocol",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "Language-neutral JSON wire protocol for SurfaceWeave",
   "license": "MIT",
   "type": "module",

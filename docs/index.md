@@ -56,7 +56,8 @@ replaceable; the wire protocol remains framework independent.
 </div>
 
 ::: warning Release candidate
-`0.1.0-rc.2` is an experimental release candidate. Pin `@next` while evaluating
-and review the [compatibility matrix](/npm-compatibility-matrix) before
-production use.
+`0.1.0-rc.3` is prepared as an experimental release candidate but is not yet
+published. npm `@next` remains on RC.2 until approval. Review the
+[RC.3 candidate summary](/rc3-release-candidate-summary) and
+[compatibility matrix](/npm-compatibility-matrix) before production use.
 :::

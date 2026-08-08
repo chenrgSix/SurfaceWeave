@@ -2,29 +2,29 @@
 
 ## Release Candidate Version
 
-All publishable packages are synchronized and published at `0.1.0-rc.2` on the
-official npm registry. Post-release cleanup keeps `next` and `latest`
-consistent at RC.2; the default tag is necessary for unqualified npm installs.
-The wire protocol remains `1.0`; npm package versions do not change Tool or
-Component Pack manifest versions.
+All publishable workspace packages are synchronized as the unpublished
+`0.1.0-rc.3` candidate. The official npm Registry still serves RC.2 from
+`next` and `latest`; do not move either tag until RC.3 publication is approved
+and complete for all ten packages. The wire protocol remains `1.0`; npm package
+versions do not change Tool or Component Pack manifest versions.
 
 If any package name already has a published version, derive its RC from that
 package's highest published SemVer instead of publishing this candidate.
 
 ## Release Inventory
 
-| Package                     | Workspace version | Public dist-tags |
-| --------------------------- | ----------------: | ---------------- |
-| `@surfaceweave/protocol`    |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/core`        |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/storage`     |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/preferences` |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/generator`   |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/agent-tools` |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/react`       |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/react-aria`  |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/antd`        |        0.1.0-rc.2 | `next`, `latest` |
-| `@surfaceweave/tauri`       |        0.1.0-rc.2 | `next`, `latest` |
+| Package                     | Candidate version | Current public dist-tags      |
+| --------------------------- | ----------------: | ----------------------------- |
+| `@surfaceweave/protocol`    |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -46,7 +46,7 @@ real publish.
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
 - Internal package dependencies use the exact prerelease range
-  `0.1.0-rc.2`; the lockfile records the same suite version.
+  `0.1.0-rc.3`; the lockfile records the same suite version.
 - Release metadata fixes the official registry, public access, and `next` tag.
 - The protocol Schema uses the stable URN
   `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain
@@ -55,7 +55,8 @@ real publish.
   side-effects, dependencies, peer ranges, and `publishConfig` are audited.
 - Internal dependency ranges are npm-compatible SemVer, while pnpm links local
   workspace packages during development.
-- Real `npm pack` tarballs install and type-check in seven clean consumers.
+- Real `npm pack` tarballs install and type-check in ten clean consumers,
+  including React DOM and Agentdown/Vue lifecycle fixtures.
 - Default React, React Aria, and Ant Design build independently without an
   unselected Pack installed.
 - Tool-to-UI compiles/runs and the Tauri adapter type-checks/bundles from package
@@ -100,4 +101,5 @@ pnpm build:tauri --no-bundle
 
 The release workflow is the only repository path authorized to call real
 `npm publish`; this checklist alone does not authorize a push, tag, npm
-organization change, or release.
+organization change, or release. RC.3 remains a candidate until the user gives
+separate publication approval.

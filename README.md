@@ -3,22 +3,21 @@
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.2%20published-orange.svg)
+![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.3%20candidate-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** all ten public packages are published as the experimental
-> `0.1.0-rc.2`. npm `next` and `latest` resolve consistently to this RC so
-> explicit prerelease and default installs cannot select the defective RC.1.
-> Review the [RC.1 post-publish report](docs/rc-post-publish-validation.md) and
-> [RC.2 release summary](docs/rc2-release-candidate-summary.md) before
-> production use.
+> **Status:** the repository is prepared as the experimental `0.1.0-rc.3`
+> candidate, but it has not been tagged or published. npm `next` and `latest`
+> still resolve to the immutable RC.2 release until explicit publication
+> approval. Review the [RC.3 candidate summary](docs/rc3-release-candidate-summary.md)
+> before production use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
-Milestones 1–5 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, and language-neutral wire protocols. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
+Milestones 1–6.1 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral wire protocols, and a generic renderer driver. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
 
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
@@ -78,8 +77,11 @@ Install only the layers used by the host:
 # Framework-independent Tool-to-UI runtime
 npm install @surfaceweave/core@next @surfaceweave/generator@next @surfaceweave/agent-tools@next
 
-# Default React renderer
-npm install react react-dom @surfaceweave/react@next
+# Existing React application (React is a peer dependency)
+npm install @surfaceweave/react@next
+
+# Generic DOM Driver (add React DOM explicitly)
+npm install @surfaceweave/react@next react-dom
 
 # Choose zero or one optional third-party Pack
 npm install react-aria-components @surfaceweave/react-aria@next
@@ -95,10 +97,12 @@ Pack, or Tauri. Installing the default renderer does not install React Aria or
 Ant Design.
 
 Vue, Svelte, Agentdown, and plain DOM hosts do not need dedicated SurfaceWeave
-Adapter packages. Install `react-dom`, then import
-`createReactDOMRendererDriver` from `@surfaceweave/react/dom`; the trusted host
-injects the Store, registries, Pack policy, capabilities, and ActionIntent
-handler once, while each mounted view supplies only `surfaceId` and mode.
+Adapter packages. Install `@surfaceweave/react@next` with `react-dom`, then
+import `createReactDOMRendererDriver` from `@surfaceweave/react/dom`; the
+trusted host injects the Store, registries, Pack policy, capabilities, and
+ActionIntent handler once, while each mounted view supplies only `surfaceId`
+and mode. The `./dom` entry first appears in RC.3 and is unavailable from the
+currently published RC.2 until `next` is promoted after approval.
 
 ## Development
 

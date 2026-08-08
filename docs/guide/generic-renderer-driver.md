@@ -9,6 +9,10 @@ or Component Pack types and is not part of the JSON Wire Protocol.
 
 The current DOM implementation is an optional React subpath:
 
+```bash
+npm install @surfaceweave/react@next react-dom
+```
+
 ```ts
 import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
 

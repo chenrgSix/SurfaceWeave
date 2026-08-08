@@ -2,10 +2,10 @@
 
 ## Status
 
-This document freezes the first npm Release Candidate API surface. Only package
-entry points declared in `exports` are public. Files under `src/` or `dist/`,
-relative monorepo paths, test helpers, and example modules are internal and may
-change without compatibility guarantees.
+This document freezes the `0.1.0-rc.3` candidate API surface. Only package entry
+points declared in `exports` are public. Files under `src/` or `dist/`, relative
+monorepo paths, test helpers, and example modules are internal and may change
+without compatibility guarantees.
 
 All JavaScript packages are ESM-only. `main`, `module`, and the default/import
 conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
@@ -69,3 +69,6 @@ remain separate version domains.
 
 Clean-tarball type fixtures import every package only through these entry points
 and verify that an internal Core subpath is rejected by Node package exports.
+The React root is also loaded without `react-dom`; a separate tarball consumer
+imports `@surfaceweave/react/dom`, and the Agentdown/Vue consumer uses only that
+public subpath.

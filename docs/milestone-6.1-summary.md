@@ -16,16 +16,17 @@ Lifecycle coverage verifies initial rendering, automatic Store refresh, two
 mount points sharing one Surface, Surface switching, ActionIntent forwarding,
 and subscription cleanup. Package gates verify that the React root loads
 without React DOM and that the `./dom` tarball entry type-checks and bundles in
-a clean consumer. Documentation includes a non-published Agentdown/Vue
-integration that keeps Agentdown in application code and shares one Store
-between chat and workspace.
+a clean consumer. A separate clean consumer installs Vue 3, Agentdown `0.0.5`,
+React, React DOM, and generated SurfaceWeave tarballs, then verifies the real
+controlled component, shared data, actions, Surface switching, subscription
+cleanup, and Vite build.
 
 No Vue Renderer, Web Component, workflow feature, Agentdown Adapter, new
 Component Pack, protocol change, tag, or npm publication was added.
 
-## RC.3 proposal
+## RC.3 candidate
 
-After acceptance, publish all ten packages atomically as `0.1.0-rc.3` because
-Core gains additive public types and React gains an additive optional subpath.
-Use exact `0.1.0-rc.3` internal dependency ranges, retain `next`, rerun the full
-clean-tarball and registry-consumer matrix, and leave RC.2 immutable.
+All ten package manifests and exact internal dependency ranges are prepared as
+`0.1.0-rc.3` because Core gains additive public types and React gains an
+additive optional subpath. RC.2 remains immutable, and no RC.3 tag, GitHub
+Release, or npm publication is created without approval.

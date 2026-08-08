@@ -29,9 +29,13 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.2",
+        text: "0.1.0-rc.3 candidate",
         items: [
-          { text: "Release summary", link: "/rc2-release-candidate-summary" },
+          {
+            text: "Candidate summary",
+            link: "/rc3-release-candidate-summary",
+          },
+          { text: "RC.2 release", link: "/rc2-release-candidate-summary" },
           { text: "Compatibility matrix", link: "/npm-compatibility-matrix" },
         ],
       },

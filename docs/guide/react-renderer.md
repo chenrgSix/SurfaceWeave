@@ -6,8 +6,15 @@ contracts but does not redefine them.
 ## Install
 
 ```bash
-npm install react react-dom @surfaceweave/react@next
+# Existing React application
+npm install @surfaceweave/react@next
+
+# Generic DOM Driver host
+npm install @surfaceweave/react@next react-dom
 ```
+
+React is a peer dependency expected from the application. React DOM is needed
+only when the application renders React or imports the isolated `./dom` entry.
 
 ## Register components and render
 
