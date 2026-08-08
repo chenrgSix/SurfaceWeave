@@ -3,17 +3,17 @@
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.3%20candidate-orange.svg)
+![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.3%20published-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** the repository is prepared as the experimental `0.1.0-rc.3`
-> candidate, but it has not been tagged or published. npm `next` and `latest`
-> still resolve to the immutable RC.2 release until explicit publication
-> approval. Review the [RC.3 candidate summary](docs/rc3-release-candidate-summary.md)
-> before production use.
+> **Status:** all ten public packages are published as the experimental
+> `0.1.0-rc.3` with npm provenance. npm `next` resolves to RC.3, while `latest`
+> intentionally remains on the immutable RC.2 release. Review the
+> [RC.3 release summary](docs/rc3-release-candidate-summary.md) before
+> production use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
@@ -102,7 +102,7 @@ import `createReactDOMRendererDriver` from `@surfaceweave/react/dom`; the
 trusted host injects the Store, registries, Pack policy, capabilities, and
 ActionIntent handler once, while each mounted view supplies only `surfaceId`
 and mode. The `./dom` entry first appears in RC.3 and is unavailable from the
-currently published RC.2 until `next` is promoted after approval.
+older RC.2 release.
 
 ## Development
 
