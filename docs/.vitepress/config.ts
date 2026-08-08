@@ -44,6 +44,10 @@ export default defineConfig({
             { text: "Introduction", link: "/guide/getting-started" },
             { text: "Tool-to-UI runtime", link: "/guide/tool-to-ui" },
             { text: "React renderer", link: "/guide/react-renderer" },
+            {
+              text: "Generic Renderer Driver",
+              link: "/guide/generic-renderer-driver",
+            },
           ],
         },
         {

@@ -56,6 +56,12 @@ registry/manifest. Register a separate implementation for each Renderer. When
 an implementation is absent, the Renderer follows the semantic fallback;
 callers do not rewrite the Surface for a framework.
 
+A business application can define this Pack locally. Component library choice
+and host framework choice are independent: Vue, Svelte, Agentdown, or plain DOM
+hosts can all mount the same React Renderer Driver, while the driver selects
+only locally registered and host-enabled React Packs. No per-library or
+per-Agent-host Adapter package is required.
+
 See the
 [Component Pack Protocol](https://github.com/chenrgSix/SurfaceWeave/blob/main/protocol/component-pack-protocol.md)
 for manifest fields, selection rules, version negotiation, and the non-React

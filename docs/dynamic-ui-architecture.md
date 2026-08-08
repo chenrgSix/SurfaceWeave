@@ -203,6 +203,20 @@ Agent 只能组合已注册组件，不能生成 React 代码。
 
 Manifest 由 `validateComponentPack` 校验，Runtime Binding 由对应 Renderer 校验。解析顺序考虑 `rendererKind`、宿主启用列表、终端 capabilities、`preferredPack`、开发者优先级、宿主接受的 Pack 版本和 fallback 链，并为不兼容选择产生诊断。`agentGuidance` 只帮助 Agent 选择语义组件，不能覆盖 JSON Schema、hard constraints、安全策略或 ActionIntent 执行规则。厂商特性只能进入带 namespace、版本和 JSON Schema 的 `extensions`；默认 Generator 和 Agent 不主动生成这些扩展。
 
+### Generic Renderer Driver（Milestone 6.1）
+
+Core 仅定义可选的 `SurfaceRendererDriver<TTarget>` 生命周期合约，以及
+`SurfaceViewReference { surfaceId, mode }`。目标类型由 Renderer 实现决定，
+因此 Core 不引用 DOM、React、Vue 或 Agent 宿主。Driver 的 `mount` 返回支持
+`update` 与幂等 `unmount` 的 handle。
+
+React DOM 实现在独立子路径 `@surfaceweave/react/dom`，由可信宿主一次性注入
+Surface Store、语义与 React Registry、ActionIntent handler、Pack allow-list、
+capabilities、优先级和版本约束。远程事件只可提供 Surface id 与展示模式，不能
+改变这些安全配置。Vue、Svelte、Agentdown 或普通 DOM 应用可以挂载此统一 Driver，
+无需为每个宿主或组件库新增 Adapter 包。该能力不修改 Wire Protocol 1.0，也不等同
+于实现 Vue Renderer；真正的 Vue Renderer 仍需独立 Runtime Binding。
+
 ## 七、Agent UI Tools
 
 建议提供四个主要工具。

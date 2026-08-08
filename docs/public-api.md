@@ -20,7 +20,7 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 | `@surfaceweave/preferences` | `.`                                                 |
 | `@surfaceweave/generator`   | `.`                                                 |
 | `@surfaceweave/agent-tools` | `.`                                                 |
-| `@surfaceweave/react`       | `.`                                                 |
+| `@surfaceweave/react`       | `.`, `./dom`                                        |
 | `@surfaceweave/react-aria`  | `.`, `./styles.css`                                 |
 | `@surfaceweave/antd`        | `.`                                                 |
 | `@surfaceweave/tauri`       | `.`                                                 |
@@ -40,6 +40,8 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
   definitions.
 - React: `SurfaceRenderer`, `useSurface`, React component registry, default Pack,
   resolver validation, layout helper, and renderer types.
+- React DOM: `createReactDOMRendererDriver` and its trusted host option type,
+  available only from `@surfaceweave/react/dom`.
 - React Aria and Ant Design: serializable manifest, Pack factory, and factory
   option types.
 - Tauri: adapter factory, action executor, preference storage, capability
@@ -50,6 +52,12 @@ The Core root also publicly exports its protocol types, including `Surface`,
 `ToolDefinition`, `ToolInvocation`, `ToolSubmissionRequest`,
 `ComponentPackManifest`, storage/preference records, and registry/store
 interfaces.
+
+Core also exports the optional, framework-neutral `SurfaceViewMode`,
+`SurfaceViewReference`, `SurfaceViewHandle`, and
+`SurfaceRendererDriver<TTarget>` types. `SurfaceViewReference` contains only a
+Surface id and presentation mode; renderer capabilities, Pack policy, and
+Action handling remain host configuration.
 
 ## Compatibility Policy
 

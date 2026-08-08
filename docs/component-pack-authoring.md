@@ -43,6 +43,12 @@ const pack: ReactComponentPack = {
 reactComponents.registerPack(pack);
 ```
 
+The Pack may live inside the consuming application. A third-party design
+system does not need its own SurfaceWeave package: declare stable semantic
+components in a manifest, bind them to trusted local implementations, and
+register the Pack at the application composition root. Publish a Pack only when
+multiple applications actually need to share it.
+
 Run `validateComponentPack(manifest)` and `validateReactComponentPack(pack, registry)` in CI. Manifests reject functions, JSX/code strings, unsafe keys, invalid schemas, missing fallback targets, cycles, and incomplete bindings.
 
 ## Resolution and Fallback
@@ -52,3 +58,7 @@ The host supplies renderer kind, capabilities, preferred Pack, priorities, accep
 Use namespaced, versioned `extensions` only when a semantic property cannot represent a library feature. Each extension needs its own JSON Schema. Generators and Agents should not emit vendor extensions by default; durable preferences should avoid them.
 
 React Aria owns its stylesheet and locale provider. Ant Design theming is passed to `createAntDesignComponentPack({ theme, locale })` and remains outside the wire contract.
+
+Component Packs and host integration are separate concerns. A DOM host uses one
+Renderer Driver regardless of which React Pack is enabled; SurfaceWeave does
+not require an Adapter package for every component library or Agent host.

@@ -28,7 +28,7 @@ either project.
 
 Read the [SurfaceWeave usage guide](https://chenrgsix.github.io/SurfaceWeave/)
 for installation, Tool-to-UI setup, React rendering, Component Packs,
-preferences, storage, and Tauri integration. Documentation source lives in
+generic DOM-host mounting, preferences, storage, and Tauri integration. Documentation source lives in
 `docs/`; run `pnpm docs:dev` to preview it locally.
 
 ![Tea purchase Tool-to-UI demo](docs/assets/tea-purchase-demo.jpg)
@@ -93,6 +93,12 @@ npm install @surfaceweave/storage@next @surfaceweave/preferences@next @surfacewe
 The Protocol and Core packages never install React, DOM bindings, a Component
 Pack, or Tauri. Installing the default renderer does not install React Aria or
 Ant Design.
+
+Vue, Svelte, Agentdown, and plain DOM hosts do not need dedicated SurfaceWeave
+Adapter packages. Install `react-dom`, then import
+`createReactDOMRendererDriver` from `@surfaceweave/react/dom`; the trusted host
+injects the Store, registries, Pack policy, capabilities, and ActionIntent
+handler once, while each mounted view supplies only `surfaceId` and mode.
 
 ## Development
 
@@ -382,7 +388,9 @@ The security chain is: trusted component emits an `ActionIntent` → semantic ac
 
 ## Peer Dependencies
 
-The default renderer supports React `>=18.2 <20`. React Aria additionally needs
+The default renderer supports React `>=18.2 <20`; its optional `./dom` entry
+needs React DOM `>=18.2 <20`, while the package root does not load React DOM.
+React Aria additionally needs
 React DOM `>=18.2 <20` and `react-aria-components >=1.20 <2`. Ant Design needs
 React DOM `>=18.2 <20` and `antd >=6.5.3 <7`. These libraries are peers of their
 optional Pack and are not pulled into Core or unrelated consumers. Tauri is a

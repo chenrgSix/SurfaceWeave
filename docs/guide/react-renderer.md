@@ -49,6 +49,36 @@ Render the same `surfaceId` and `SurfaceStore` twice:
 Both views subscribe to the same Store. A field update from either view writes
 through its `DataBinding` and is visible in the other view immediately.
 
+## Mount from a non-React DOM host
+
+Import the optional DOM entry when Vue, Svelte, Agentdown, or plain host code
+owns the mount point:
+
+```ts
+import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
+
+const driver = createReactDOMRendererDriver({
+  store: surfaces,
+  componentRegistry: components,
+  reactComponents,
+  onActionIntent: (intent) => runtime.handleActionIntent(intent),
+  enabledPackIds: ["default"],
+  capabilities: ["web"],
+});
+
+const view = driver.mount(targetElement, {
+  surfaceId: "order-form",
+  mode: "compact",
+});
+view.update({ surfaceId: "order-result", mode: "workspace" });
+view.unmount();
+```
+
+`react-dom` is an optional peer used only by `@surfaceweave/react/dom`; importing
+the React package root does not load it. See the
+[Generic Renderer Driver](./generic-renderer-driver) guide for host boundaries
+and an Agentdown/Vue example.
+
 ## Security boundary
 
 - Register only trusted component implementations.

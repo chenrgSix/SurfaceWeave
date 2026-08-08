@@ -142,6 +142,7 @@ for (const releasePackage of releasePackages) {
 
 const core = manifests.get("@surfaceweave/core");
 const protocol = manifests.get("@surfaceweave/protocol");
+const react = manifests.get("@surfaceweave/react");
 for (const [name, manifest] of [
   ["Core", core],
   ["Protocol", protocol],
@@ -158,6 +159,38 @@ for (const [name, manifest] of [
       fail(`${name}: forbidden dependency metadata contains ${forbidden}`);
     }
   }
+}
+
+if (
+  react?.exports?.["./dom"]?.types !== "./dist/dom.d.ts" ||
+  react?.exports?.["./dom"]?.import !== "./dist/dom.js" ||
+  react?.exports?.["./dom"]?.default !== "./dist/dom.js"
+) {
+  fail("React: ./dom must expose isolated ESM and type entry points");
+}
+if (
+  react?.peerDependencies?.["react-dom"] !== ">=18.2.0 <20" ||
+  react?.peerDependenciesMeta?.["react-dom"]?.optional !== true
+) {
+  fail("React: react-dom must be an optional peer for the ./dom entry point");
+}
+try {
+  const reactRootEntry = readFileSync(
+    resolve(repositoryRoot, "packages/renderer-react/dist/index.js"),
+    "utf8",
+  );
+  const reactDOMEntry = readFileSync(
+    resolve(repositoryRoot, "packages/renderer-react/dist/dom.js"),
+    "utf8",
+  );
+  if (/react-dom/.test(reactRootEntry)) {
+    fail("React: root runtime entry must not import react-dom");
+  }
+  if (!/react-dom\/client/.test(reactDOMEntry)) {
+    fail("React: ./dom runtime entry must own the react-dom/client import");
+  }
+} catch {
+  fail("React: build outputs are missing; run pnpm build before audit:release");
 }
 
 if (errors.length > 0) {

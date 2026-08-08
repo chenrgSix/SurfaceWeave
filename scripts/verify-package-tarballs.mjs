@@ -188,11 +188,14 @@ function verifyFixture(packageSpecs, fixture) {
 }
 
 const typescript = { typescript: "6.0.2" };
-const react = {
+const reactWithoutDOM = {
   ...typescript,
   react: "19.2.8",
-  "react-dom": "19.2.8",
   "@types/react": "19.2.18",
+};
+const react = {
+  ...reactWithoutDOM,
+  "react-dom": "19.2.8",
   "@types/react-dom": "19.2.4",
   vite: "8.2.0",
 };
@@ -236,6 +239,27 @@ try {
 `,
   },
   {
+    name: "react-root-without-dom",
+    packages: ["@surfaceweave/core", "@surfaceweave/react"],
+    dependencies: reactWithoutDOM,
+    consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+const components = createStandardComponentRegistry();
+const renderer = createStandardReactComponentRegistry(components);
+void renderer;
+`,
+    smoke: `const renderer = await import("@surfaceweave/react");
+if (typeof renderer.SurfaceRenderer !== "function") throw new Error("React root entry");
+try {
+  await import("react-dom");
+  throw new Error("react-dom was installed for the React root entry");
+} catch (error) {
+  if (error?.message === "react-dom was installed for the React root entry") throw error;
+  if (error?.code !== "ERR_MODULE_NOT_FOUND") throw error;
+}
+`,
+  },
+  {
     name: "react-default",
     packages: ["@surfaceweave/core", "@surfaceweave/react"],
     dependencies: react,
@@ -252,6 +276,48 @@ void [pack, renderer, props];
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 const runtime = createStandardReactComponentRegistry(createStandardComponentRegistry());
 document.querySelector("#app").textContent = runtime.listPacks()[0].id;
+`,
+  },
+  {
+    name: "react-dom-driver",
+    packages: ["@surfaceweave/core", "@surfaceweave/react"],
+    dependencies: react,
+    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+import type { SurfaceRendererDriver, SurfaceViewReference } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
+const components = createStandardComponentRegistry();
+const store = new InMemorySurfaceStore(components);
+const driver: SurfaceRendererDriver<Element> = createReactDOMRendererDriver({
+  store,
+  componentRegistry: components,
+  reactComponents: createStandardReactComponentRegistry(components),
+  enabledPackIds: ["default"],
+  capabilities: ["web"],
+  packPriorities: { default: 1 },
+  supportedPackVersions: { default: ["1.0.0"] },
+});
+const reference: SurfaceViewReference = { surfaceId: "surface", mode: "compact" };
+void [driver, reference];
+`,
+    viteEntry: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
+const components = createStandardComponentRegistry();
+const store = new InMemorySurfaceStore(components);
+store.createSurface({
+  id: "surface",
+  intent: "confirm",
+  tree: { id: "confirm", component: "Confirm", props: { title: "Ready", message: "Mounted" } },
+  data: {},
+  context: {},
+});
+const driver = createReactDOMRendererDriver({
+  store,
+  componentRegistry: components,
+  reactComponents: createStandardReactComponentRegistry(components),
+});
+driver.mount(document.querySelector("#app"), { surfaceId: "surface", mode: "compact" });
 `,
   },
   {
