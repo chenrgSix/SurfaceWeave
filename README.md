@@ -1,6 +1,7 @@
 # SurfaceWeave
 
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.2%20published-orange.svg)
 
@@ -22,6 +23,13 @@ Milestones 1–5 implement the Surface runtime, deterministic Tool Schema genera
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
 either project.
+
+## Documentation
+
+Read the [SurfaceWeave usage guide](https://chenrgsix.github.io/SurfaceWeave/)
+for installation, Tool-to-UI setup, React rendering, Component Packs,
+preferences, storage, and Tauri integration. Documentation source lives in
+`docs/`; run `pnpm docs:dev` to preview it locally.
 
 ![Tea purchase Tool-to-UI demo](docs/assets/tea-purchase-demo.jpg)
 
@@ -99,6 +107,8 @@ pnpm lint
 pnpm test
 pnpm verify:packages
 pnpm verify:release
+pnpm docs:dev
+pnpm docs:build
 pnpm dev
 ```
 

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Architecture decisions live in `docs/`; the language-neutral contract and JSON Schema live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`.
+Architecture decisions and the VitePress usage site live in `docs/`; the language-neutral contract and JSON Schema live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
 
@@ -17,6 +17,9 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm verify:packages` — run `npm pack` and test isolated clean consumers.
 - `pnpm audit:release` — audit release metadata, package boundaries, and tarball contents without registry access.
 - `pnpm verify:release` — run the release audit and npm publish dry-runs against the official registry.
+- `pnpm docs:dev` — start the VitePress documentation site locally.
+- `pnpm docs:build` — build and validate the GitHub Pages documentation artifact.
+- `pnpm docs:preview` — preview the generated documentation artifact.
 - `pnpm dev` — start the tea-purchase example.
 - `pnpm dev:tauri` — start the Tauri 2 desktop example.
 - `pnpm check:tauri` — compile-check the Rust host commands.
