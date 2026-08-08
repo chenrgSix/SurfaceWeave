@@ -91,6 +91,8 @@ export function createReactDOMRendererDriver(
 
   return {
     mount(target, initialReference) {
+      const initial = readReference(initialReference);
+      options.store.requireSurface(initial.surfaceId);
       const root = createRoot(target);
       let mounted = true;
 
@@ -106,7 +108,7 @@ export function createReactDOMRendererDriver(
         );
       };
 
-      render(initialReference);
+      render(initial);
       return {
         update(reference) {
           if (!mounted) return;

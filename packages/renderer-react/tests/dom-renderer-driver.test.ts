@@ -55,6 +55,35 @@ function createRuntime() {
 }
 
 describe("createReactDOMRendererDriver", () => {
+  it("validates the initial Surface before creating a React root", async () => {
+    const { registry, store } = createRuntime();
+    const driver = createReactDOMRendererDriver({
+      store,
+      componentRegistry: registry,
+      reactComponents: createStandardReactComponentRegistry(registry),
+    });
+    const target = document.createElement("div");
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    expect(() =>
+      driver.mount(target, { surfaceId: "missing", mode: "compact" }),
+    ).toThrow('Surface "missing" does not exist');
+    let handle: ReturnType<typeof driver.mount>;
+    await act(async () => {
+      handle = driver.mount(target, {
+        surfaceId: "purchase",
+        mode: "compact",
+      });
+    });
+    expect(consoleError.mock.calls.flat().join(" ")).not.toMatch(
+      /already been passed to createRoot/,
+    );
+    await act(async () => handle.unmount());
+    consoleError.mockRestore();
+  });
+
   it("mounts shared views, updates references, forwards actions, and cleans subscriptions", async () => {
     const { registry, store } = createRuntime();
     const originalSubscribe = store.subscribe.bind(store);
