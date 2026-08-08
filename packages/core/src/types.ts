@@ -592,3 +592,28 @@ export interface SurfaceStore {
     replacement: Omit<Surface, "id" | "revision">,
   ): Surface;
 }
+
+/** Presentation density selected by a host for one mounted Surface view. */
+export type SurfaceViewMode = "compact" | "workspace";
+
+/**
+ * Serializable reference controlled by a host integration.
+ *
+ * Security-sensitive renderer configuration is deliberately excluded. It is
+ * fixed when the host creates its renderer driver.
+ */
+export interface SurfaceViewReference {
+  surfaceId: string;
+  mode: SurfaceViewMode;
+}
+
+/** Lifecycle handle returned for one mounted Surface view. */
+export interface SurfaceViewHandle {
+  update(reference: SurfaceViewReference): void;
+  unmount(): void;
+}
+
+/** Framework-neutral mounting contract implemented by renderer packages. */
+export interface SurfaceRendererDriver<TTarget> {
+  mount(target: TTarget, reference: SurfaceViewReference): SurfaceViewHandle;
+}
