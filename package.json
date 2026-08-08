@@ -15,6 +15,9 @@
     "check:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:check",
     "dev": "pnpm --filter @surfaceweave/tea-purchase dev",
     "dev:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:dev",
+    "docs:build": "vitepress build docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:preview": "vitepress preview docs",
     "lint": "pnpm lint:code && pnpm lint:format",
     "lint:code": "eslint . --max-warnings 0",
     "lint:format": "prettier --check .",
@@ -37,6 +40,7 @@
     "prettier": "^3.9.6",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.66.0",
+    "vitepress": "^1.6.4",
     "vitest": "^4.1.10"
   }
 }
