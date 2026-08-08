@@ -33,8 +33,9 @@ or install an Executor. The driver copies those policies when it is created.
 This is a documentation-only integration checked against Agentdown `0.0.5`.
 Agentdown stays an application dev/example dependency and is not a dependency
 of any SurfaceWeave package. Register a local Vue renderer component through
-Agentdown's `defineAgnoToolComponents`; a small wrapper correlates the tool block
-to a Surface and passes only `surfaceId` into the controlled mount component.
+Agentdown's `defineAgnoToolComponents`. Agentdown maps the tool block data to
+component props, so the controlled component declares and accepts only
+`surfaceId`.
 
 ```ts
 // agentdown-tools.ts
@@ -50,22 +51,7 @@ export const toolComponents = defineAgnoToolComponents({
 ```
 
 ```vue
-<!-- SurfaceWeaveToolBlock.vue -->
-<script setup lang="ts">
-import type { RunSurfaceRendererProps } from "agentdown";
-import { computed } from "vue";
-import SurfaceWeaveView from "./SurfaceWeaveView.vue";
-import { surfaceIdForToolBlock } from "./tool-surface-correlation";
-
-const props = defineProps<RunSurfaceRendererProps>();
-const surfaceId = computed(() => surfaceIdForToolBlock(props.block.id));
-</script>
-
-<template><SurfaceWeaveView :surface-id="surfaceId" /></template>
-```
-
-```vue
-<!-- SurfaceWeaveView.vue: this component receives only surfaceId. -->
+<!-- SurfaceWeaveToolBlock.vue: Agentdown passes only surfaceId. -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { SurfaceViewHandle } from "@surfaceweave/core";

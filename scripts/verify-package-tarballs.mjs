@@ -9,11 +9,15 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import process from "node:process";
 import { parseArgs } from "node:util";
 
-import { npmRegistry, releasePackages } from "./release-packages.mjs";
+import {
+  npmRegistry,
+  releasePackages,
+  releaseVersion,
+} from "./release-packages.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const fixtureRoot = mkdtempSync(join(tmpdir(), "surfaceweave-consumers-"));
@@ -25,6 +29,7 @@ const { values } = parseArgs({
   }),
   options: {
     fixture: { type: "string" },
+    keep: { type: "boolean", default: false },
     published: { type: "boolean", default: false },
     tag: { type: "string", default: "next" },
   },
@@ -122,6 +127,14 @@ function verifyFixture(packageSpecs, fixture) {
     include: ["consumer.ts"],
   });
   writeFileSync(join(directory, "consumer.ts"), fixture.consumer);
+  for (const [relativePath, contents] of Object.entries(fixture.files ?? {})) {
+    const destination = resolve(directory, relativePath);
+    if (!destination.startsWith(`${directory}/`)) {
+      throw new Error(`${fixture.name}: fixture file escapes its directory`);
+    }
+    mkdirSync(dirname(destination), { recursive: true });
+    writeFileSync(destination, contents);
+  }
   const smoke =
     values.published && fixture.publishedSmoke !== undefined
       ? fixture.publishedSmoke
@@ -179,7 +192,10 @@ function verifyFixture(packageSpecs, fixture) {
   }
   run("npm", ["exec", "tsc", "--", "-p", "tsconfig.json"], directory);
   if (smoke !== undefined) run("node", ["smoke.mjs"], directory);
-  if (fixture.viteEntry !== undefined) {
+  if (fixture.vitest === true) {
+    run("npm", ["exec", "vitest", "--", "run"], directory);
+  }
+  if (fixture.viteEntry !== undefined || fixture.viteBuild === true) {
     run("npm", ["exec", "vite", "--", "build"], directory);
   }
   process.stdout.write(
@@ -198,6 +214,15 @@ const react = {
   "react-dom": "19.2.8",
   "@types/react-dom": "19.2.4",
   vite: "8.2.0",
+};
+const vueAgentdown = {
+  ...react,
+  agentdown: "0.0.5",
+  vue: "3.5.31",
+  "@vue/compiler-sfc": "3.5.31",
+  "@vitejs/plugin-vue": "6.0.5",
+  vitest: "4.1.10",
+  jsdom: "30.0.1",
 };
 
 const fixtures = [
@@ -280,6 +305,7 @@ document.querySelector("#app").textContent = runtime.listPacks()[0].id;
   },
   {
     name: "react-dom-driver",
+    requiresCandidateVersion: true,
     packages: ["@surfaceweave/core", "@surfaceweave/react"],
     dependencies: react,
     consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
@@ -319,6 +345,369 @@ const driver = createReactDOMRendererDriver({
 });
 driver.mount(document.querySelector("#app"), { surfaceId: "surface", mode: "compact" });
 `,
+  },
+  {
+    name: "agentdown-vue-driver",
+    requiresCandidateVersion: true,
+    packages: ["@surfaceweave/core", "@surfaceweave/react"],
+    dependencies: vueAgentdown,
+    consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
+import type { SurfaceRendererDriver, SurfaceViewHandle } from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
+import { RunSurface, defineAgnoToolComponents } from "agentdown";
+import type { Component } from "vue";
+const components = createStandardComponentRegistry();
+const driver: SurfaceRendererDriver<Element> = createReactDOMRendererDriver({
+  store: {} as never,
+  componentRegistry: components,
+  reactComponents: createStandardReactComponentRegistry(components),
+});
+const controlled = {} as Component<{ surfaceId: string }>;
+const tools = defineAgnoToolComponents({ surfaceweave: { match: "ui.renderSurface", component: controlled } });
+const handle = {} as SurfaceViewHandle;
+void [driver, tools, handle, RunSurface];
+`,
+    vitest: true,
+    viteBuild: true,
+    files: {
+      "vite.config.ts": `import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [vue()],
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+  },
+});
+`,
+      "index.html": `<div id="app"></div><script type="module" src="/src/main.ts"></script>\n`,
+      "src/main.ts": `import { createApp } from "vue";
+import App from "./App.vue";
+import "agentdown/style.css";
+
+createApp(App).mount("#app");
+`,
+      "src/runtime.ts": `import {
+  InMemorySurfaceStore,
+  createStandardComponentRegistry,
+  type ActionIntent,
+  type SurfaceListener,
+} from "@surfaceweave/core";
+import { createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
+
+export const componentRegistry = createStandardComponentRegistry();
+export const store = new InMemorySurfaceStore(componentRegistry);
+store.createSurface({
+  id: "purchase",
+  intent: "form",
+  tree: {
+    id: "purchase-stack",
+    component: "Stack",
+    props: {},
+    children: [
+      {
+        id: "buyer",
+        stableId: "purchase.buyer",
+        component: "TextInput",
+        props: { label: "Buyer" },
+        binding: { path: "buyer", valueType: "string" },
+      },
+      {
+        id: "tea-cards",
+        component: "CardList",
+        props: {
+          title: "Tea",
+          multiple: true,
+          items: [{ id: "longjing", name: "Longjing" }],
+        },
+        binding: { path: "selection", valueType: "array" },
+      },
+    ],
+  },
+  data: { buyer: "Ada", selection: [] },
+  context: {},
+});
+store.createSurface({
+  id: "second",
+  intent: "confirm",
+  tree: {
+    id: "second-confirm",
+    component: "Confirm",
+    props: { title: "Second surface", message: "Ready" },
+  },
+  data: {},
+  context: {},
+});
+
+let activeSubscriptions = 0;
+export const subscriptionEvents: string[] = [];
+const subscribe = store.subscribe.bind(store);
+store.subscribe = (surfaceId: string, listener: SurfaceListener) => {
+  activeSubscriptions += 1;
+  subscriptionEvents.push(\`subscribe:\${surfaceId}:\${activeSubscriptions}\`);
+  const unsubscribe = subscribe(surfaceId, listener);
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    activeSubscriptions -= 1;
+    subscriptionEvents.push(\`unsubscribe:\${surfaceId}:\${activeSubscriptions}\`);
+    unsubscribe();
+  };
+};
+
+export const actionIntents: ActionIntent[] = [];
+export const driver = createReactDOMRendererDriver({
+  store,
+  componentRegistry,
+  reactComponents: createStandardReactComponentRegistry(componentRegistry),
+  onActionIntent: (intent) => actionIntents.push(intent),
+  enabledPackIds: ["default"],
+  capabilities: ["web"],
+});
+
+export function getActiveSubscriptionCount(): number {
+  return activeSubscriptions;
+}
+`,
+      "src/agentdown-runtime.ts": `import {
+  createAgentRuntime,
+  defineAgnoToolComponents,
+} from "agentdown";
+import AgentdownSurfaceBlock from "./AgentdownSurfaceBlock.vue";
+
+export const agentRuntime = createAgentRuntime();
+export const surfaceTools = defineAgnoToolComponents({
+  surfaceweave: {
+    match: "ui.renderSurface",
+    component: AgentdownSurfaceBlock,
+  },
+});
+
+agentRuntime.apply({
+  type: "block.upsert",
+  block: {
+    id: "surface-tool-block",
+    slot: "main",
+    type: "tool",
+    renderer: "surfaceweave",
+    state: "settled",
+    groupId: "turn:purchase",
+    data: { surfaceId: "purchase" },
+  },
+});
+
+export function switchChatSurface(surfaceId: string): void {
+  agentRuntime.apply({
+    type: "block.patch",
+    id: "surface-tool-block",
+    patch: { data: { surfaceId } },
+  });
+}
+`,
+      "src/use-surface-driver.ts": `import type {
+  SurfaceViewHandle,
+  SurfaceViewMode,
+} from "@surfaceweave/core";
+import { onBeforeUnmount, onMounted, type Ref, watch } from "vue";
+import { driver } from "./runtime";
+
+export function useSurfaceDriver(
+  target: Ref<Element | null>,
+  surfaceId: () => string,
+  mode: SurfaceViewMode,
+): void {
+  let handle: SurfaceViewHandle | undefined;
+  onMounted(() => {
+    if (target.value === null) throw new Error("Missing mount target");
+    handle = driver.mount(target.value, { surfaceId: surfaceId(), mode });
+  });
+  watch(surfaceId, (nextSurfaceId) => {
+    handle?.update({ surfaceId: nextSurfaceId, mode });
+  });
+  onBeforeUnmount(() => handle?.unmount());
+}
+`,
+      "src/SurfaceWeaveChatView.vue": `<script setup lang="ts">
+import { ref } from "vue";
+import { useSurfaceDriver } from "./use-surface-driver";
+
+const props = defineProps<{ surfaceId: string }>();
+const target = ref<Element | null>(null);
+useSurfaceDriver(target, () => props.surfaceId, "compact");
+</script>
+
+<template><div ref="target" data-chat-surface /></template>
+`,
+      "src/SurfaceWeaveWorkspaceView.vue": `<script setup lang="ts">
+import { ref } from "vue";
+import { useSurfaceDriver } from "./use-surface-driver";
+
+const props = defineProps<{ surfaceId: string }>();
+const target = ref<Element | null>(null);
+useSurfaceDriver(target, () => props.surfaceId, "workspace");
+</script>
+
+<template><div ref="target" data-workspace-surface /></template>
+`,
+      "src/AgentdownSurfaceBlock.vue": `<script setup lang="ts">
+import SurfaceWeaveChatView from "./SurfaceWeaveChatView.vue";
+
+defineProps<{ surfaceId: string }>();
+</script>
+
+<template>
+  <section data-agentdown-surface-block>
+    <SurfaceWeaveChatView :surface-id="surfaceId" />
+  </section>
+</template>
+`,
+      "src/App.vue": `<script setup lang="ts">
+import { RunSurface } from "agentdown";
+import { agentRuntime, surfaceTools } from "./agentdown-runtime";
+import SurfaceWeaveWorkspaceView from "./SurfaceWeaveWorkspaceView.vue";
+</script>
+
+<template>
+  <RunSurface
+    :runtime="agentRuntime"
+    :renderers="surfaceTools.renderers"
+    :performance="{ lazyMount: false }"
+  />
+  <SurfaceWeaveWorkspaceView surface-id="purchase" />
+</template>
+`,
+      "src/test-setup.ts": `class ObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+Object.assign(globalThis, {
+  IS_REACT_ACT_ENVIRONMENT: true,
+  ResizeObserver: ObserverStub,
+  IntersectionObserver: ObserverStub,
+  requestAnimationFrame: (callback: FrameRequestCallback) =>
+    setTimeout(() => callback(Date.now()), 0),
+  cancelAnimationFrame: (id: number) => clearTimeout(id),
+});
+`,
+      "src/integration.test.ts": `import { act } from "react";
+import { createApp, nextTick } from "vue";
+import { afterEach, describe, expect, it } from "vitest";
+import App from "./App.vue";
+import { switchChatSurface } from "./agentdown-runtime";
+import {
+  actionIntents,
+  getActiveSubscriptionCount,
+  store,
+  subscriptionEvents,
+} from "./runtime";
+
+async function settle(): Promise<void> {
+  for (let index = 0; index < 6; index += 1) {
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+}
+
+async function commit(action: () => void): Promise<void> {
+  await act(async () => {
+    action();
+    await settle();
+  });
+}
+
+async function waitUntil(condition: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (condition()) return;
+    await settle();
+  }
+  throw new Error(
+    \`Timed out waiting for renderer lifecycle state: active=\${getActiveSubscriptionCount()} events=\${subscriptionEvents.join("|")}\`,
+  );
+}
+
+function input(element: HTMLInputElement, value: string): void {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value",
+  )?.set;
+  if (valueSetter === undefined) {
+    throw new Error("HTMLInputElement value setter is unavailable");
+  }
+  valueSetter.call(element, value);
+  element.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+afterEach(() => {
+  document.body.replaceChildren();
+  actionIntents.length = 0;
+});
+
+describe("Agentdown Vue tarball consumer", () => {
+  it("shares lifecycle, data, actions, and Surface switching", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp(App);
+    await commit(() => app.mount(host));
+
+    const chatBlock = host.querySelector("[data-agentdown-surface-block]");
+    const chat = chatBlock?.querySelector("[data-chat-surface]");
+    const workspace = host.querySelector("[data-workspace-surface]");
+    expect(chatBlock).not.toBeNull();
+    expect(chat).not.toBeNull();
+    expect(workspace).not.toBeNull();
+    expect(chat?.querySelector("[data-surface-id='purchase']")).not.toBeNull();
+    expect(
+      workspace?.querySelector("[data-surface-id='purchase']"),
+    ).not.toBeNull();
+    await waitUntil(() => getActiveSubscriptionCount() === 2);
+    expect(getActiveSubscriptionCount()).toBe(2);
+
+    const chatInput = chat?.querySelector("input") as HTMLInputElement;
+    const workspaceInput = workspace?.querySelector("input") as HTMLInputElement;
+    await commit(() => input(chatInput, "Lin"));
+    expect(workspaceInput.value).toBe("Lin");
+    expect(store.requireSurface("purchase").data.buyer).toBe("Lin");
+
+    await commit(() => input(workspaceInput, "Mei"));
+    expect(chatInput.value).toBe("Mei");
+    expect(store.requireSurface("purchase").data.buyer).toBe("Mei");
+
+    const actionButton = [...(chat?.querySelectorAll("button") ?? [])].find(
+      (button) => button.textContent === "Longjing",
+    );
+    await commit(() =>
+      actionButton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+    );
+    expect(actionIntents).toHaveLength(1);
+    expect(actionIntents[0]).toMatchObject({
+      surfaceId: "purchase",
+      nodeId: "tea-cards",
+      action: "select",
+      input: { value: ["longjing"] },
+    });
+
+    await commit(() => switchChatSurface("second"));
+    expect(chat?.querySelector("[data-surface-id='second']")).not.toBeNull();
+    expect(chat?.querySelector("[data-surface-id='purchase']")).toBeNull();
+    expect(chat?.textContent).toContain("Second surface");
+    expect(
+      workspace?.querySelector("[data-surface-id='purchase']"),
+    ).not.toBeNull();
+
+    await commit(() => app.unmount());
+    await waitUntil(() => getActiveSubscriptionCount() === 0);
+    expect(getActiveSubscriptionCount()).toBe(0);
+    expect(host.childElementCount).toBe(0);
+  });
+});
+`,
+    },
   },
   {
     name: "react-aria-only",
@@ -472,6 +861,17 @@ document.querySelector("#app").textContent = "tauri-adapter-bundled";
 ];
 
 try {
+  let publishedVersion;
+  if (values.published) {
+    publishedVersion = JSON.parse(
+      run(
+        "npm",
+        ["view", `@surfaceweave/react@${values.tag}`, "version", "--json"],
+        repositoryRoot,
+        true,
+      ),
+    );
+  }
   const packageSpecs = values.published
     ? new Map(
         releasePackages.map((releasePackage) => [
@@ -484,15 +884,42 @@ try {
       );
   const selectedFixtures =
     values.fixture === undefined
-      ? fixtures
-      : fixtures.filter((fixture) => fixture.name === values.fixture);
+      ? fixtures.filter(
+          (fixture) =>
+            !values.published ||
+            fixture.requiresCandidateVersion !== true ||
+            publishedVersion === releaseVersion,
+        )
+      : fixtures.filter(
+          (fixture) =>
+            fixture.name === values.fixture &&
+            (!values.published ||
+              fixture.requiresCandidateVersion !== true ||
+              publishedVersion === releaseVersion),
+        );
   if (selectedFixtures.length === 0) {
     throw new Error(`Unknown consumer fixture: ${values.fixture}`);
   }
   for (const fixture of selectedFixtures) verifyFixture(packageSpecs, fixture);
+  const skippedCandidateFixtures = values.published
+    ? fixtures.filter(
+        (fixture) =>
+          fixture.requiresCandidateVersion === true &&
+          publishedVersion !== releaseVersion,
+      )
+    : [];
+  if (skippedCandidateFixtures.length > 0) {
+    process.stdout.write(
+      `Skipped candidate-only consumers (${skippedCandidateFixtures.map((fixture) => fixture.name).join(", ")}) because ${values.tag} is ${publishedVersion}, not ${releaseVersion}.\n`,
+    );
+  }
   process.stdout.write(
     `npm ${values.published ? "Registry" : "tarball"} verification passed for ${releasePackages.length} packages and ${selectedFixtures.length} clean consumers.\n`,
   );
 } finally {
-  if (existsSync(fixtureRoot)) rmSync(fixtureRoot, { recursive: true });
+  if (values.keep) {
+    process.stdout.write(`Kept consumer fixtures at ${fixtureRoot}\n`);
+  } else if (existsSync(fixtureRoot)) {
+    rmSync(fixtureRoot, { recursive: true });
+  }
 }
