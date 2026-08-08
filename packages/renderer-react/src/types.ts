@@ -3,11 +3,13 @@ import type {
   ComponentPackManifest,
   ComponentResolution,
   JsonValue,
+  SurfaceViewMode,
   UINode,
 } from "@surfaceweave/core";
 import type { ComponentType, ReactNode } from "react";
 
-export type RendererMode = "compact" | "workspace";
+/** React compatibility name for the framework-neutral SurfaceViewMode. */
+export type RendererMode = SurfaceViewMode;
 
 export interface RendererComponentProps {
   node: UINode;

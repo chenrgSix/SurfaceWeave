@@ -17,6 +17,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./dom": {
+      "types": "./dist/dom.d.ts",
+      "import": "./dist/dom.js",
+      "default": "./dist/dom.js"
     }
   },
   "publishConfig": {
@@ -32,7 +37,13 @@
     "@surfaceweave/core": "0.1.0-rc.2"
   },
   "peerDependencies": {
-    "react": ">=18.2.0 <20"
+    "react": ">=18.2.0 <20",
+    "react-dom": ">=18.2.0 <20"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
