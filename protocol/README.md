@@ -9,11 +9,10 @@ npm install @surfaceweave/protocol@next
 
 Import the normative wire schema from `@surfaceweave/protocol/schema`.
 
-The RC.4 candidate also exposes the framework-neutral Semantic
+RC.4 also exposes the framework-neutral Semantic
 LayoutSpec and Surface Client Capabilities contracts. Import the capability
 document from `@surfaceweave/protocol/client-capabilities` and its Schema from
-`@surfaceweave/protocol/client-capabilities-schema`. These subpaths require a
-protected RC.4 release.
+`@surfaceweave/protocol/client-capabilities-schema`.
 
 The capability object is descriptive data created from trusted local policy.
 It cannot authorize a Pack or action, and receiving one from a remote party

@@ -1,9 +1,9 @@
 # Capabilities, Action State, and Resource Policy
 
-These RC.4 candidate APIs let a trusted host describe what it can render,
-project execution state into every view, and bound untrusted Surface work. The
-candidate is not published yet. The APIs do not add a transport or change Wire
-Protocol 1.0.
+These RC.4 APIs let a trusted host describe what it can render, project
+execution state into every view, and bound untrusted Surface work. They are
+published through npm `next` and do not add a transport or change Wire Protocol
+1.0.
 
 ## Create a trusted capability snapshot
 

@@ -49,7 +49,7 @@ retryable/non-retryable errors. Agent Operations alter the projection, never
 the raw result. Compatible data migrates by stableId or explicit alias;
 incompatible targets emit `ui.dataMigrationConflict`.
 
-In the RC.4 candidate, `ToolToUIRuntime.actionStateSource` is a read-only Renderer
+In RC.4, `ToolToUIRuntime.actionStateSource` is a read-only Renderer
 projection of that same `ToolInvocation`; it is not a second lifecycle store.
 Only a Runtime success transition can project `succeeded`. The host-only
 `setInteractionDisabled` gate supports recovery and reconnect periods and is

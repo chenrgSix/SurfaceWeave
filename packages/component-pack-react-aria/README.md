@@ -9,5 +9,5 @@ npm install react react-dom react-aria-components @surfaceweave/core@next @surfa
 
 Import `@surfaceweave/react-aria/styles.css` once in the host.
 
-The RC.4 candidate applies the shared Semantic LayoutSpec to Form, Stack, Grid,
+RC.4 applies the shared Semantic LayoutSpec to Form, Stack, Grid,
 Section, and Accordion without adding React Aria properties to the Surface.

@@ -7,7 +7,7 @@ boundary. The host remains responsible for executing business tools.
 npm install @surfaceweave/core@next @surfaceweave/generator@next @surfaceweave/agent-tools@next
 ```
 
-The RC.4 candidate isolates event/request observer failures through
+RC.4 isolates event/request observer failures through
 `ToolToUIRuntimeOptions.onListenerError`. Call `disposeInvocation(id)` when a
 host interaction is no longer addressable, or `dispose()` when tearing down the
 entire Runtime, to release Runtime-owned Surface subscriptions and transient

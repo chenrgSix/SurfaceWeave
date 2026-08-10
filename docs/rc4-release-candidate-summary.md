@@ -1,11 +1,12 @@
-# RC.4 Release Candidate Summary
+# RC.4 Release Summary
 
 ## Status
 
-SurfaceWeave `0.1.0-rc.4` is prepared for all ten public packages. This is a
-local candidate only: no tag, GitHub Release, or npm publication exists yet.
-npm `next` continues to resolve to RC.3 and `latest` remains on RC.2 until a
-separately approved protected release succeeds.
+SurfaceWeave `0.1.0-rc.4` is published for all ten public packages with npm
+SLSA provenance. npm `next` resolves to RC.4 and `latest` intentionally remains
+on immutable RC.2. The annotated tag and GitHub Prerelease are
+[`v0.1.0-rc.4`](https://github.com/chenrgSix/SurfaceWeave/releases/tag/v0.1.0-rc.4),
+pointing to commit `58e28953b82619af3e60d83cd2f9d9e913802952`.
 
 ## Included changes
 
@@ -55,7 +56,7 @@ Action props. The intentional behavior change is that a duplicate Tool submit
 while pending now returns the same pending outcome and emits one Host request
 instead of throwing.
 
-## Installation after publication
+## Installation
 
 ```bash
 npm install @surfaceweave/core@next \
@@ -64,17 +65,21 @@ npm install @surfaceweave/core@next \
 ```
 
 React hosts add `@surfaceweave/react@next`. DOM Driver hosts also install
-`react-dom` and import `@surfaceweave/react/dom`. Do not use these commands to
-test RC.4 before publication; during candidate review, use the generated local
-tarballs from `pnpm verify:packages`.
+`react-dom` and import `@surfaceweave/react/dom`.
 
-## Candidate evidence
+## Release evidence
 
-The prepared suite uses exact `0.1.0-rc.4` internal dependencies and a matching
-lockfile. Under Node 22, the candidate passes frozen install, cold build,
+The published suite uses exact `0.1.0-rc.4` internal dependencies and a matching
+lockfile. Under Node 22, the tagged source passes frozen install, cold build,
 typecheck, lint, 36 Vitest files / 152 tests, ten package tarballs / eleven clean
 consumers, all ten npm publish dry-runs, VitePress build, Tauri cargo check, and
 the optimized no-bundle Tauri build.
+
+The protected OIDC workflow completed successfully on its second attempt after
+the first attempt observed a transient propagation delay for the final Tauri
+package. The integrity-aware retry skipped all ten immutable artifacts, then
+passed Registry metadata, tarball, and clean-consumer verification. All ten
+packages expose SLSA provenance tied to the release workflow and tag.
 
 Known Vite large-chunk warnings remain limited to the demo, Ant Design itself,
 and the Agentdown consumer. Package isolation tests confirm they are not caused
@@ -82,8 +87,7 @@ by unselected Component Packs leaking into ordinary consumers.
 
 ## Release boundary
 
-Publishing still requires explicit confirmation of the final clean commit.
-Only then may that exact commit receive annotated tag `v0.1.0-rc.4`, be pushed,
-and enter the protected `npm-release` Environment for OIDC Trusted Publishing.
-The release must update only `next`; `latest` remains unchanged unless the owner
-separately authorizes it.
+The annotated release tag remains fixed at the reviewed commit; the separate
+post-release documentation commit does not move or rebuild it. Future versions
+still require explicit owner approval and the protected `npm-release` OIDC
+workflow. `latest` remains unchanged unless the owner separately authorizes it.

@@ -1,9 +1,8 @@
 # Semantic LayoutSpec 1.0
 
-::: warning RC.4 candidate
-LayoutSpec 1.0 and the `Section` semantic component are included in the local
-`0.1.0-rc.4` candidate but are not in the published RC.3 packages. npm `next`
-will expose them only after the protected RC.4 publication succeeds.
+::: warning Experimental RC.4 API
+LayoutSpec 1.0 and the `Section` semantic component are published in
+`0.1.0-rc.4`. Install them through npm `next` while RC.4 remains experimental.
 :::
 
 SurfaceWeave layouts are JSON-only semantic hints. They describe relationships

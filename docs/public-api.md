@@ -2,8 +2,8 @@
 
 ## Status
 
-This document freezes the prepared `0.1.0-rc.4` candidate API surface. The
-candidate is not published; npm `next` still serves RC.3. Only package entry
+This document freezes the published `0.1.0-rc.4` API surface. npm `next` serves
+RC.4 and `latest` intentionally remains on RC.2. Only package entry
 points declared in `exports` are public. Files under `src/` or `dist`, relative
 monorepo paths, test helpers, and example modules are internal and may change
 without compatibility guarantees.
@@ -26,8 +26,7 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 | `@surfaceweave/antd`        | `.`                                                                                                                                         |
 | `@surfaceweave/tauri`       | `.`                                                                                                                                         |
 
-The Protocol layout and client-capability subpaths are new in the RC.4
-candidate and are absent from published RC.3.
+The Protocol layout and client-capability subpaths are new in RC.4.
 
 ## Frozen Runtime Exports
 
@@ -66,7 +65,7 @@ Action handling remain host configuration.
 
 ## RC.4 Semantic LayoutSpec 1.0
 
-The candidate adds:
+RC.4 adds:
 
 - Protocol exports the human-readable `./layout` contract and the strict
   `./layout-schema` JSON Schema;
@@ -87,7 +86,7 @@ properties instead of forwarding them to framework sinks.
 
 ## RC.4 Capability, Action State, and Resource Policy
 
-The candidate adds:
+RC.4 adds:
 
 - Protocol exports language-neutral client capability documentation and a
   Draft 2020-12 JSON Schema;
@@ -107,10 +106,9 @@ The candidate adds:
 
 These APIs bound untrusted payload work, isolate observer failures from
 committed state, and release Runtime-owned subscriptions. Numeric resource
-limits are opt-in, so the existing RC.3 Store constructor retains its accepted
+limits are opt-in, so the existing Store constructor retains its accepted
 payload range. Deprecated `SurfaceResourceLimits`, `limits`, and legacy helper
-names remain available for source compatibility. These additions become
-Registry-installable only after the protected RC.4 publication succeeds.
+names remain available for source compatibility.
 
 ## Compatibility Policy
 

@@ -32,7 +32,7 @@ export default defineConfig({
         text: "0.1.0-rc.4 candidate",
         items: [
           {
-            text: "RC.4 candidate summary",
+            text: "RC.4 release summary",
             link: "/rc4-release-candidate-summary",
           },
           { text: "RC.3 release", link: "/rc3-release-candidate-summary" },
@@ -76,7 +76,7 @@ export default defineConfig({
           items: [
             { text: "Public API", link: "/public-api" },
             {
-              text: "RC.4 candidate",
+              text: "RC.4 release",
               link: "/rc4-release-candidate-summary",
             },
             {

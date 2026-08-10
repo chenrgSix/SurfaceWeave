@@ -10,7 +10,7 @@ npm install @surfaceweave/core@next
 This package does not depend on React, DOM, a Component Pack, Tauri, or a
 network client.
 
-In the RC.4 candidate, hosts may opt into resource guardrails and
+In RC.4, hosts may opt into resource guardrails and
 observer error reporting without changing the wire protocol. It also provides
 framework-neutral LayoutSpec parsing and fallback:
 

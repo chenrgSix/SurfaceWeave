@@ -1,30 +1,26 @@
 # npm Release Candidate Checklist
 
-## Published Baseline and RC.4 Candidate
+## Published RC.4 Baseline
 
-All ten publishable workspace packages are published as `0.1.0-rc.3` with npm
-provenance. The official npm Registry resolves `next` to RC.3 and intentionally
+All ten publishable workspace packages are published as `0.1.0-rc.4` with npm
+provenance. The official npm Registry resolves `next` to RC.4 and intentionally
 keeps `latest` on the immutable RC.2 release. The wire protocol remains `1.0`;
 npm package versions do not change Tool or Component Pack manifest versions.
 
-The prepared candidate synchronizes all ten package manifests and exact
-internal dependencies at `0.1.0-rc.4`. It is not published, tagged, or visible
-through npm dist-tags yet.
-
 ## Release Inventory
 
-| Package                     | Published | Candidate | Current public dist-tags             |
-| --------------------------- | --------: | --------: | ------------------------------------ |
-| `@surfaceweave/protocol`    |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/core`        |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/storage`     |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/preferences` |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/generator`   |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/agent-tools` |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react`       |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react-aria`  |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/antd`        |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/tauri`       |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| Package                     | Published | Current public dist-tags             |
+| --------------------------- | --------: | ------------------------------------ |
+| `@surfaceweave/protocol`    |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -41,7 +37,7 @@ No compatibility aliases are required because this repository records no
 published release under the previous names. Reassess that assumption before a
 real publish.
 
-## Candidate Metadata Checks
+## Release Metadata Checks
 
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
@@ -66,7 +62,7 @@ real publish.
 
 ## Trusted Publishing Status
 
-`0.1.0-rc.1` was published manually. RC.2 and RC.3 proved the protected OIDC
+`0.1.0-rc.1` was published manually. RC.2 through RC.4 prove the protected OIDC
 workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md): all
 ten packages expose verified provenance for the same tag, release commit, and
 workflow run. Future releases must continue to:
@@ -87,7 +83,7 @@ It packs each local artifact, compares npm integrity, skips an already-published
 identical artifact, and refuses an immutable version whose integrity differs.
 This allows a protected workflow retry to finish a partial suite safely.
 
-## RC.4 Release Gate
+## Future Release Gate
 
 Before any real publish, start from a clean commit and rerun:
 
