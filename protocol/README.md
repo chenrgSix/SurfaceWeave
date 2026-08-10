@@ -7,7 +7,12 @@ Component Pack and Tool-to-UI specifications. It has no runtime dependencies.
 npm install @surfaceweave/protocol@next
 ```
 
-Import the normative schema from `@surfaceweave/protocol/schema`.
+Import the normative wire schema from `@surfaceweave/protocol/schema`.
+
+The unreleased `main` branch also exposes the framework-neutral Semantic
+LayoutSpec document at `@surfaceweave/protocol/layout` and its strict JSON
+Schema at `@surfaceweave/protocol/layout-schema`. Those subpaths require a
+release after RC.3.
 
 The schema has the stable, non-resolvable identity
 `urn:surfaceweave:schema:dynamic-ui-wire:1.0`. Consumers must not require a

@@ -19,6 +19,11 @@ JSON Schema and interaction intent produce a trusted declarative `Surface`; busi
 
 Milestones 1–6.1 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral wire protocols, and a generic renderer driver. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
 
+Current `main` additionally contains the unreleased Semantic LayoutSpec 1.0:
+portable layout types and Schema, deterministic form sections, strict Agent
+layout tools, and shared layout fallback across the three React Packs and a
+non-React contract test. These additions are not in npm RC.3 yet.
+
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
 either project.
@@ -61,7 +66,7 @@ mock Tool results and a mock Host executor.
 | `@surfaceweave/agent-tools`        | Tool-to-UI orchestration and portable Agent UI tool definitions                                  |
 | `@surfaceweave/preferences`        | Scoped preference composition, conflict detection, migration, and events                         |
 | `@surfaceweave/react`              | Trusted React implementations and shared Store rendering                                         |
-| `@surfaceweave/protocol`           | Standalone JSON Schema and language-neutral Component Pack specification                         |
+| `@surfaceweave/protocol`           | Standalone Wire/Layout JSON Schemas and language-neutral Component Pack specifications           |
 | `@surfaceweave/react-aria`         | Accessible React Aria runtime bindings and styles                                                |
 | `@surfaceweave/antd`               | Ant Design runtime bindings and ConfigProvider theme integration                                 |
 | `@surfaceweave/storage`            | LocalStorage, memory, and host-transport persistence adapters                                    |
@@ -303,6 +308,40 @@ export function Profile() {
   );
 }
 ```
+
+## Define Portable Form Layout
+
+Current `main` generates single-column forms by default. Developer soft hints
+may add workspace columns, field spans, and explicit semantic Sections without
+changing bindings or data:
+
+```ts
+const surface = generateSurface(
+  {
+    surfaceId: "purchase",
+    intent: "form",
+    schema: purchaseSchema,
+    data: {},
+    developer: {
+      softHints: {
+        layout: { columns: 2, gap: 16 },
+        groups: {
+          delivery: { title: "Delivery", layout: { columns: 2, gap: 8 } },
+        },
+        fields: {
+          receiver: { group: "delivery" },
+          address: { group: "delivery", layout: { span: 2 } },
+        },
+      },
+    },
+  },
+  components,
+);
+```
+
+Compact views safely use one column. Agent `setLayout` operations accept the
+same JSON-only vocabulary and reject CSS, `className`, DOM, and vendor props.
+See the [Semantic Layout guide](docs/guide/semantic-layout.md).
 
 ## Connect Agent Tool Calls
 

@@ -3,7 +3,7 @@
 A Component Pack has two separate parts:
 
 1. A serializable manifest describing semantic support, fallback, capabilities,
-   and framework identity.
+   portable layout capabilities, and framework identity.
 2. A Renderer-specific Runtime Binding containing trusted implementations.
 
 The Surface contains semantic component names such as `TextField`, never
@@ -55,6 +55,11 @@ Declare the semantic component and its fallback in the framework-neutral
 registry/manifest. Register a separate implementation for each Renderer. When
 an implementation is absent, the Renderer follows the semantic fallback;
 callers do not rewrite the Surface for a framework.
+
+Declare `layoutCapabilities` only for LayoutSpec features the semantic
+component can apply. Unsupported features are diagnosed and ignored; component
+fallback never rewrites the Surface or moves bound data. See
+[Semantic LayoutSpec 1.0](./semantic-layout).
 
 A business application can define this Pack locally. Component library choice
 and host framework choice are independent: Vue, Svelte, Agentdown, or plain DOM

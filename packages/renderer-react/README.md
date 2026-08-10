@@ -30,3 +30,9 @@ const view = driver.mount(element, {
 Install `react-dom` only when using `@surfaceweave/react/dom`. Pack allow-lists,
 capabilities, priorities, and version constraints belong in the trusted driver
 factory options, never in a remote Surface view reference.
+
+On unreleased `main`, the default, React Aria, and Ant Design Packs resolve the
+same Semantic LayoutSpec. `safeLayoutStyle` maps portable container values;
+`safeLayoutItemStyle` applies only grid-item `span`. Compact mode safely uses a
+single column, and unknown layout properties are never forwarded to React or
+the DOM.

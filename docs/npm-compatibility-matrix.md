@@ -46,3 +46,15 @@ alone exceeds it; the other Packs are physically absent, so this is AntD cost,
 not cross-Pack leakage. The tea demo intentionally imports three selectable
 Packs and therefore remains larger. Runtime Pack downloading is not part of
 this release.
+
+## Current main: unreleased LayoutSpec verification
+
+Local candidate tarballs additionally verify the strict
+`@surfaceweave/protocol/layout-schema` export, Core layout types/resolver, and
+the React layout helpers through public entry points. The same Surface layout
+is exercised by the framework-agnostic fake renderer and by the default,
+React Aria, and Ant Design bindings. Core continues to compile with `ES2022`
+only and has no DOM, React, Vue, Agentdown, CSS, or vendor type dependency.
+
+These LayoutSpec additions require a later release candidate and are not
+claimed for the published `0.1.0-rc.3` artifacts in the table above.

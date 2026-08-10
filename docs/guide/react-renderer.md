@@ -56,6 +56,12 @@ Render the same `surfaceId` and `SurfaceStore` twice:
 Both views subscribe to the same Store. A field update from either view writes
 through its `DataBinding` and is visible in the other view immediately.
 
+Semantic `direction`, `columns`, `gap`, `align`, `justify`, and `span` values
+are resolved before conversion to local styles. Compact mode safely reduces
+multi-column declarations to one column. The same rules are used by the
+default, React Aria, and Ant Design Packs; see the
+[Semantic Layout guide](./semantic-layout).
+
 ## Mount from a non-React DOM host
 
 Import the optional DOM entry when Vue, Svelte, Agentdown, or plain host code

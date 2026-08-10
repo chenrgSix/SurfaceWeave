@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Architecture decisions and the VitePress usage site live in `docs/`; the language-neutral contract and JSON Schema live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`.
+Architecture decisions and the VitePress usage site live in `docs/`; the language-neutral Wire and Layout contracts plus JSON Schemas live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
 
@@ -29,11 +29,11 @@ Update this guide and README when scripts or package boundaries change.
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript for shared protocols and runtime code. Keep core packages independent of React, Tauri, and agent SDKs. Follow two-space indentation, trailing commas where supported, and formatter output once configured. Use `PascalCase` for types and components (`ActionIntent`), `camelCase` for fields and functions (`baseRevision`), kebab-case for package directories, and dot-separated event names (`surface.created`). Prefer stable semantic identifiers over array indexes.
+Use TypeScript for shared protocols and runtime code. Keep core packages independent of React, Tauri, and agent SDKs. Layout declarations use Semantic LayoutSpec fields, never CSS, DOM, `className`, or vendor props. Follow two-space indentation, trailing commas where supported, and formatter output once configured. Use `PascalCase` for types and components (`ActionIntent`), `camelCase` for fields and functions (`baseRevision`), kebab-case for package directories, and dot-separated event names (`surface.created`). Prefer stable semantic identifiers over array indexes.
 
 ## Testing Guidelines
 
-Vitest is the test runner; jsdom and Testing Library cover React. Name tests `*.test.ts` or `*.test.tsx`. Every bug fix needs a regression test. Test atomic failure, revision conflicts, data and preference migration, scope precedence, durable-write failures, shared views, and ActionIntent safety.
+Vitest is the test runner; jsdom and Testing Library cover React. Name tests `*.test.ts` or `*.test.tsx`. Every bug fix needs a regression test. Test atomic failure, revision conflicts, data and preference migration, scope precedence, durable-write failures, shared views, semantic layout degradation, and ActionIntent safety.
 
 ## Commit & Pull Request Guidelines
 

@@ -177,6 +177,16 @@ for (const [name, manifest] of [
 }
 
 if (
+  protocol?.exports?.["./layout"] !== "./layout-spec.md" ||
+  protocol?.exports?.["./layout-schema"] !==
+    "./schemas/semantic-layout-1.0.schema.json" ||
+  !protocol?.files?.includes("layout-spec.md") ||
+  !protocol?.files?.includes("schemas")
+) {
+  fail("Protocol: LayoutSpec document and Schema must be published exports");
+}
+
+if (
   react?.exports?.["./dom"]?.types !== "./dist/dom.d.ts" ||
   react?.exports?.["./dom"]?.import !== "./dist/dom.js" ||
   react?.exports?.["./dom"]?.default !== "./dist/dom.js"

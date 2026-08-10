@@ -11,12 +11,14 @@ This package does not depend on React, DOM, a Component Pack, Tauri, or a
 network client.
 
 On the unreleased `main` branch, hosts may configure resource guardrails and
-observer error reporting without changing the wire protocol:
+observer error reporting without changing the wire protocol. It also provides
+framework-neutral LayoutSpec parsing and fallback:
 
 ```ts
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  resolveSemanticLayout,
 } from "@surfaceweave/core";
 
 const registry = createStandardComponentRegistry();
@@ -26,4 +28,9 @@ const store = new InMemorySurfaceStore(registry, {
 });
 
 store.dispose(); // Release in-memory state and subscriptions at session end.
+
+const compact = resolveSemanticLayout(
+  { columns: 2, modes: { compact: { columns: 1 } } },
+  "compact",
+);
 ```

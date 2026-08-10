@@ -21,6 +21,7 @@ const teaProductCard: ComponentManifest = {
   },
   binding: { valueTypes: ["array"] },
   actions: ["select"],
+  layoutCapabilities: ["span"],
   fallback: "Card",
 };
 ```
@@ -50,6 +51,34 @@ register the Pack at the application composition root. Publish a Pack only when
 multiple applications actually need to share it.
 
 Run `validateComponentPack(manifest)` and `validateReactComponentPack(pack, registry)` in CI. Manifests reject functions, JSX/code strings, unsafe keys, invalid schemas, missing fallback targets, cycles, and incomplete bindings.
+
+## Layout capability boundary
+
+LayoutSpec 1.0 is independent of a Renderer binding. A semantic container may
+declare portable behavior such as:
+
+```ts
+const section: ComponentManifest = {
+  semanticType: "BusinessSection",
+  propsSchema: { type: "object" },
+  layoutCapabilities: [
+    "direction",
+    "columns",
+    "gap",
+    "align",
+    "justify",
+    "span",
+  ],
+  fallback: "Section",
+};
+```
+
+The declaration means the component can apply those semantic relationships; it
+does not expose CSS properties. A Renderer calls the Core layout resolver,
+maps supported values locally, and retains document order when a capability is
+missing. `compact` and `workspace` overrides never select Packs or change host
+capabilities. See the [Semantic Layout guide](guide/semantic-layout.md) and the
+standalone `@surfaceweave/protocol/layout-schema` export.
 
 ## Resolution and Fallback
 

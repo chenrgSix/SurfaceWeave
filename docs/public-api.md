@@ -12,18 +12,22 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 
 ## Public Entry Points
 
-| Package                     | Public entry points                                 |
-| --------------------------- | --------------------------------------------------- |
-| `@surfaceweave/protocol`    | `.`, `./schema`, `./component-pack`, `./tool-to-ui` |
-| `@surfaceweave/core`        | `.`                                                 |
-| `@surfaceweave/storage`     | `.`                                                 |
-| `@surfaceweave/preferences` | `.`                                                 |
-| `@surfaceweave/generator`   | `.`                                                 |
-| `@surfaceweave/agent-tools` | `.`                                                 |
-| `@surfaceweave/react`       | `.`, `./dom`                                        |
-| `@surfaceweave/react-aria`  | `.`, `./styles.css`                                 |
-| `@surfaceweave/antd`        | `.`                                                 |
-| `@surfaceweave/tauri`       | `.`                                                 |
+| Package                     | Public entry points                                                                |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `@surfaceweave/protocol`    | `.`, `./schema`, `./component-pack`, `./tool-to-ui`, `./layout`, `./layout-schema` |
+| `@surfaceweave/core`        | `.`                                                                                |
+| `@surfaceweave/storage`     | `.`                                                                                |
+| `@surfaceweave/preferences` | `.`                                                                                |
+| `@surfaceweave/generator`   | `.`                                                                                |
+| `@surfaceweave/agent-tools` | `.`                                                                                |
+| `@surfaceweave/react`       | `.`, `./dom`                                                                       |
+| `@surfaceweave/react-aria`  | `.`, `./styles.css`                                                                |
+| `@surfaceweave/antd`        | `.`                                                                                |
+| `@surfaceweave/tauri`       | `.`                                                                                |
+
+The two Protocol layout subpaths shown above exist on current `main`; published
+RC.3 exposes the other entry points only. The unreleased additions are listed
+separately below.
 
 ## Frozen Runtime Exports
 
@@ -39,7 +43,8 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 - Agent Tools: Surface, preference, and Tool-to-UI runtimes and JSON Schema tool
   definitions.
 - React: `SurfaceRenderer`, `useSurface`, React component registry, default Pack,
-  resolver validation, layout helper, and renderer types.
+  resolver validation, `safeLayoutStyle`, `safeLayoutItemStyle`, and renderer
+  types.
 - React DOM: `createReactDOMRendererDriver` and its trusted host option type,
   available only from `@surfaceweave/react/dom`.
 - React Aria and Ant Design: serializable manifest, Pack factory, and factory
@@ -58,6 +63,28 @@ Core also exports the optional, framework-neutral `SurfaceViewMode`,
 `SurfaceRendererDriver<TTarget>` types. `SurfaceViewReference` contains only a
 Surface id and presentation mode; renderer capabilities, Pack policy, and
 Action handling remain host configuration.
+
+## Unreleased Semantic LayoutSpec 1.0
+
+The current `main` branch adds APIs that are not part of the published RC.3
+tarballs:
+
+- Protocol exports the human-readable `./layout` contract and the strict
+  `./layout-schema` JSON Schema;
+- Core exports `SemanticLayout`, its value/feature/diagnostic types,
+  `semanticLayoutFeatures`, `parseSemanticLayout`, `serializeSemanticLayout`,
+  and `resolveSemanticLayout`;
+- `ComponentManifest` and `ComponentDefinition` add optional
+  `layoutCapabilities`;
+- the standard semantic catalog adds `Section`;
+- Generator soft hints add root/field layout and explicit group metadata;
+- React exports `safeLayoutItemStyle` in addition to the compatible
+  `safeLayoutStyle` helper.
+
+`UINode.layout` intentionally remains `Record<string, JsonValue>` so Wire
+Protocol 1.0 consumers are not narrowed. Generator and Agent Tool output use
+the stricter portable subset; renderers diagnose and ignore legacy unknown
+properties instead of forwarding them to framework sinks.
 
 ## Unreleased Runtime Hardening
 

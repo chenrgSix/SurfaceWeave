@@ -231,25 +231,32 @@ const fixtures = [
     packages: ["@surfaceweave/protocol"],
     dependencies: typescript,
     consumer: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
+import layoutSchema from "@surfaceweave/protocol/layout-schema" with { type: "json" };
 const dialect: string = schema.$schema;
-void dialect;
+const layoutId: string = layoutSchema.$id;
+void [dialect, layoutId];
 `,
     smoke: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
+import layoutSchema from "@surfaceweave/protocol/layout-schema" with { type: "json" };
 if (schema.$schema !== "https://json-schema.org/draft/2020-12/schema") throw new Error("protocol");
+if (layoutSchema.$id !== "urn:surfaceweave:schema:semantic-layout:1.0") throw new Error("layout protocol");
 `,
   },
   {
     name: "core-only",
     packages: ["@surfaceweave/core"],
     dependencies: typescript,
-    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
-import type { ActionIntent, Surface, ToolDefinition, UINode } from "@surfaceweave/core";
+    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry, resolveSemanticLayout } from "@surfaceweave/core";
+import type { ActionIntent, SemanticLayout, SemanticLayoutFeature, Surface, ToolDefinition, UINode } from "@surfaceweave/core";
+const layout: SemanticLayout = { columns: 2, modes: { compact: { columns: 1 } } };
+const layoutFeatures: SemanticLayoutFeature[] = ["columns", "gap"];
+const resolved = resolveSemanticLayout(layout, "compact", layoutFeatures);
 const node: UINode = { id: "root", component: "Stack", props: {} };
 const surface: Surface = { id: "surface", revision: 0, intent: "form", tree: node, data: {}, context: {} };
 const tool: ToolDefinition = { id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } };
 const intent: ActionIntent = { id: "intent", surfaceId: surface.id, nodeId: node.id, action: "submit", input: null };
 const store = new InMemorySurfaceStore(createStandardComponentRegistry());
-void [tool, intent, store];
+void [tool, intent, store, resolved];
 `,
     smoke: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 const registry = createStandardComponentRegistry();
@@ -289,13 +296,15 @@ try {
     packages: ["@surfaceweave/core", "@surfaceweave/react"],
     dependencies: react,
     consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
-import { createDefaultReactComponentPack, createStandardReactComponentRegistry } from "@surfaceweave/react";
+import { createDefaultReactComponentPack, createStandardReactComponentRegistry, safeLayoutItemStyle, safeLayoutStyle } from "@surfaceweave/react";
 import type { ReactComponentPack, SurfaceRendererProps } from "@surfaceweave/react";
 const registry = createStandardComponentRegistry();
 const pack: ReactComponentPack = createDefaultReactComponentPack();
 const renderer = createStandardReactComponentRegistry(registry);
 const props = {} as SurfaceRendererProps;
-void [pack, renderer, props];
+const containerStyle = safeLayoutStyle({ columns: 2 }, "workspace");
+const itemStyle = safeLayoutItemStyle({ span: 2 }, "workspace");
+void [pack, renderer, props, containerStyle, itemStyle];
 `,
     viteEntry: `import { createStandardComponentRegistry } from "@surfaceweave/core";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";

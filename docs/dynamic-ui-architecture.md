@@ -106,6 +106,9 @@ interface UINode {
   props: Record<string, unknown>
   binding?: DataBinding
   children?: UINode[]
+  layout?: Record<string, unknown>
+  visible?: boolean
+  extensions?: Record<string, ComponentExtension>
 }
 ```
 
@@ -116,6 +119,18 @@ interface UINode {
 * 表单数据与组件树分离；
 * 调整布局时不移动或复制业务数据；
 * 组件替换后，只要绑定兼容，就继续使用原值。
+
+### Semantic LayoutSpec 1.0（current main，未发布）
+
+`UINode.layout` 保留 Wire Protocol 1.0 的安全 JSON 对象兼容性；新增的
+LayoutSpec 1.0 独立 Schema 冻结可移植字段：`direction`、`columns`、`gap`、
+`align`、`justify`、`span`，以及 `compact` / `workspace` 模式覆盖。协议中不出现
+CSS、DOM、className 或组件库属性。Renderer 不支持某项时忽略该项并产生诊断，
+但始终保持组件树顺序、stableId、DataBinding 和数据。
+
+默认表单单列生成；开发者可通过 soft hints 声明列数、字段 span 和显式 Section。
+compact 视图安全降级为单列。Component Manifest 通过 `layoutCapabilities` 声明
+可移植能力；默认 React、React Aria、AntD 与非 React fake renderer 使用相同解析规则。
 
 ### 个人偏好
 
@@ -170,13 +185,13 @@ Agent 可以临时覆盖历史偏好，但必须提供原因，且不能自动�
 
 ## 六、组件注册机制
 
-标准组件包括：
+当前标准语义组件包括：
 
 * Text、Image、Badge；
-* Stack、Grid、Tabs、Accordion；
-* TextInput、NumberInput、Select、Checkbox；
-* Form、Table、CardList；
-* Button、Confirm、EmptyState、ErrorState。
+* Form、Stack、Grid、Section、Accordion；
+* TextInput、NumberInput、ChoiceField、Checkbox；
+* DataTable、Card；
+* Action、Dialog、EmptyState、ErrorState。
 
 业务组件由开发者注册：
 
@@ -250,11 +265,9 @@ Milestone 4 额外提供 `ui.inspectComponentPacks`，只返回可序列化的�
       "position": "first"
     },
     {
-      "type": "setPresentation",
+      "type": "setProps",
       "target": "purchase.remark",
-      "presentation": {
-        "collapsed": true
-      }
+      "props": { "collapsed": true }
     }
   ]
 }
@@ -268,8 +281,6 @@ Operations 至少支持：
 * `setLayout`
 * `setVisibility`
 * `groupNodes`
-* `removeNode`
-* `insertNode`
 
 不建议向 Agent 暴露基于数组下标的 JSON Patch。
 
