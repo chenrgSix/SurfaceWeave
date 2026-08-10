@@ -10,7 +10,7 @@ npm install @surfaceweave/core@next
 This package does not depend on React, DOM, a Component Pack, Tauri, or a
 network client.
 
-On the unreleased `main` branch, hosts may opt into resource guardrails and
+In the RC.4 candidate, hosts may opt into resource guardrails and
 observer error reporting without changing the wire protocol. It also provides
 framework-neutral LayoutSpec parsing and fallback:
 
@@ -40,7 +40,7 @@ const compact = resolveSemanticLayout(
 );
 ```
 
-The same branch exports the JSON-only client capability snapshot and read-only
+RC.4 also exports the JSON-only client capability snapshot and read-only
 Action execution contracts. `createSurfaceClientCapabilities` projects only
 host-enabled Packs; `InMemoryActionExecutionController` is for non-Tool
 actions. Tool actions use `ToolToUIRuntime.actionStateSource` so

@@ -3,30 +3,26 @@
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.3%20published-orange.svg)
+![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.4%20candidate-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** all ten public packages are published as the experimental
-> `0.1.0-rc.3` with npm provenance. npm `next` resolves to RC.3, while `latest`
-> intentionally remains on the immutable RC.2 release. Review the
-> [RC.3 release summary](docs/rc3-release-candidate-summary.md) before
-> production use.
+> **Status:** all ten package manifests are prepared as the experimental
+> `0.1.0-rc.4` candidate. It is not published yet: npm `next` still resolves to
+> RC.3, while `latest` intentionally remains on immutable RC.2. Review the
+> [RC.4 candidate summary](docs/rc4-release-candidate-summary.md) before use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
-Milestones 1–6.1 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral wire protocols, and a generic renderer driver. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
+Milestones 1–6.3 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral protocols, generic Renderer Driver, Semantic LayoutSpec, capability handshake, Action state projection, and resource policy. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
 
-Current `main` additionally contains the unreleased Semantic LayoutSpec 1.0:
-portable layout types and Schema, deterministic form sections, strict Agent
-layout tools, and shared layout fallback across the three React Packs and a
-non-React contract test. These additions are not in npm RC.3 yet.
-
-It also contains an unreleased host-generated capability handshake, a unified
-read-only Action state projection, and opt-in Surface resource policy. These
-remain candidates for RC.4 and are not present in the published RC.3 tarballs.
+The RC.4 candidate adds Semantic LayoutSpec 1.0, deterministic form sections,
+strict Agent layout tools, a host-generated capability handshake, unified
+read-only Action state, and opt-in Surface resource policy. These APIs are in
+candidate tarballs but remain absent from npm until the protected release is
+approved and published.
 
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
@@ -372,7 +368,7 @@ if (!result.ok) {
 
 Call `ui.inspectComponentPacks` to give an Agent the current semantic component schemas, capabilities, fallback, renderer/pack identifiers, and concise `agentGuidance`. The result is JSON-only and never exposes React components or vendor APIs.
 
-On current `main`, construct `AgentUIToolRuntime` with trusted
+In the RC.4 candidate, construct `AgentUIToolRuntime` with trusted
 `clientCapabilities` options. The same filtered projection powers
 `createSurfaceClientCapabilities` and `ui.inspectComponentPacks`; remote Agent
 arguments can only narrow the host's Pack and terminal-capability allow-list.
@@ -424,7 +420,7 @@ Renderer components emit JSON-only `ActionIntent` values. Route them to a host `
 
 Tool UI should subscribe to `toolRuntime.actionStateSource`; it projects the
 existing `ToolInvocation` lifecycle rather than creating another authority.
-For non-Tool actions, current `main` provides the host-owned
+For non-Tool actions, RC.4 provides the host-owned
 `InMemoryActionExecutionController`. Only `ActionResult.status === "success"`
 marks an action successful. The host alone may temporarily gate a Surface with
 `setInteractionDisabled`; neither an Agent nor Surface data can set that flag.

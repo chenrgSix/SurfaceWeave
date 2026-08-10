@@ -47,7 +47,7 @@ not cross-Pack leakage. The tea demo intentionally imports three selectable
 Packs and therefore remains larger. Runtime Pack downloading is not part of
 this release.
 
-## Current main: unreleased RC.4 candidate verification
+## RC.4 candidate verification
 
 Local candidate tarballs additionally verify the strict
 `@surfaceweave/protocol/layout-schema` export, Core layout types/resolver, and
@@ -56,8 +56,8 @@ is exercised by the framework-agnostic fake renderer and by the default,
 React Aria, and Ant Design bindings. Core continues to compile with `ES2022`
 only and has no DOM, React, Vue, Agentdown, CSS, or vendor type dependency.
 
-These LayoutSpec additions require a later release candidate and are not
-claimed for the published `0.1.0-rc.3` artifacts in the table above.
+These LayoutSpec additions are included in local `0.1.0-rc.4` tarballs but are
+not claimed for the published RC.3 artifacts in the table above.
 
 Local candidate tarballs also verify the standalone client-capability Protocol
 exports, Core capability/action/resource types, Agent catalog projection, and

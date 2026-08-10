@@ -6,14 +6,27 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0-rc.4] - 2026-08-10
+
 ### Added
 
-- Added configurable Surface, JSON, and Operation resource budgets.
+- Added language-neutral Semantic LayoutSpec and client-capability contracts,
+  including standalone Draft 2020-12 JSON Schemas.
+- Added deterministic form sections, portable layout hints, strict Agent layout
+  operations, and shared fallback across the default, React Aria, Ant Design,
+  and framework-agnostic renderers.
+- Added host-filtered Component Pack capability snapshots shared with
+  `ui.inspectComponentPacks`.
+- Added ToolInvocation-backed Action state, a non-Tool Action controller,
+  optional React binding state, and a host-only interaction gate.
+- Added opt-in Surface, JSON, and Operation resource policy budgets.
 - Added explicit Store and Tool Runtime disposal APIs plus observer-error
   reporting hooks.
 
 ### Changed
 
+- Coalesced pending duplicate Tool submissions and made safe retry reuse the
+  original normalized input and idempotency key.
 - Included release-script and tea-purchase example tests in the default Vitest
   run.
 - Made protected multi-package publication safely resumable by comparing local
@@ -24,6 +37,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Prevented duplicate Invocation creation and invalid result transitions from
   leaving orphan Surface or result state.
 - Isolated failing event listeners from committed Store and Runtime state.
+- Kept grid-item span out of container styles across all React Component Packs.
 
 ## [0.1.0-rc.3] - 2026-08-09
 

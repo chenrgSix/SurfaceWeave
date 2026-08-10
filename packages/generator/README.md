@@ -7,6 +7,6 @@ Definitions, data, and interaction intent.
 npm install @surfaceweave/core@next @surfaceweave/generator@next
 ```
 
-On unreleased `main`, generated forms default to a deterministic single column.
+In the RC.4 candidate, generated forms default to a deterministic single column.
 Developer soft hints may add portable root layouts, field spans, and explicit
 semantic Sections while preserving field `stableId`, bindings, and data.

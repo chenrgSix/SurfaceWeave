@@ -32,13 +32,13 @@ Install `react-dom` only when using `@surfaceweave/react/dom`. Pack allow-lists,
 capabilities, priorities, and version constraints belong in the trusted driver
 factory options, never in a remote Surface view reference.
 
-On unreleased `main`, `SurfaceRenderer` and the DOM Driver accept an optional
+In the RC.4 candidate, `SurfaceRenderer` and the DOM Driver accept an optional
 `actionStateSource`. Bindings receive optional read-only `actionStates` and
 `interactionDisabled` props. Existing Packs may ignore both. The default Form,
 Action, Dialog, and Confirm bindings show pending/error state and do not emit
 actions while the trusted host gate is active.
 
-On unreleased `main`, the default, React Aria, and Ant Design Packs resolve the
+In the RC.4 candidate, the default, React Aria, and Ant Design Packs resolve the
 same Semantic LayoutSpec. `safeLayoutStyle` maps portable container values;
 `safeLayoutItemStyle` applies only grid-item `span`. Compact mode safely uses a
 single column, and unknown layout properties are never forwarded to React or

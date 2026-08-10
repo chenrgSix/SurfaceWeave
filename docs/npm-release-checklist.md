@@ -1,30 +1,30 @@
 # npm Release Candidate Checklist
 
-## Published Baseline
+## Published Baseline and RC.4 Candidate
 
 All ten publishable workspace packages are published as `0.1.0-rc.3` with npm
 provenance. The official npm Registry resolves `next` to RC.3 and intentionally
 keeps `latest` on the immutable RC.2 release. The wire protocol remains `1.0`;
 npm package versions do not change Tool or Component Pack manifest versions.
 
-For a future candidate, derive the version from every package's highest
-published SemVer and synchronize all package manifests and exact internal
-dependencies before creating a tag.
+The prepared candidate synchronizes all ten package manifests and exact
+internal dependencies at `0.1.0-rc.4`. It is not published, tagged, or visible
+through npm dist-tags yet.
 
 ## Release Inventory
 
-| Package                     | Published version | Current public dist-tags             |
-| --------------------------- | ----------------: | ------------------------------------ |
-| `@surfaceweave/protocol`    |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/core`        |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/storage`     |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/preferences` |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/generator`   |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/agent-tools` |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react`       |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react-aria`  |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/antd`        |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/tauri`       |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| Package                     | Published | Candidate | Current public dist-tags             |
+| --------------------------- | --------: | --------: | ------------------------------------ |
+| `@surfaceweave/protocol`    |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |      RC.3 |      RC.4 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -41,12 +41,12 @@ No compatibility aliases are required because this repository records no
 published release under the previous names. Reassess that assumption before a
 real publish.
 
-## Completed Checks
+## Candidate Metadata Checks
 
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
 - Internal package dependencies use the exact prerelease range
-  `0.1.0-rc.3`; the lockfile records the same suite version.
+  `0.1.0-rc.4`; the lockfile records the same suite version.
 - Release metadata fixes the official registry, public access, and `next` tag.
 - The protocol Schema uses the stable URN
   `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain
@@ -55,7 +55,7 @@ real publish.
   side-effects, dependencies, peer ranges, and `publishConfig` are audited.
 - Internal dependency ranges are npm-compatible SemVer, while pnpm links local
   workspace packages during development.
-- Real `npm pack` tarballs install and type-check in ten clean consumers,
+- Real `npm pack` tarballs install and type-check in eleven clean consumers,
   including React DOM and Agentdown/Vue lifecycle fixtures.
 - Default React, React Aria, and Ant Design build independently without an
   unselected Pack installed.
@@ -87,7 +87,7 @@ It packs each local artifact, compares npm integrity, skips an already-published
 identical artifact, and refuses an immutable version whose integrity differs.
 This allows a protected workflow retry to finish a partial suite safely.
 
-## Future Release Gate
+## RC.4 Release Gate
 
 Before any real publish, start from a clean commit and rerun:
 

@@ -1,9 +1,9 @@
 # Semantic LayoutSpec 1.0
 
-::: warning Unreleased on current main
-LayoutSpec 1.0 and the `Section` semantic component are implemented on the
-current repository branch but are not present in the published `0.1.0-rc.3`
-packages. They require a later release candidate.
+::: warning RC.4 candidate
+LayoutSpec 1.0 and the `Section` semantic component are included in the local
+`0.1.0-rc.4` candidate but are not in the published RC.3 packages. npm `next`
+will expose them only after the protected RC.4 publication succeeds.
 :::
 
 SurfaceWeave layouts are JSON-only semantic hints. They describe relationships

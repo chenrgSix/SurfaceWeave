@@ -29,12 +29,13 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.3",
+        text: "0.1.0-rc.4 candidate",
         items: [
           {
-            text: "Release summary",
-            link: "/rc3-release-candidate-summary",
+            text: "RC.4 candidate summary",
+            link: "/rc4-release-candidate-summary",
           },
+          { text: "RC.3 release", link: "/rc3-release-candidate-summary" },
           { text: "RC.2 release", link: "/rc2-release-candidate-summary" },
           { text: "Compatibility matrix", link: "/npm-compatibility-matrix" },
         ],
@@ -74,6 +75,10 @@ export default defineConfig({
           text: "References",
           items: [
             { text: "Public API", link: "/public-api" },
+            {
+              text: "RC.4 candidate",
+              link: "/rc4-release-candidate-summary",
+            },
             {
               text: "Milestone 6.2 audit",
               link: "/milestone-6.2-summary",

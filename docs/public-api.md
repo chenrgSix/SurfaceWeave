@@ -2,8 +2,9 @@
 
 ## Status
 
-This document freezes the published `0.1.0-rc.3` API surface. Only package entry
-points declared in `exports` are public. Files under `src/` or `dist/`, relative
+This document freezes the prepared `0.1.0-rc.4` candidate API surface. The
+candidate is not published; npm `next` still serves RC.3. Only package entry
+points declared in `exports` are public. Files under `src/` or `dist`, relative
 monorepo paths, test helpers, and example modules are internal and may change
 without compatibility guarantees.
 
@@ -25,9 +26,8 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 | `@surfaceweave/antd`        | `.`                                                                                                                                         |
 | `@surfaceweave/tauri`       | `.`                                                                                                                                         |
 
-The Protocol layout and client-capability subpaths shown above exist on current
-`main`; published RC.3 exposes the other entry points only. The unreleased
-additions are listed separately below.
+The Protocol layout and client-capability subpaths are new in the RC.4
+candidate and are absent from published RC.3.
 
 ## Frozen Runtime Exports
 
@@ -64,10 +64,9 @@ Core also exports the optional, framework-neutral `SurfaceViewMode`,
 Surface id and presentation mode; renderer capabilities, Pack policy, and
 Action handling remain host configuration.
 
-## Unreleased Semantic LayoutSpec 1.0
+## RC.4 Semantic LayoutSpec 1.0
 
-The current `main` branch adds APIs that are not part of the published RC.3
-tarballs:
+The candidate adds:
 
 - Protocol exports the human-readable `./layout` contract and the strict
   `./layout-schema` JSON Schema;
@@ -86,10 +85,9 @@ Protocol 1.0 consumers are not narrowed. Generator and Agent Tool output use
 the stricter portable subset; renderers diagnose and ignore legacy unknown
 properties instead of forwarding them to framework sinks.
 
-## Unreleased Capability, Action State, and Resource Policy
+## RC.4 Capability, Action State, and Resource Policy
 
-The current `main` branch adds host controls that are not part of the published
-RC.3 tarballs:
+The candidate adds:
 
 - Protocol exports language-neutral client capability documentation and a
   Draft 2020-12 JSON Schema;
@@ -111,8 +109,8 @@ These APIs bound untrusted payload work, isolate observer failures from
 committed state, and release Runtime-owned subscriptions. Numeric resource
 limits are opt-in, so the existing RC.3 Store constructor retains its accepted
 payload range. Deprecated `SurfaceResourceLimits`, `limits`, and legacy helper
-names remain available for source compatibility. A new RC is still required
-before consumers can install these additions from npm.
+names remain available for source compatibility. These additions become
+Registry-installable only after the protected RC.4 publication succeeds.
 
 ## Compatibility Policy
 

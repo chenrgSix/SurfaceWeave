@@ -28,7 +28,7 @@ const teaProductCard: ComponentManifest = {
 
 Then provide one binding per renderer. A React binding receives `node`, the bound `value`, `onValueChange`, and `onAction`. It must emit an ActionIntent through `onAction`; it must not call business APIs directly.
 
-On current `main`, React bindings may also read optional, immutable
+In the RC.4 candidate, React bindings may also read optional, immutable
 `actionStates` and `interactionDisabled` props. Existing bindings need no
 change. A Pack may show pending or error feedback, but it must not mutate the
 state, declare an action successful, or bypass the host-disabled gate.
