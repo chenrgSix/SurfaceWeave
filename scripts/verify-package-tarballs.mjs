@@ -840,6 +840,39 @@ if (!surfaces.getSurface(resolved.resultSurfaceId)) throw new Error("result surf
 `,
   },
   {
+    name: "runtime-hardening",
+    localOnly: true,
+    packages: [
+      "@surfaceweave/core",
+      "@surfaceweave/storage",
+      "@surfaceweave/preferences",
+      "@surfaceweave/generator",
+      "@surfaceweave/agent-tools",
+    ],
+    dependencies: typescript,
+    consumer: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import type { ToolToUIRuntimeOptions } from "@surfaceweave/agent-tools";
+import { InMemorySurfaceStore, createStandardComponentRegistry, defaultSurfaceResourceLimits } from "@surfaceweave/core";
+import type { InMemorySurfaceStoreOptions, SurfaceResourceLimits } from "@surfaceweave/core";
+const limits: SurfaceResourceLimits = { ...defaultSurfaceResourceLimits, maxNodes: 500 };
+const components = createStandardComponentRegistry();
+const storeOptions: InMemorySurfaceStoreOptions = { limits, onListenerError: () => undefined };
+const store = new InMemorySurfaceStore(components, storeOptions);
+const runtimeOptions: ToolToUIRuntimeOptions = { onListenerError: () => undefined };
+const runtime = new ToolToUIRuntime(components, store, runtimeOptions);
+runtime.dispose();
+store.dispose();
+`,
+    smoke: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
+import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+const components = createStandardComponentRegistry();
+const store = new InMemorySurfaceStore(components, { limits: { maxNodes: 10 } });
+const runtime = new ToolToUIRuntime(components, store);
+runtime.dispose();
+store.dispose();
+`,
+  },
+  {
     name: "tauri-adapter",
     packages: [
       "@surfaceweave/core",
@@ -886,13 +919,15 @@ try {
     values.fixture === undefined
       ? fixtures.filter(
           (fixture) =>
-            !values.published ||
-            fixture.requiresCandidateVersion !== true ||
-            publishedVersion === releaseVersion,
+            (!values.published || fixture.localOnly !== true) &&
+            (!values.published ||
+              fixture.requiresCandidateVersion !== true ||
+              publishedVersion === releaseVersion),
         )
       : fixtures.filter(
           (fixture) =>
             fixture.name === values.fixture &&
+            (!values.published || fixture.localOnly !== true) &&
             (!values.published ||
               fixture.requiresCandidateVersion !== true ||
               publishedVersion === releaseVersion),
