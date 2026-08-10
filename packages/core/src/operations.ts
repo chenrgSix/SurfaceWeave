@@ -9,15 +9,15 @@ import {
 } from "./data.js";
 import { DynamicUIError } from "./errors.js";
 import {
-  assertOperationResourceLimits,
-  assertSurfaceResourceLimits,
-  resolveSurfaceResourceLimits,
+  assertOperationResourcePolicy,
+  assertSurfaceResourcePolicy,
+  resolveSurfaceResourcePolicy,
 } from "./resource-limits.js";
 import type {
   ComponentRegistry,
   NodePosition,
   Surface,
-  SurfaceResourceLimits,
+  SurfaceResourcePolicy,
   UINode,
   UIOperation,
 } from "./types.js";
@@ -202,10 +202,13 @@ function applyOperation(root: UINode, operation: UIOperation): void {
 export function validateSurface(
   surface: Surface,
   registry: ComponentRegistry,
-  resourceLimits: Partial<SurfaceResourceLimits> = {},
+  resourcePolicy?: Partial<SurfaceResourcePolicy>,
 ): void {
-  const limits = resolveSurfaceResourceLimits(resourceLimits);
-  assertSurfaceResourceLimits(surface, limits);
+  const policy =
+    resourcePolicy === undefined
+      ? undefined
+      : resolveSurfaceResourcePolicy(resourcePolicy);
+  assertSurfaceResourcePolicy(surface, policy);
   if (surface.id.trim() === "") {
     throw new DynamicUIError("INVALID_SURFACE", "Surface id cannot be empty");
   }
@@ -282,7 +285,7 @@ export function applyOperationsToSurface(
   surface: Surface,
   operations: UIOperation[],
   registry: ComponentRegistry,
-  resourceLimits: Partial<SurfaceResourceLimits> = {},
+  resourcePolicy?: Partial<SurfaceResourcePolicy>,
 ): Surface {
   if (operations.length === 0) {
     throw new DynamicUIError(
@@ -290,12 +293,15 @@ export function applyOperationsToSurface(
       "At least one operation is required",
     );
   }
-  const limits = resolveSurfaceResourceLimits(resourceLimits);
-  assertOperationResourceLimits(operations, limits);
+  const policy =
+    resourcePolicy === undefined
+      ? undefined
+      : resolveSurfaceResourcePolicy(resourcePolicy);
+  assertOperationResourcePolicy(operations, policy);
   const candidate = cloneValue(surface);
   for (const operation of operations) {
     applyOperation(candidate.tree, operation);
   }
-  validateSurface(candidate, registry, limits);
+  validateSurface(candidate, registry, policy);
   return candidate;
 }

@@ -3,6 +3,7 @@ import type {
   ComponentDefinition,
   ComponentPackManifest,
   ComponentRegistry,
+  SurfaceResourcePolicy,
 } from "./types.js";
 
 export type SurfaceRuntimeCapability =
@@ -10,7 +11,7 @@ export type SurfaceRuntimeCapability =
 
 export interface SurfaceResourcePolicySummary {
   enabled: boolean;
-  limits?: Readonly<Record<string, number>>;
+  limits?: Partial<SurfaceResourcePolicy>;
 }
 
 /** Serializable view of the semantic catalog actually available to a host. */

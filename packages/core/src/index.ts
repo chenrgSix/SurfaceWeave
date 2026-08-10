@@ -58,9 +58,14 @@ export {
 } from "./layout.js";
 export { applyOperationsToSurface, validateSurface } from "./operations.js";
 export {
+  assertOperationResourcePolicy,
   assertOperationResourceLimits,
+  assertSurfaceResourcePolicy,
   assertSurfaceResourceLimits,
+  createSurfaceResourcePolicySummary,
   defaultSurfaceResourceLimits,
+  recommendedSurfaceResourcePolicy,
+  resolveSurfaceResourcePolicy,
   resolveSurfaceResourceLimits,
 } from "./resource-limits.js";
 export {

@@ -7,7 +7,11 @@ import {
 import { migrateSurfaceData } from "./data-migration.js";
 import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
-import { resolveSurfaceResourceLimits } from "./resource-limits.js";
+import {
+  createSurfaceResourcePolicySummary,
+  resolveSurfaceResourcePolicy,
+} from "./resource-limits.js";
+import type { SurfaceResourcePolicySummary } from "./client-capabilities.js";
 import type {
   ComponentRegistry,
   DataBinding,
@@ -16,6 +20,7 @@ import type {
   SurfaceEvent,
   SurfaceListener,
   SurfaceResourceLimits,
+  SurfaceResourcePolicy,
   SurfaceStore,
   UIOperation,
 } from "./types.js";
@@ -30,6 +35,8 @@ export type SurfaceListenerErrorHandler = (
 ) => void;
 
 export interface InMemorySurfaceStoreOptions {
+  resourcePolicy?: Partial<SurfaceResourcePolicy>;
+  /** @deprecated Use resourcePolicy. */
   limits?: Partial<SurfaceResourceLimits>;
   onListenerError?: SurfaceListenerErrorHandler;
 }
@@ -49,7 +56,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
   readonly #registry: ComponentRegistry;
   readonly #surfaces = new Map<string, Surface>();
   readonly #listeners = new Map<string, Set<SurfaceListener>>();
-  readonly #limits: SurfaceResourceLimits;
+  readonly #resourcePolicy: SurfaceResourcePolicy | undefined;
   readonly #onListenerError: SurfaceListenerErrorHandler | undefined;
   #sequence = 0;
 
@@ -58,7 +65,17 @@ export class InMemorySurfaceStore implements SurfaceStore {
     options: InMemorySurfaceStoreOptions = {},
   ) {
     this.#registry = registry;
-    this.#limits = resolveSurfaceResourceLimits(options.limits);
+    if (options.resourcePolicy !== undefined && options.limits !== undefined) {
+      throw new DynamicUIError(
+        "INVALID_RESOURCE_POLICY",
+        "Configure either resourcePolicy or deprecated limits, not both",
+      );
+    }
+    const configured = options.resourcePolicy ?? options.limits;
+    this.#resourcePolicy =
+      configured === undefined
+        ? undefined
+        : resolveSurfaceResourcePolicy(configured);
     this.#onListenerError = options.onListenerError;
   }
 
@@ -73,7 +90,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
       ...input,
       revision: 0,
     };
-    validateSurface(candidate, this.#registry, this.#limits);
+    validateSurface(candidate, this.#registry, this.#resourcePolicy);
     const surface = cloneValue(candidate);
     this.#surfaces.set(surface.id, surface);
     this.#publish(surface.id, {
@@ -127,7 +144,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
       current,
       operations,
       this.#registry,
-      this.#limits,
+      this.#resourcePolicy,
     );
     next.revision = current.revision + 1;
     this.#surfaces.set(surfaceId, next);
@@ -177,7 +194,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
       }
       writeDataPath(next.data, change.path, change.value);
     }
-    validateSurface(next, this.#registry, this.#limits);
+    validateSurface(next, this.#registry, this.#resourcePolicy);
     next.revision = current.revision + 1;
     this.#surfaces.set(surfaceId, next);
     this.#publish(surfaceId, {
@@ -202,10 +219,11 @@ export class InMemorySurfaceStore implements SurfaceStore {
       id: surfaceId,
       revision: current.revision + 1,
     };
-    validateSurface(candidate, this.#registry, this.#limits);
+    validateSurface(candidate, this.#registry, this.#resourcePolicy);
     const next = cloneValue(candidate);
     const migrated = migrateSurfaceData(current, next);
     next.data = migrated.surface.data;
+    validateSurface(next, this.#registry, this.#resourcePolicy);
     this.#surfaces.set(surfaceId, next);
     this.#publish(surfaceId, {
       type: "surface.replaced",
@@ -228,6 +246,10 @@ export class InMemorySurfaceStore implements SurfaceStore {
       );
     }
     return surface;
+  }
+
+  getResourcePolicySummary(): SurfaceResourcePolicySummary {
+    return createSurfaceResourcePolicySummary(this.#resourcePolicy);
   }
 
   #nextSequence(): number {

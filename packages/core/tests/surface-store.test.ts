@@ -35,7 +35,13 @@ describe("InMemorySurfaceStore", () => {
     });
     expect(() => store.createSurface(createFormSurface())).toThrowError(
       expect.objectContaining<Partial<DynamicUIError>>({
-        code: "RESOURCE_LIMIT_EXCEEDED",
+        code: "RESOURCE_POLICY_EXCEEDED",
+        details: {
+          limit: "maxNodes",
+          allowed: 2,
+          actual: 3,
+          scope: "Surface",
+        },
       }),
     );
     expect(store.getSurface("purchase")).toBeUndefined();
@@ -59,7 +65,7 @@ describe("InMemorySurfaceStore", () => {
       ]),
     ).toThrowError(
       expect.objectContaining<Partial<DynamicUIError>>({
-        code: "RESOURCE_LIMIT_EXCEEDED",
+        code: "RESOURCE_POLICY_EXCEEDED",
       }),
     );
     expect(operationStore.requireSurface(surface.id)).toEqual(surface);
