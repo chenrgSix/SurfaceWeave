@@ -33,7 +33,9 @@ const containerLayoutCapabilities: SemanticLayoutFeature[] = [
 ];
 
 function layoutCapabilitiesFor(semanticType: string): SemanticLayoutFeature[] {
-  return ["Form", "Stack", "Grid", "Accordion"].includes(semanticType)
+  return ["Form", "Stack", "Grid", "Section", "Accordion"].includes(
+    semanticType,
+  )
     ? containerLayoutCapabilities
     : ["span"];
 }
@@ -94,6 +96,13 @@ const standardComponentManifestBase: ComponentManifest[] = [
   },
   { semanticType: "Stack", propsSchema: propsSchema() },
   { semanticType: "Grid", propsSchema: propsSchema() },
+  {
+    semanticType: "Section",
+    propsSchema: propsSchema({
+      title: stringSchema,
+      description: stringSchema,
+    }),
+  },
   {
     semanticType: "Accordion",
     propsSchema: propsSchema({

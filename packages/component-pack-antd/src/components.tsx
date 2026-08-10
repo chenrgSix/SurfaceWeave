@@ -1,4 +1,5 @@
 import type { JsonValue } from "@surfaceweave/core";
+import { safeLayoutStyle } from "@surfaceweave/react";
 import type { RendererComponentProps } from "@surfaceweave/react";
 import {
   Alert,
@@ -101,29 +102,61 @@ export function AntBadge({ node, value }: RendererComponentProps) {
   );
 }
 
-export function AntStack({ children }: RendererComponentProps) {
-  return (
-    <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-      {children}
-    </Space>
-  );
-}
-
-export function AntGrid({ children }: RendererComponentProps) {
+export function AntStack({ node, children, mode }: RendererComponentProps) {
   return (
     <div
-      style={{
-        display: "grid",
-        gap: 16,
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-      }}
+      style={safeLayoutStyle(
+        { direction: "column", gap: 16, ...node.layout },
+        mode,
+      )}
     >
       {children}
     </div>
   );
 }
 
-export function AntAccordion({ node, children }: RendererComponentProps) {
+export function AntGrid({ node, children, mode }: RendererComponentProps) {
+  return (
+    <div
+      style={safeLayoutStyle(
+        {
+          columns: 2,
+          gap: 16,
+          modes: { compact: { columns: 1 } },
+          ...node.layout,
+        },
+        mode,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function AntSection({ node, children, mode }: RendererComponentProps) {
+  return (
+    <section>
+      <Typography.Title level={4}>
+        {stringProp(node.props, "title")}
+      </Typography.Title>
+      {node.props.description === undefined ? null : (
+        <Typography.Paragraph>
+          {stringProp(node.props, "description")}
+        </Typography.Paragraph>
+      )}
+      <div
+        style={safeLayoutStyle(
+          { direction: "column", gap: 16, ...node.layout },
+          mode,
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+export function AntAccordion({ node, children, mode }: RendererComponentProps) {
   const label = stringProp(
     node.props,
     "label",
@@ -132,7 +165,22 @@ export function AntAccordion({ node, children }: RendererComponentProps) {
   return (
     <Collapse
       defaultActiveKey={node.props.collapsed === true ? [] : [node.id]}
-      items={[{ key: node.id, label, children }]}
+      items={[
+        {
+          key: node.id,
+          label,
+          children: (
+            <div
+              style={safeLayoutStyle(
+                { direction: "column", gap: 16, ...node.layout },
+                mode,
+              )}
+            >
+              {children}
+            </div>
+          ),
+        },
+      ]}
     />
   );
 }
@@ -254,7 +302,12 @@ export function AntChoiceField({
   );
 }
 
-export function AntForm({ node, children, onAction }: RendererComponentProps) {
+export function AntForm({
+  node,
+  children,
+  mode,
+  onAction,
+}: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
   return (
     <Form
@@ -270,7 +323,19 @@ export function AntForm({ node, children, onAction }: RendererComponentProps) {
       <Typography.Title level={3}>
         {stringProp(node.props, "title")}
       </Typography.Title>
-      {children}
+      <div
+        style={safeLayoutStyle(
+          {
+            direction: "column",
+            columns: 1,
+            gap: 16,
+            ...node.layout,
+          },
+          mode,
+        )}
+      >
+        {children}
+      </div>
       <Button
         type="primary"
         htmlType="submit"

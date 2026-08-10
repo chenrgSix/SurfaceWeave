@@ -15,6 +15,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   SurfaceRenderer,
   createStandardReactComponentRegistry,
+  safeLayoutItemStyle,
+  safeLayoutStyle,
   type ReactComponentPack,
   type RendererComponentProps,
 } from "../src/index.js";
@@ -52,6 +54,90 @@ function createFormRuntime() {
 }
 
 describe("SurfaceRenderer", () => {
+  it("maps portable layouts and safely degrades compact columns", () => {
+    expect(
+      safeLayoutStyle(
+        {
+          columns: 3,
+          gap: 16,
+          align: "end",
+          justify: "between",
+          modes: { compact: { gap: 8 } },
+        },
+        "workspace",
+      ),
+    ).toMatchObject({
+      display: "grid",
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+      gap: 16,
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+    });
+    expect(
+      safeLayoutStyle(
+        { columns: 3, modes: { compact: { gap: 8 } } },
+        "compact",
+      ),
+    ).toMatchObject({
+      gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+      gap: 8,
+    });
+    expect(safeLayoutItemStyle({ span: 2, columns: 4 }, "workspace")).toEqual({
+      gridColumn: "span 2",
+    });
+  });
+
+  it("renders Section with container layout while applying span as item placement", () => {
+    const registry = createStandardComponentRegistry();
+    const store = new InMemorySurfaceStore(registry);
+    store.createSurface({
+      id: "layout-form",
+      intent: "form",
+      tree: {
+        id: "form",
+        component: "Form",
+        props: { title: "Layout" },
+        layout: { columns: 2, gap: 16 },
+        children: [
+          {
+            id: "section",
+            component: "Section",
+            props: { title: "Delivery" },
+            layout: { direction: "column", gap: 8, span: 2 },
+            children: [
+              {
+                id: "address",
+                component: "TextInput",
+                props: { label: "Address" },
+                binding: { path: "address", valueType: "string" },
+              },
+            ],
+          },
+        ],
+      },
+      data: { address: "" },
+      context: {},
+    });
+
+    const view = render(
+      <SurfaceRenderer
+        store={store}
+        componentRegistry={registry}
+        reactComponents={createStandardReactComponentRegistry(registry)}
+        surfaceId="layout-form"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Delivery" })).toBeTruthy();
+    expect(
+      view.container.querySelector("fieldset > div")?.getAttribute("style"),
+    ).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+    expect(
+      screen.getByRole("heading", { name: "Delivery" }).parentElement
+        ?.parentElement?.style.gridColumn,
+    ).toBe("span 2");
+  });
+
   it("keeps compact chat and full workspace views on the same Store state", async () => {
     const runtime = createFormRuntime();
     const user = userEvent.setup();

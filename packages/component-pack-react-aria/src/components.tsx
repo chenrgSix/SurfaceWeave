@@ -1,4 +1,5 @@
 import type { JsonValue } from "@surfaceweave/core";
+import { safeLayoutStyle } from "@surfaceweave/react";
 import type { RendererComponentProps } from "@surfaceweave/react";
 import {
   Button,
@@ -99,15 +100,63 @@ export function AriaBadge({ node, value }: RendererComponentProps) {
   );
 }
 
-export function AriaStack({ children }: RendererComponentProps) {
-  return <div className="pf-aria-stack">{children}</div>;
+export function AriaStack({ node, children, mode }: RendererComponentProps) {
+  return (
+    <div
+      className="pf-aria-stack"
+      style={safeLayoutStyle(
+        { direction: "column", gap: 12, ...node.layout },
+        mode,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function AriaGrid({ children }: RendererComponentProps) {
-  return <div className="pf-aria-grid">{children}</div>;
+export function AriaGrid({ node, children, mode }: RendererComponentProps) {
+  return (
+    <div
+      className="pf-aria-grid"
+      style={safeLayoutStyle(
+        {
+          columns: 2,
+          gap: 12,
+          modes: { compact: { columns: 1 } },
+          ...node.layout,
+        },
+        mode,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function AriaAccordion({ node, children }: RendererComponentProps) {
+export function AriaSection({ node, children, mode }: RendererComponentProps) {
+  return (
+    <section className="pf-aria-section">
+      <Heading>{stringProp(node.props, "title")}</Heading>
+      {node.props.description === undefined ? null : (
+        <p>{stringProp(node.props, "description")}</p>
+      )}
+      <div
+        style={safeLayoutStyle(
+          { direction: "column", gap: 12, ...node.layout },
+          mode,
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+export function AriaAccordion({
+  node,
+  children,
+  mode,
+}: RendererComponentProps) {
   return (
     <details
       open={node.props.collapsed !== true}
@@ -116,7 +165,14 @@ export function AriaAccordion({ node, children }: RendererComponentProps) {
       <summary>
         {stringProp(node.props, "label", stringProp(node.props, "title"))}
       </summary>
-      {children}
+      <div
+        style={safeLayoutStyle(
+          { direction: "column", gap: 12, ...node.layout },
+          mode,
+        )}
+      >
+        {children}
+      </div>
     </details>
   );
 }
@@ -266,7 +322,12 @@ export function AriaChoiceField({
   );
 }
 
-export function AriaForm({ node, children, onAction }: RendererComponentProps) {
+export function AriaForm({
+  node,
+  children,
+  mode,
+  onAction,
+}: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
   return (
     <Form
@@ -280,7 +341,19 @@ export function AriaForm({ node, children, onAction }: RendererComponentProps) {
       }}
     >
       <Heading slot="title">{stringProp(node.props, "title")}</Heading>
-      {children}
+      <div
+        style={safeLayoutStyle(
+          {
+            direction: "column",
+            columns: 1,
+            gap: 12,
+            ...node.layout,
+          },
+          mode,
+        )}
+      >
+        {children}
+      </div>
       <Button type="submit" isDisabled={node.props.submitting === true}>
         {node.props.submitting === true
           ? "Submitting…"

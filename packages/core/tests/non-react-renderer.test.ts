@@ -4,7 +4,9 @@ import {
   createActionIntent,
   createStandardComponentRegistry,
   readDataPath,
+  resolveSemanticLayout,
   standardComponentManifests,
+  walkNodes,
 } from "../src/index.js";
 import type {
   ActionIntent,
@@ -13,6 +15,8 @@ import type {
   JsonValue,
   SurfaceStore,
   UINode,
+  SemanticLayoutFeature,
+  SurfaceViewMode,
 } from "../src/index.js";
 import { describe, expect, it } from "vitest";
 
@@ -89,6 +93,20 @@ class FakeRenderer {
         input: { value: ["longjing"] },
       },
     );
+  }
+
+  layout(
+    surfaceId: string,
+    nodeId: string,
+    mode: SurfaceViewMode,
+    supported: SemanticLayoutFeature[],
+  ) {
+    let selected: UINode | undefined;
+    walkNodes(this.#store.requireSurface(surfaceId).tree, (node) => {
+      if (node.id === nodeId) selected = node;
+    });
+    if (selected === undefined) throw new Error("Missing layout node");
+    return resolveSemanticLayout(selected.layout, mode, supported);
   }
 }
 
@@ -180,5 +198,49 @@ describe("framework-agnostic renderer contract", () => {
       input: { value: ["longjing"] },
     });
     expect(store.requireSurface("tea").tree.component).toBe("TeaProductCard");
+  });
+
+  it("resolves the same semantic layout without React, DOM, or CSS types", () => {
+    const registry = createStandardComponentRegistry();
+    const store = new InMemorySurfaceStore(registry);
+    store.createSurface({
+      id: "portable-layout",
+      intent: "form",
+      tree: {
+        id: "grid",
+        component: "Grid",
+        props: {},
+        layout: {
+          columns: 3,
+          gap: 12,
+          align: "stretch",
+          modes: { compact: { gap: 8 } },
+        },
+      },
+      data: {},
+      context: {},
+    });
+    const fake = new FakeRenderer(registry, store, [
+      {
+        manifest: {
+          protocolVersion: "1.0",
+          id: "layout-terminal",
+          version: "1.0.0",
+          rendererKind: "fake",
+          components: [semantic("Grid")],
+        },
+        bindings: { Grid: () => "grid" },
+      },
+    ]);
+
+    expect(
+      fake.layout("portable-layout", "grid", "compact", ["columns", "gap"]),
+    ).toMatchObject({
+      layout: { columns: 1, gap: 8 },
+      diagnostics: [
+        expect.objectContaining({ code: "UNSUPPORTED_LAYOUT_FEATURE" }),
+        expect.objectContaining({ code: "COMPACT_LAYOUT_FALLBACK" }),
+      ],
+    });
   });
 });

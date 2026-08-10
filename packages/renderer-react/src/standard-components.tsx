@@ -1,5 +1,13 @@
-import { cloneValue, standardComponentManifests } from "@surfaceweave/core";
-import type { JsonValue } from "@surfaceweave/core";
+import {
+  cloneValue,
+  resolveSemanticLayout,
+  standardComponentManifests,
+} from "@surfaceweave/core";
+import type {
+  JsonValue,
+  SemanticLayoutFeature,
+  SurfaceViewMode,
+} from "@surfaceweave/core";
 import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 
 import { ReactComponentRegistry } from "./react-component-registry.js";
@@ -65,38 +73,70 @@ function BadgeComponent({ node, value }: RendererComponentProps) {
   );
 }
 
-function StackComponent({ children }: RendererComponentProps) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {children}
-    </div>
-  );
-}
-
-function GridComponent({ children, mode }: RendererComponentProps) {
+function StackComponent({ node, children, mode }: RendererComponentProps) {
   return (
     <div
-      style={{
-        display: "grid",
-        gap: 12,
-        gridTemplateColumns:
-          mode === "compact"
-            ? "minmax(0, 1fr)"
-            : "repeat(auto-fit, minmax(220px, 1fr))",
-      }}
+      style={safeLayoutStyle(
+        { direction: "column", gap: 12, ...node.layout },
+        mode,
+      )}
     >
       {children}
     </div>
   );
 }
 
-function AccordionComponent({ node, children }: RendererComponentProps) {
+function GridComponent({ node, children, mode }: RendererComponentProps) {
+  return (
+    <div
+      style={safeLayoutStyle(
+        {
+          columns: 2,
+          gap: 12,
+          modes: { compact: { columns: 1 } },
+          ...node.layout,
+        },
+        mode,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionComponent({ node, children, mode }: RendererComponentProps) {
+  return (
+    <section>
+      <h3>{stringProp(node.props, "title")}</h3>
+      {node.props.description === undefined ? null : (
+        <p>{stringProp(node.props, "description")}</p>
+      )}
+      <div
+        style={safeLayoutStyle(
+          { direction: "column", gap: 12, ...node.layout },
+          mode,
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function AccordionComponent({ node, children, mode }: RendererComponentProps) {
   return (
     <details open={node.props.collapsed !== true}>
       <summary>
         {stringProp(node.props, "label", stringProp(node.props, "title"))}
       </summary>
-      {children}
+      <div
+        style={safeLayoutStyle(
+          { direction: "column", gap: 12, ...node.layout },
+          mode,
+        )}
+      >
+        {children}
+      </div>
     </details>
   );
 }
@@ -232,7 +272,12 @@ function SelectComponent({
   );
 }
 
-function FormComponent({ node, children, onAction }: RendererComponentProps) {
+function FormComponent({
+  node,
+  children,
+  mode,
+  onAction,
+}: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
   return (
     <form
@@ -246,7 +291,19 @@ function FormComponent({ node, children, onAction }: RendererComponentProps) {
     >
       <h2>{stringProp(node.props, "title")}</h2>
       <fieldset disabled={node.props.submitting === true}>
-        <div style={{ display: "grid", gap: 12 }}>{children}</div>
+        <div
+          style={safeLayoutStyle(
+            {
+              direction: "column",
+              columns: 1,
+              gap: 12,
+              ...node.layout,
+            },
+            mode,
+          )}
+        >
+          {children}
+        </div>
         <button type="submit">
           {node.props.submitting === true
             ? "Submitting…"
@@ -401,6 +458,7 @@ export function createDefaultReactComponentPack(): ReactComponentPack {
       Badge: BadgeComponent,
       Stack: StackComponent,
       Grid: GridComponent,
+      Section: SectionComponent,
       Accordion: AccordionComponent,
       Form: FormComponent,
       TextInput: TextInputComponent,
@@ -427,24 +485,55 @@ export function createStandardReactComponentRegistry(
 
 export function safeLayoutStyle(
   layout: Record<string, JsonValue> | undefined,
+  mode: SurfaceViewMode = "workspace",
+  supportedFeatures?: readonly SemanticLayoutFeature[],
 ): CSSProperties {
-  if (layout === undefined) {
-    return {};
-  }
+  const resolved = resolveSemanticLayout(layout, mode, supportedFeatures);
+  const layoutValues = resolved.layout;
   const style: CSSProperties = {};
-  if (typeof layout.gap === "number" && layout.gap >= 0 && layout.gap <= 64) {
-    style.gap = layout.gap;
-  }
-  if (layout.direction === "row" || layout.direction === "column") {
-    style.flexDirection = layout.direction;
-  }
-  if (
-    typeof layout.columns === "number" &&
-    Number.isInteger(layout.columns) &&
-    layout.columns >= 1 &&
-    layout.columns <= 12
+  if (layoutValues.columns !== undefined) {
+    style.display = "grid";
+    style.gridTemplateColumns = `repeat(${layoutValues.columns}, minmax(0, 1fr))`;
+  } else if (
+    layoutValues.direction !== undefined ||
+    layoutValues.gap !== undefined ||
+    layoutValues.align !== undefined ||
+    layoutValues.justify !== undefined
   ) {
-    style.gridTemplateColumns = `repeat(${layout.columns}, minmax(0, 1fr))`;
+    style.display = "flex";
+    style.flexDirection = layoutValues.direction ?? "column";
+  }
+  if (layoutValues.gap !== undefined) {
+    style.gap = layoutValues.gap;
+  }
+  if (layoutValues.align !== undefined) {
+    style.alignItems =
+      layoutValues.align === "start"
+        ? "flex-start"
+        : layoutValues.align === "end"
+          ? "flex-end"
+          : layoutValues.align;
+  }
+  if (layoutValues.justify !== undefined) {
+    style.justifyContent =
+      layoutValues.justify === "between"
+        ? "space-between"
+        : layoutValues.justify === "start"
+          ? "flex-start"
+          : layoutValues.justify === "end"
+            ? "flex-end"
+            : "center";
+  }
+  if (layoutValues.span !== undefined) {
+    style.gridColumn = `span ${layoutValues.span}`;
   }
   return style;
+}
+
+/** Safe item-placement subset used by the renderer's structural wrapper. */
+export function safeLayoutItemStyle(
+  layout: Record<string, JsonValue> | undefined,
+  mode: SurfaceViewMode = "workspace",
+): CSSProperties {
+  return safeLayoutStyle(layout, mode, ["span"]);
 }

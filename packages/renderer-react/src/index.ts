@@ -7,6 +7,7 @@ export {
   createDefaultReactComponentPack,
   createStandardReactComponentRegistry,
   registerStandardReactComponents,
+  safeLayoutItemStyle,
   safeLayoutStyle,
 } from "./standard-components.js";
 export { SurfaceRenderer } from "./surface-renderer.js";

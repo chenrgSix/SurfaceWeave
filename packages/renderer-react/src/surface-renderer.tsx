@@ -13,7 +13,7 @@ import { Fragment, useRef } from "react";
 import type { ReactNode } from "react";
 
 import type { ReactComponentRegistry } from "./react-component-registry.js";
-import { safeLayoutStyle } from "./standard-components.js";
+import { safeLayoutItemStyle } from "./standard-components.js";
 import type { ActionIntentHandler, RendererMode } from "./types.js";
 import { useSurface } from "./use-surface.js";
 
@@ -147,7 +147,7 @@ export function SurfaceRenderer({
       ) : (
         <resolved.Provider>{component}</resolved.Provider>
       );
-    const layoutStyle = safeLayoutStyle(node.layout);
+    const layoutStyle = safeLayoutItemStyle(node.layout, mode);
     return Object.keys(layoutStyle).length === 0 ? (
       rendered
     ) : (
