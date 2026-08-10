@@ -232,27 +232,36 @@ const fixtures = [
     dependencies: typescript,
     consumer: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
 import layoutSchema from "@surfaceweave/protocol/layout-schema" with { type: "json" };
+import capabilitySchema from "@surfaceweave/protocol/client-capabilities-schema" with { type: "json" };
 const dialect: string = schema.$schema;
 const layoutId: string = layoutSchema.$id;
-void [dialect, layoutId];
+const capabilityId: string = capabilitySchema.$id;
+void [dialect, layoutId, capabilityId];
 `,
     smoke: `import schema from "@surfaceweave/protocol/schema" with { type: "json" };
 import layoutSchema from "@surfaceweave/protocol/layout-schema" with { type: "json" };
+import capabilitySchema from "@surfaceweave/protocol/client-capabilities-schema" with { type: "json" };
 if (schema.$schema !== "https://json-schema.org/draft/2020-12/schema") throw new Error("protocol");
 if (layoutSchema.$id !== "urn:surfaceweave:schema:semantic-layout:1.0") throw new Error("layout protocol");
+if (capabilitySchema.$id !== "urn:surfaceweave:schema:surface-client-capabilities:1.0") throw new Error("capability protocol");
 `,
   },
   {
     name: "core-only",
     packages: ["@surfaceweave/core"],
     dependencies: typescript,
-    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry, resolveSemanticLayout } from "@surfaceweave/core";
-import type { ActionIntent, SemanticLayout, SemanticLayoutFeature, Surface, ToolDefinition, UINode } from "@surfaceweave/core";
+    consumer: `import { InMemoryActionExecutionController, InMemorySurfaceStore, createStandardComponentRegistry, createSurfaceClientCapabilities, recommendedSurfaceResourcePolicy, resolveSemanticLayout } from "@surfaceweave/core";
+import type { ActionExecutionStateSource, ActionIntent, SemanticLayout, SemanticLayoutFeature, Surface, SurfaceClientCapabilities, SurfaceResourcePolicy, ToolDefinition, UINode } from "@surfaceweave/core";
 const layout: SemanticLayout = { columns: 2, modes: { compact: { columns: 1 } } };
 const layoutFeatures: SemanticLayoutFeature[] = ["columns", "gap"];
 const resolved = resolveSemanticLayout(layout, "compact", layoutFeatures);
 const node: UINode = { id: "root", component: "Stack", props: {} };
 const surface: Surface = { id: "surface", revision: 0, intent: "form", tree: node, data: {}, context: {} };
+const policy: SurfaceResourcePolicy = recommendedSurfaceResourcePolicy;
+const capabilities: SurfaceClientCapabilities = createSurfaceClientCapabilities(createStandardComponentRegistry(), { rendererKind: "fake", enabledPackIds: [], resourcePolicy: { enabled: true, limits: policy } });
+const controller = new InMemoryActionExecutionController({ execute: async (intent) => ({ intentId: intent.id, status: "success" }) });
+const actionSource: ActionExecutionStateSource = controller;
+void [capabilities, actionSource];
 const tool: ToolDefinition = { id: "tea.search", version: "1.0.0", inputSchema: { type: "object" } };
 const intent: ActionIntent = { id: "intent", surfaceId: surface.id, nodeId: node.id, action: "submit", input: null };
 const store = new InMemorySurfaceStore(createStandardComponentRegistry());
@@ -297,14 +306,15 @@ try {
     dependencies: react,
     consumer: `import { createStandardComponentRegistry } from "@surfaceweave/core";
 import { createDefaultReactComponentPack, createStandardReactComponentRegistry, safeLayoutItemStyle, safeLayoutStyle } from "@surfaceweave/react";
-import type { ReactComponentPack, SurfaceRendererProps } from "@surfaceweave/react";
+import type { ReactComponentPack, RendererComponentProps, SurfaceRendererProps } from "@surfaceweave/react";
 const registry = createStandardComponentRegistry();
 const pack: ReactComponentPack = createDefaultReactComponentPack();
 const renderer = createStandardReactComponentRegistry(registry);
 const props = {} as SurfaceRendererProps;
 const containerStyle = safeLayoutStyle({ columns: 2 }, "workspace");
 const itemStyle = safeLayoutItemStyle({ span: 2 }, "workspace");
-void [pack, renderer, props, containerStyle, itemStyle];
+const componentProps = {} as RendererComponentProps;
+void [pack, renderer, props, componentProps.actionStates, componentProps.interactionDisabled, containerStyle, itemStyle];
 `,
     viteEntry: `import { createStandardComponentRegistry } from "@surfaceweave/core";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
@@ -317,16 +327,18 @@ document.querySelector("#app").textContent = runtime.listPacks()[0].id;
     requiresCandidateVersion: true,
     packages: ["@surfaceweave/core", "@surfaceweave/react"],
     dependencies: react,
-    consumer: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
-import type { SurfaceRendererDriver, SurfaceViewReference } from "@surfaceweave/core";
+    consumer: `import { InMemoryActionExecutionController, InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+import type { ActionExecutionStateSource, SurfaceRendererDriver, SurfaceViewReference } from "@surfaceweave/core";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
+const actionStateSource: ActionExecutionStateSource = new InMemoryActionExecutionController({ execute: async (intent) => ({ intentId: intent.id, status: "success" }) });
 const driver: SurfaceRendererDriver<Element> = createReactDOMRendererDriver({
   store,
   componentRegistry: components,
   reactComponents: createStandardReactComponentRegistry(components),
+  actionStateSource,
   enabledPackIds: ["default"],
   capabilities: ["web"],
   packPriorities: { default: 1 },
@@ -335,11 +347,12 @@ const driver: SurfaceRendererDriver<Element> = createReactDOMRendererDriver({
 const reference: SurfaceViewReference = { surfaceId: "surface", mode: "compact" };
 void [driver, reference];
 `,
-    viteEntry: `import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
+    viteEntry: `import { InMemoryActionExecutionController, InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
+const actionStateSource = new InMemoryActionExecutionController({ execute: async (intent) => ({ intentId: intent.id, status: "success" }) });
 store.createSurface({
   id: "surface",
   intent: "confirm",
@@ -351,6 +364,7 @@ const driver = createReactDOMRendererDriver({
   store,
   componentRegistry: components,
   reactComponents: createStandardReactComponentRegistry(components),
+  actionStateSource,
 });
 driver.mount(document.querySelector("#app"), { surfaceId: "surface", mode: "compact" });
 `,
@@ -861,21 +875,23 @@ if (!surfaces.getSurface(resolved.resultSurfaceId)) throw new Error("result surf
     dependencies: typescript,
     consumer: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import type { ToolToUIRuntimeOptions } from "@surfaceweave/agent-tools";
-import { InMemorySurfaceStore, createStandardComponentRegistry, defaultSurfaceResourceLimits } from "@surfaceweave/core";
-import type { InMemorySurfaceStoreOptions, SurfaceResourceLimits } from "@surfaceweave/core";
-const limits: SurfaceResourceLimits = { ...defaultSurfaceResourceLimits, maxNodes: 500 };
+import { InMemorySurfaceStore, createStandardComponentRegistry, recommendedSurfaceResourcePolicy } from "@surfaceweave/core";
+import type { ActionExecutionStateSource, InMemorySurfaceStoreOptions, SurfaceResourcePolicy } from "@surfaceweave/core";
+const policy: SurfaceResourcePolicy = { ...recommendedSurfaceResourcePolicy, maxNodes: 500 };
 const components = createStandardComponentRegistry();
-const storeOptions: InMemorySurfaceStoreOptions = { limits, onListenerError: () => undefined };
+const storeOptions: InMemorySurfaceStoreOptions = { resourcePolicy: policy, onListenerError: () => undefined };
 const store = new InMemorySurfaceStore(components, storeOptions);
 const runtimeOptions: ToolToUIRuntimeOptions = { onListenerError: () => undefined };
 const runtime = new ToolToUIRuntime(components, store, runtimeOptions);
+const actionStateSource: ActionExecutionStateSource = runtime.actionStateSource;
+void actionStateSource;
 runtime.dispose();
 store.dispose();
 `,
     smoke: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 const components = createStandardComponentRegistry();
-const store = new InMemorySurfaceStore(components, { limits: { maxNodes: 10 } });
+const store = new InMemorySurfaceStore(components, { resourcePolicy: { maxNodes: 10 } });
 const runtime = new ToolToUIRuntime(components, store);
 runtime.dispose();
 store.dispose();

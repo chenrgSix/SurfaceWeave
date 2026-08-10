@@ -38,7 +38,9 @@ Tool schemas and confirmation policy sit outside UI composition.
 ## Confirmation, Security, and Results
 
 Side-effecting tools always require confirmation. Submitting disables the Form
-and duplicate requests are rejected. Safe retry reuses the idempotency key.
+and pending duplicate submissions coalesce to the same outcome; the Host
+request is emitted once. Safe retry reuses the original normalized input and
+idempotency key while increasing `attempt`.
 Read-only fields are checked and omitted from submission. Sensitive paths are
 redacted in events; only the Host request carries validated values.
 
@@ -46,6 +48,13 @@ Result Surfaces cover summaries, lists, empty success, partial output, and
 retryable/non-retryable errors. Agent Operations alter the projection, never
 the raw result. Compatible data migrates by stableId or explicit alias;
 incompatible targets emit `ui.dataMigrationConflict`.
+
+On current `main`, `ToolToUIRuntime.actionStateSource` is a read-only Renderer
+projection of that same `ToolInvocation`; it is not a second lifecycle store.
+Only a Runtime success transition can project `succeeded`. The host-only
+`setInteractionDisabled` gate supports recovery and reconnect periods and is
+never read from Surface or Agent data. Non-Tool `ActionExecutor` calls may use
+Core's separate `InMemoryActionExecutionController`.
 
 ## Agent Tools and Limits
 

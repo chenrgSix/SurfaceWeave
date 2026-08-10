@@ -134,6 +134,7 @@ export function App() {
               preferredPack={pack}
               enabledPackIds={enabledPacks[pack]}
               capabilities={["web"]}
+              actionStateSource={toolRuntime.actionStateSource}
               onActionIntent={handleAction}
               onError={(error) => setMessage(error.message)}
             />

@@ -20,6 +20,7 @@ const driver = createReactDOMRendererDriver({
   componentRegistry,
   reactComponents,
   onActionIntent,
+  actionStateSource: toolRuntime.actionStateSource,
 });
 const view = driver.mount(element, {
   surfaceId: "purchase",
@@ -30,6 +31,12 @@ const view = driver.mount(element, {
 Install `react-dom` only when using `@surfaceweave/react/dom`. Pack allow-lists,
 capabilities, priorities, and version constraints belong in the trusted driver
 factory options, never in a remote Surface view reference.
+
+On unreleased `main`, `SurfaceRenderer` and the DOM Driver accept an optional
+`actionStateSource`. Bindings receive optional read-only `actionStates` and
+`interactionDisabled` props. Existing Packs may ignore both. The default Form,
+Action, Dialog, and Confirm bindings show pending/error state and do not emit
+actions while the trusted host gate is active.
 
 On unreleased `main`, the default, React Aria, and Ant Design Packs resolve the
 same Semantic LayoutSpec. `safeLayoutStyle` maps portable container values;

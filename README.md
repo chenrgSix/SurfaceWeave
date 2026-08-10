@@ -24,6 +24,10 @@ portable layout types and Schema, deterministic form sections, strict Agent
 layout tools, and shared layout fallback across the three React Packs and a
 non-React contract test. These additions are not in npm RC.3 yet.
 
+It also contains an unreleased host-generated capability handshake, a unified
+read-only Action state projection, and opt-in Surface resource policy. These
+remain candidates for RC.4 and are not present in the published RC.3 tarballs.
+
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
 either project.
@@ -153,11 +157,14 @@ import {
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  recommendedSurfaceResourcePolicy,
   type ToolHostExecutor,
 } from "@surfaceweave/core";
 
 const components = createStandardComponentRegistry();
-const store = new InMemorySurfaceStore(components);
+const store = new InMemorySurfaceStore(components, {
+  resourcePolicy: recommendedSurfaceResourcePolicy,
+});
 const runtime = new ToolToUIRuntime(components, store);
 const hostExecutor: ToolHostExecutor = {
   async execute(request) {
@@ -267,6 +274,7 @@ Ant Design accepts host-only `ConfigProvider` options through `createAntDesignCo
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  recommendedSurfaceResourcePolicy,
 } from "@surfaceweave/core";
 import { generateSurface } from "@surfaceweave/generator";
 import {
@@ -275,7 +283,9 @@ import {
 } from "@surfaceweave/react";
 
 const components = createStandardComponentRegistry();
-const store = new InMemorySurfaceStore(components);
+const store = new InMemorySurfaceStore(components, {
+  resourcePolicy: recommendedSurfaceResourcePolicy,
+});
 store.createSurface(
   generateSurface(
     {
@@ -303,6 +313,7 @@ export function Profile() {
       preferredPack="react-aria"
       enabledPackIds={["react-aria", "default"]}
       capabilities={["web"]}
+      actionStateSource={toolRuntime.actionStateSource}
       onActionIntent={(intent) => hostActionExecutor.execute(intent)}
     />
   );
@@ -361,6 +372,13 @@ if (!result.ok) {
 
 Call `ui.inspectComponentPacks` to give an Agent the current semantic component schemas, capabilities, fallback, renderer/pack identifiers, and concise `agentGuidance`. The result is JSON-only and never exposes React components or vendor APIs.
 
+On current `main`, construct `AgentUIToolRuntime` with trusted
+`clientCapabilities` options. The same filtered projection powers
+`createSurfaceClientCapabilities` and `ui.inspectComponentPacks`; remote Agent
+arguments can only narrow the host's Pack and terminal-capability allow-list.
+SurfaceWeave returns the JSON snapshot but leaves transport to the host. See
+[Capabilities and Action State](docs/guide/capabilities-action-state.md).
+
 `ui.applyOperations` and `ui.replaceSurface` are session-only overrides: they update the Surface Store but never persist user preferences. Use the separate async preference runtime for confirmed long-term changes.
 
 ## Persist and Apply Preferences
@@ -403,6 +421,13 @@ When a schema changes, keep compatible `stableId` values. Supply `schemaRef` and
 ## Handle Actions
 
 Renderer components emit JSON-only `ActionIntent` values. Route them to a host `ActionExecutor` that performs authorization, confirmation, idempotency, and network access; never place functions or source code in an intent.
+
+Tool UI should subscribe to `toolRuntime.actionStateSource`; it projects the
+existing `ToolInvocation` lifecycle rather than creating another authority.
+For non-Tool actions, current `main` provides the host-owned
+`InMemoryActionExecutionController`. Only `ActionResult.status === "success"`
+marks an action successful. The host alone may temporarily gate a Surface with
+`setInteractionDisabled`; neither an Agent nor Surface data can set that flag.
 
 In Tauri, register semantic host actions and let trusted handlers choose fixed Rust command names:
 

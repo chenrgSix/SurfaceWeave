@@ -126,6 +126,7 @@ function RuntimeApp({ runtime }: { runtime: TauriExampleRuntime }) {
               preferredPack={pack}
               enabledPackIds={[pack]}
               capabilities={["web", "desktop"]}
+              actionStateSource={runtime.toolRuntime.actionStateSource}
               onActionIntent={handleAction}
               onError={(renderError) => setMessage(renderError.message)}
             />

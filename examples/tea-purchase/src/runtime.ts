@@ -3,8 +3,10 @@ import { createAntDesignComponentPack } from "@surfaceweave/antd";
 import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
 import {
   InMemorySurfaceStore,
+  createSurfaceClientCapabilities,
   createStandardComponentRegistry,
   readDataPath,
+  recommendedSurfaceResourcePolicy,
 } from "@surfaceweave/core";
 import { generateSurface } from "@surfaceweave/generator";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
@@ -23,7 +25,9 @@ import {
 
 export const componentRegistry = createStandardComponentRegistry();
 componentRegistry.register(teaProductCardDefinition);
-export const surfaceStore = new InMemorySurfaceStore(componentRegistry);
+export const surfaceStore = new InMemorySurfaceStore(componentRegistry, {
+  resourcePolicy: recommendedSurfaceResourcePolicy,
+});
 export const reactComponents =
   createStandardReactComponentRegistry(componentRegistry);
 reactComponents.registerPack(createReactAriaComponentPack({ locale: "zh-CN" }));
@@ -34,6 +38,30 @@ reactComponents.registerPack(
 );
 reactComponents.registerPack(teaBusinessReactPack);
 
+const clientCapabilityOptions = {
+  rendererKind: "react",
+  enabledPackIds: ["default", "react-aria", "antd", "tea-business"],
+  terminalCapabilities: ["web"],
+  supportedPackVersions: {
+    default: ["1.0.0"],
+    "react-aria": ["1.0.0"],
+    antd: ["1.0.0"],
+    "tea-business": ["1.0.0"],
+  },
+  runtimeCapabilities: [
+    "operations",
+    "preferences",
+    "tool-invocation",
+    "action-state",
+  ],
+  resourcePolicy: surfaceStore.getResourcePolicySummary(),
+} as const;
+
+export const clientCapabilities = createSurfaceClientCapabilities(
+  componentRegistry,
+  clientCapabilityOptions,
+);
+
 export const toolRuntime = new ToolToUIRuntime(componentRegistry, surfaceStore);
 for (const definition of teaToolDefinitions)
   toolRuntime.registerTool(definition);
@@ -42,6 +70,7 @@ export const agentTools = new AgentUIToolRuntime(
   surfaceStore,
   undefined,
   toolRuntime,
+  { clientCapabilities: clientCapabilityOptions },
 );
 
 const hostExecutor = new MockTeaHostExecutor();

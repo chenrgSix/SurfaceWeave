@@ -235,11 +235,43 @@ capabilities、优先级和版本约束。远程事件只可提供 Surface id �
 无需为每个宿主或组件库新增 Adapter 包。该能力不修改 Wire Protocol 1.0，也不等同
 于实现 Vue Renderer；真正的 Vue Renderer 仍需独立 Runtime Binding。
 
+### Capability Handshake（current main，未发布）
+
+可信宿主在注册语义组件和 Runtime Pack 后，通过同一目录投影生成确定性、
+JSON-only 的 `SurfaceClientCapabilities`。快照包含 Wire 版本、renderer kind、
+Pack allow-list 的实际交集、接受版本、终端能力、可用语义组件、Runtime 可选能力和
+资源策略摘要；不包含 Binding、Provider、函数、DOM 或厂商 API。Agent 可以读取或
+进一步缩小查询，但远程数据不能反向注册组件、启用 Pack、改变 Executor 或扩大策略。
+SDK 不规定 Transport，也不发送网络请求。独立协议文档和 JSON Schema 使非
+TypeScript 宿主可以实现同一握手。
+
+### 统一 Action Execution State（current main，未发布）
+
+Tool Action 的唯一权威生命周期仍是 `ToolInvocation`。`ToolToUIRuntime` 仅将其投影为
+只读 `ActionExecutionStateSource`，供聊天、工作区和 Component Binding 同步显示
+pending、success、error、cancel、attempt 与时间戳。Renderer 不得自行判断业务成功；
+只有 Runtime 成功转换或 `ActionResult.status === "success"` 才能标记成功。
+
+非 Tool Action 可使用宿主持有的 `InMemoryActionExecutionController` 包装
+`ActionExecutor`。pending 期间相同 idempotency key 只执行一次，retry 复用原始 intent
+和 key。`interactionDisabled` 是恢复、重连或互斥期间的 runtime-only 宿主开关，不能
+来自 Agent、Surface 或远程事件。React Binding 的状态字段均为可选，因此已有 Pack
+保持兼容。
+
+### Surface Resource Policy（current main，未发布）
+
+宿主可在 `InMemorySurfaceStore` 显式启用 `SurfaceResourcePolicy`，限制节点数、树深、
+Operation 批量、JSON 深度和值数量、字符串长度与整体 UTF-8 JSON 字节。策略在 create、
+replace、data update 和 operations 的提交前校验；超限不会改变 Surface、revision、事件
+序列或 listener。检查拒绝循环、非普通对象和稀疏数组绕过。为兼容 RC.3，数值预算默认
+不启用；Agent-facing 宿主应显式选择 `recommendedSurfaceResourcePolicy`。能力握手只
+暴露已启用策略的深拷贝摘要。
+
 ## 七、Agent UI Tools
 
 建议提供四个主要工具。
 
-Milestone 4 额外提供 `ui.inspectComponentPacks`，只返回可序列化的语义组件目录和 Manifest，不返回 React 绑定或第三方库 API。
+Milestone 4 额外提供 `ui.inspectComponentPacks`，只返回可序列化的语义组件目录和 Manifest，不返回 React 绑定或第三方库 API。current main 让该工具与宿主 Capability Handshake 复用同一投影逻辑，查询只能缩小可信 allow-list。
 
 ### `ui.createSurface`
 

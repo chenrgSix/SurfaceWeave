@@ -4,6 +4,7 @@ import {
   readDataPath,
 } from "@surfaceweave/core";
 import type {
+  ActionExecutionStateSource,
   ComponentRegistry,
   JsonValue,
   SurfaceStore,
@@ -15,6 +16,7 @@ import type { ReactNode } from "react";
 import type { ReactComponentRegistry } from "./react-component-registry.js";
 import { safeLayoutItemStyle } from "./standard-components.js";
 import type { ActionIntentHandler, RendererMode } from "./types.js";
+import { useActionExecution } from "./use-action-execution.js";
 import { useSurface } from "./use-surface.js";
 
 export interface SurfaceRendererProps {
@@ -30,6 +32,7 @@ export interface SurfaceRendererProps {
   packPriorities?: Record<string, number>;
   supportedPackVersions?: Record<string, string[]>;
   onActionIntent?: ActionIntentHandler;
+  actionStateSource?: ActionExecutionStateSource;
   onError?: (error: DynamicUIError) => void;
 }
 
@@ -55,9 +58,11 @@ export function SurfaceRenderer({
   packPriorities,
   supportedPackVersions,
   onActionIntent,
+  actionStateSource,
   onError,
 }: SurfaceRendererProps) {
   const surface = useSurface(store, surfaceId);
+  const actionExecution = useActionExecution(actionStateSource, surfaceId);
   const actionSequence = useRef(0);
 
   function report(error: unknown): void {
@@ -99,6 +104,8 @@ export function SurfaceRenderer({
         node={node}
         value={value}
         mode={mode}
+        actionStates={actionExecution.states}
+        interactionDisabled={actionExecution.interactionDisabled}
         onValueChange={(nextValue) => {
           if (node.binding === undefined) {
             report(
@@ -119,7 +126,10 @@ export function SurfaceRenderer({
           }
         }}
         onAction={(action, input: JsonValue) => {
-          if (onActionIntent === undefined) {
+          if (
+            onActionIntent === undefined ||
+            actionExecution.interactionDisabled
+          ) {
             return;
           }
           try {

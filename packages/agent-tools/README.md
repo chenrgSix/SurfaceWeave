@@ -16,3 +16,10 @@ results.
 The same unreleased branch publishes strict Semantic LayoutSpec JSON Schemas in
 `ui.applyOperations`. Agent `setLayout` and grouped-node writes reject CSS,
 DOM, `className`, and vendor properties before Surface state changes.
+
+Hosts may inject trusted `clientCapabilities` when constructing
+`AgentUIToolRuntime`. `ui.inspectComponentPacks` then reads the same filtered,
+deterministic catalog used by the capability handshake; Agent arguments can
+only narrow that snapshot. `ToolToUIRuntime.actionStateSource` projects its
+existing `ToolInvocation` lifecycle for renderers, and
+`setInteractionDisabled(surfaceId, value)` is a host-only runtime gate.

@@ -4,6 +4,9 @@ import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   type ActionIntent,
+  type ActionExecutionSnapshot,
+  type ActionExecutionStateListener,
+  type ActionExecutionStateSource,
   type SurfaceListener,
 } from "@surfaceweave/core";
 import { fireEvent } from "@testing-library/react";
@@ -12,6 +15,55 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createReactDOMRendererDriver } from "../src/dom.js";
 import { createStandardReactComponentRegistry } from "../src/index.js";
+
+class TestActionStateSource implements ActionExecutionStateSource {
+  readonly listeners = new Map<string, Set<ActionExecutionStateListener>>();
+
+  get activeSubscriptions(): number {
+    return [...this.listeners.values()].reduce(
+      (total, listeners) => total + listeners.size,
+      0,
+    );
+  }
+
+  getSnapshot(surfaceId: string): ActionExecutionSnapshot {
+    return {
+      surfaceId,
+      interactionDisabled: surfaceId === "purchase",
+      states:
+        surfaceId === "purchase"
+          ? [
+              {
+                intentId: "purchase-submit",
+                idempotencyKey: "purchase-1",
+                surfaceId,
+                nodeId: "form",
+                action: "tool.submit",
+                status: "pending",
+                attempt: 1,
+                startedAt: 1,
+              },
+            ]
+          : [],
+    };
+  }
+
+  subscribe(
+    surfaceId: string,
+    listener: ActionExecutionStateListener,
+  ): () => void {
+    const listeners = this.listeners.get(surfaceId) ?? new Set();
+    listeners.add(listener);
+    this.listeners.set(surfaceId, listeners);
+    let active = true;
+    return () => {
+      if (!active) return;
+      active = false;
+      listeners.delete(listener);
+      if (listeners.size === 0) this.listeners.delete(surfaceId);
+    };
+  }
+}
 
 function createRuntime() {
   const registry = createStandardComponentRegistry();
@@ -102,11 +154,13 @@ describe("createReactDOMRendererDriver", () => {
       },
     );
     const onActionIntent = vi.fn<(intent: ActionIntent) => void>();
+    const actionStateSource = new TestActionStateSource();
     const driver = createReactDOMRendererDriver({
       store,
       componentRegistry: registry,
       reactComponents: createStandardReactComponentRegistry(registry),
       onActionIntent,
+      actionStateSource,
       enabledPackIds: ["default"],
       capabilities: [],
       packPriorities: { default: 1 },
@@ -136,6 +190,7 @@ describe("createReactDOMRendererDriver", () => {
       workspaceTarget.querySelector("[data-surface-view='workspace']"),
     ).not.toBeNull();
     expect(activeSubscriptions).toBe(2);
+    expect(actionStateSource.activeSubscriptions).toBe(2);
 
     await act(async () => {
       store.updateData("purchase", 0, [{ path: "buyer", value: "Lin" }]);
@@ -150,7 +205,13 @@ describe("createReactDOMRendererDriver", () => {
     await act(async () => {
       chatHandle.update({ surfaceId: "teas", mode: "compact" });
     });
+    expect(actionStateSource.activeSubscriptions).toBe(2);
+    expect(actionStateSource.listeners.get("purchase")?.size).toBe(1);
+    expect(actionStateSource.listeners.get("teas")?.size).toBe(1);
     expect(chatTarget.querySelector("[data-surface-id='teas']")).not.toBeNull();
+    expect(
+      (chatTarget.querySelector("button") as HTMLButtonElement).disabled,
+    ).toBe(false);
     expect(
       workspaceTarget.querySelector("[data-surface-id='purchase']"),
     ).not.toBeNull();
@@ -170,6 +231,7 @@ describe("createReactDOMRendererDriver", () => {
       workspaceHandle.unmount();
     });
     expect(activeSubscriptions).toBe(0);
+    expect(actionStateSource.activeSubscriptions).toBe(0);
     expect(chatTarget.childElementCount).toBe(0);
     expect(workspaceTarget.childElementCount).toBe(0);
   });

@@ -15,6 +15,10 @@ document from `@surfaceweave/protocol/client-capabilities` and its Schema from
 `@surfaceweave/protocol/client-capabilities-schema`. These subpaths require a
 release after RC.3.
 
+The capability object is descriptive data created from trusted local policy.
+It cannot authorize a Pack or action, and receiving one from a remote party
+must never mutate local Registry, Executor, or resource configuration.
+
 The schema has the stable, non-resolvable identity
 `urn:surfaceweave:schema:dynamic-ui-wire:1.0`. Consumers must not require a
 TypeScript package or an owned web domain to implement the protocol.

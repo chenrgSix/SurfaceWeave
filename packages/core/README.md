@@ -10,7 +10,7 @@ npm install @surfaceweave/core@next
 This package does not depend on React, DOM, a Component Pack, Tauri, or a
 network client.
 
-On the unreleased `main` branch, hosts may configure resource guardrails and
+On the unreleased `main` branch, hosts may opt into resource guardrails and
 observer error reporting without changing the wire protocol. It also provides
 framework-neutral LayoutSpec parsing and fallback:
 
@@ -18,12 +18,17 @@ framework-neutral LayoutSpec parsing and fallback:
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  recommendedSurfaceResourcePolicy,
   resolveSemanticLayout,
 } from "@surfaceweave/core";
 
 const registry = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(registry, {
-  limits: { maxNodes: 500, maxOperationsPerBatch: 50 },
+  resourcePolicy: {
+    ...recommendedSurfaceResourcePolicy,
+    maxNodes: 500,
+    maxOperationsPerBatch: 50,
+  },
   onListenerError: (error, event) => console.error(event.type, error),
 });
 
@@ -34,3 +39,10 @@ const compact = resolveSemanticLayout(
   "compact",
 );
 ```
+
+The same branch exports the JSON-only client capability snapshot and read-only
+Action execution contracts. `createSurfaceClientCapabilities` projects only
+host-enabled Packs; `InMemoryActionExecutionController` is for non-Tool
+actions. Tool actions use `ToolToUIRuntime.actionStateSource` so
+`ToolInvocation` remains authoritative. Resource limits are opt-in: omitting
+`resourcePolicy` preserves RC.3 numeric acceptance behavior.

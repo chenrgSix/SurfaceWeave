@@ -47,7 +47,7 @@ not cross-Pack leakage. The tea demo intentionally imports three selectable
 Packs and therefore remains larger. Runtime Pack downloading is not part of
 this release.
 
-## Current main: unreleased LayoutSpec verification
+## Current main: unreleased RC.4 candidate verification
 
 Local candidate tarballs additionally verify the strict
 `@surfaceweave/protocol/layout-schema` export, Core layout types/resolver, and
@@ -58,3 +58,11 @@ only and has no DOM, React, Vue, Agentdown, CSS, or vendor type dependency.
 
 These LayoutSpec additions require a later release candidate and are not
 claimed for the published `0.1.0-rc.3` artifacts in the table above.
+
+Local candidate tarballs also verify the standalone client-capability Protocol
+exports, Core capability/action/resource types, Agent catalog projection, and
+optional React Action state. Resource policy remains opt-in for compatibility.
+The React root still loads without React DOM; the `./dom` consumer verifies
+Action subscription cleanup on update and idempotent unmount. Framework-neutral
+consumers compile the Core with no DOM library, and release audit rejects React,
+Vue, Agentdown, DOM, component-library, or Tauri leakage into Protocol/Core.

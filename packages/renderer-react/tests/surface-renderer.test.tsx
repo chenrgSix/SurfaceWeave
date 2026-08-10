@@ -6,9 +6,18 @@ import {
   createStandardComponentRegistry,
   standardComponentManifests,
   type ActionIntent,
+  type ActionExecutionSnapshot,
+  type ActionExecutionStateListener,
+  type ActionExecutionStateSource,
   type ComponentManifest,
 } from "@surfaceweave/core";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -53,7 +62,127 @@ function createFormRuntime() {
   };
 }
 
+class MutableActionStateSource implements ActionExecutionStateSource {
+  snapshot: ActionExecutionSnapshot;
+  readonly listeners = new Set<ActionExecutionStateListener>();
+
+  constructor(snapshot: ActionExecutionSnapshot) {
+    this.snapshot = snapshot;
+  }
+
+  getSnapshot(surfaceId: string): ActionExecutionSnapshot {
+    return this.snapshot.surfaceId === surfaceId
+      ? this.snapshot
+      : { surfaceId, interactionDisabled: false, states: [] };
+  }
+
+  subscribe(
+    _surfaceId: string,
+    listener: ActionExecutionStateListener,
+  ): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  update(snapshot: ActionExecutionSnapshot): void {
+    this.snapshot = snapshot;
+    for (const listener of this.listeners) listener(snapshot);
+  }
+}
+
 describe("SurfaceRenderer", () => {
+  it("shares read-only action state across views and honors the host interaction gate", () => {
+    const runtime = createFormRuntime();
+    runtime.store.applyOperations("purchase", 0, [
+      {
+        type: "setProps",
+        target: "form",
+        props: {
+          submitAction: "tool.submit",
+          invocationId: "purchase-invocation",
+        },
+      },
+    ]);
+    const pendingState = {
+      intentId: "submit-1",
+      idempotencyKey: "purchase-1",
+      surfaceId: "purchase",
+      nodeId: "form",
+      action: "tool.submit",
+      status: "pending" as const,
+      attempt: 1,
+      startedAt: 10,
+    };
+    const source = new MutableActionStateSource({
+      surfaceId: "purchase",
+      interactionDisabled: false,
+      states: [pendingState],
+    });
+    const onActionIntent = vi.fn<(intent: ActionIntent) => void>();
+    render(
+      <>
+        <SurfaceRenderer
+          store={runtime.store}
+          componentRegistry={runtime.registry}
+          reactComponents={runtime.reactComponents}
+          surfaceId="purchase"
+          mode="compact"
+          actionStateSource={source}
+          onActionIntent={onActionIntent}
+        />
+        <SurfaceRenderer
+          store={runtime.store}
+          componentRegistry={runtime.registry}
+          reactComponents={runtime.reactComponents}
+          surfaceId="purchase"
+          mode="workspace"
+          actionStateSource={source}
+          onActionIntent={onActionIntent}
+        />
+      </>,
+    );
+
+    expect(screen.getAllByRole("button", { name: "Submitting…" })).toHaveLength(
+      2,
+    );
+    expect(
+      screen
+        .getAllByRole("button", { name: "Submitting…" })
+        .every((button) => (button as HTMLButtonElement).disabled),
+    ).toBe(true);
+
+    act(() => {
+      source.update({
+        surfaceId: "purchase",
+        interactionDisabled: false,
+        states: [
+          {
+            ...pendingState,
+            status: "failed",
+            settledAt: 20,
+            error: { code: "NO_STOCK", message: "Tea is out of stock" },
+          },
+        ],
+      });
+    });
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+    expect(screen.getAllByText("Tea is out of stock")).toHaveLength(2);
+
+    act(() => {
+      source.update({
+        surfaceId: "purchase",
+        interactionDisabled: true,
+        states: [],
+      });
+    });
+    const submitButtons = screen.getAllByRole("button", { name: "Submit" });
+    expect(
+      submitButtons.every((button) => (button as HTMLButtonElement).disabled),
+    ).toBe(true);
+    fireEvent.click(submitButtons[0]!);
+    expect(onActionIntent).not.toHaveBeenCalled();
+  });
+
   it("maps portable layouts and safely degrades compact columns", () => {
     expect(
       safeLayoutStyle(

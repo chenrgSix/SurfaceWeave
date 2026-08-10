@@ -187,6 +187,17 @@ if (
 }
 
 if (
+  protocol?.exports?.["./client-capabilities"] !== "./client-capabilities.md" ||
+  protocol?.exports?.["./client-capabilities-schema"] !==
+    "./schemas/surface-client-capabilities-1.0.schema.json" ||
+  !protocol?.files?.includes("client-capabilities.md")
+) {
+  fail(
+    "Protocol: client capability document and Schema must be published exports",
+  );
+}
+
+if (
   react?.exports?.["./dom"]?.types !== "./dist/dom.d.ts" ||
   react?.exports?.["./dom"]?.import !== "./dist/dom.js" ||
   react?.exports?.["./dom"]?.default !== "./dist/dom.js"

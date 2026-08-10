@@ -12,22 +12,22 @@ conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
 
 ## Public Entry Points
 
-| Package                     | Public entry points                                                                |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `@surfaceweave/protocol`    | `.`, `./schema`, `./component-pack`, `./tool-to-ui`, `./layout`, `./layout-schema` |
-| `@surfaceweave/core`        | `.`                                                                                |
-| `@surfaceweave/storage`     | `.`                                                                                |
-| `@surfaceweave/preferences` | `.`                                                                                |
-| `@surfaceweave/generator`   | `.`                                                                                |
-| `@surfaceweave/agent-tools` | `.`                                                                                |
-| `@surfaceweave/react`       | `.`, `./dom`                                                                       |
-| `@surfaceweave/react-aria`  | `.`, `./styles.css`                                                                |
-| `@surfaceweave/antd`        | `.`                                                                                |
-| `@surfaceweave/tauri`       | `.`                                                                                |
+| Package                     | Public entry points                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@surfaceweave/protocol`    | `.`, `./schema`, `./component-pack`, `./tool-to-ui`, `./layout`, `./layout-schema`, `./client-capabilities`, `./client-capabilities-schema` |
+| `@surfaceweave/core`        | `.`                                                                                                                                         |
+| `@surfaceweave/storage`     | `.`                                                                                                                                         |
+| `@surfaceweave/preferences` | `.`                                                                                                                                         |
+| `@surfaceweave/generator`   | `.`                                                                                                                                         |
+| `@surfaceweave/agent-tools` | `.`                                                                                                                                         |
+| `@surfaceweave/react`       | `.`, `./dom`                                                                                                                                |
+| `@surfaceweave/react-aria`  | `.`, `./styles.css`                                                                                                                         |
+| `@surfaceweave/antd`        | `.`                                                                                                                                         |
+| `@surfaceweave/tauri`       | `.`                                                                                                                                         |
 
-The two Protocol layout subpaths shown above exist on current `main`; published
-RC.3 exposes the other entry points only. The unreleased additions are listed
-separately below.
+The Protocol layout and client-capability subpaths shown above exist on current
+`main`; published RC.3 exposes the other entry points only. The unreleased
+additions are listed separately below.
 
 ## Frozen Runtime Exports
 
@@ -86,24 +86,33 @@ Protocol 1.0 consumers are not narrowed. Generator and Agent Tool output use
 the stricter portable subset; renderers diagnose and ignore legacy unknown
 properties instead of forwarding them to framework sinks.
 
-## Unreleased Runtime Hardening
+## Unreleased Capability, Action State, and Resource Policy
 
 The current `main` branch adds host controls that are not part of the published
 RC.3 tarballs:
 
-- Core exports `SurfaceResourceLimits`, default/resolve/assert helpers,
-  `InMemorySurfaceStoreOptions`, and `SurfaceListenerErrorHandler`;
-- `InMemorySurfaceStore` accepts resource and observer-error options and has an
-  idempotent `dispose()` method;
+- Protocol exports language-neutral client capability documentation and a
+  Draft 2020-12 JSON Schema;
+- Core exports `SurfaceClientCapabilities`, shared catalog projection helpers,
+  `ActionExecutionStateSource`, `InMemoryActionExecutionController`,
+  `SurfaceResourcePolicy`, its recommended/resolve/assert/summary helpers,
+  `InMemorySurfaceStoreOptions`, and observer error types;
+- `InMemorySurfaceStore` accepts opt-in `resourcePolicy` and observer-error
+  options, exposes a policy summary, and has an idempotent `dispose()` method;
 - Agent Tools exports `ToolToUIRuntimeOptions` and
-  `ToolRuntimeListenerErrorHandler`; `ToolToUIRuntime` adds
-  `disposeInvocation()` and `dispose()`.
+  `ToolRuntimeListenerErrorHandler`; `AgentUIToolRuntime` accepts trusted client
+  capability options; `ToolToUIRuntime` adds a ToolInvocation-backed
+  `actionStateSource`, host-only `setInteractionDisabled()`,
+  `disposeInvocation()`, and `dispose()`;
+- React `SurfaceRenderer`, `RendererComponentProps`, and the `./dom` Driver add
+  optional read-only Action state without adding React DOM to the root entry.
 
 These APIs bound untrusted payload work, isolate observer failures from
-committed state, and release Runtime-owned subscriptions. Default limits
-intentionally reject exceptionally large payloads that RC.3 did not bound, so
-the behavior needs explicit compatibility review and a new RC before consumers
-can install it from npm.
+committed state, and release Runtime-owned subscriptions. Numeric resource
+limits are opt-in, so the existing RC.3 Store constructor retains its accepted
+payload range. Deprecated `SurfaceResourceLimits`, `limits`, and legacy helper
+names remain available for source compatibility. A new RC is still required
+before consumers can install these additions from npm.
 
 ## Compatibility Policy
 

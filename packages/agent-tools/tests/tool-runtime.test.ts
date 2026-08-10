@@ -255,6 +255,13 @@ describe("ToolToUIRuntime", () => {
     });
     expect(resolved.status).toBe("success");
     expect(resolved.resultSurfaceId).toBe("order-form--result-1");
+    expect(
+      runtime.actionStateSource.getSnapshot(confirmation!.id).states[0],
+    ).toMatchObject({
+      status: "succeeded",
+      attempt: 1,
+      idempotencyKey: `${invocation.id}:1`,
+    });
     expect(runtime.getRawResult(invocation.id)).toEqual({ orderId: "PO-1" });
     const raw = runtime.getRawResult(invocation.id) as { orderId: string };
     raw.orderId = "tampered";
@@ -420,6 +427,46 @@ describe("ToolToUIRuntime", () => {
         runtime.actionStateSource.getSnapshot(created.surface.id).states[0],
       ).toMatchObject({ status: "pending", attempt: 2 });
     }
+  });
+
+  it("projects Tool cancellation from the authoritative invocation", () => {
+    const { runtime } = runtimeFixture();
+    const created = runtime.createToolSurface({
+      toolId: "order.create",
+      surfaceId: "cancel-form",
+      initialValues: { buyer: "Ada", password: "secret", tenant: "north" },
+    });
+    const confirmation = runtime.handleAction(
+      action(created.surface.id, "tool.submit", created.invocation.id),
+    );
+    if (confirmation.kind !== "confirmation-required")
+      throw new Error("confirmation expected");
+    const submitted = runtime.handleAction(
+      action(
+        confirmation.confirmationSurface.id,
+        "tool.submit",
+        created.invocation.id,
+        { confirmed: true },
+      ),
+    );
+    if (submitted.kind !== "invocation-requested")
+      throw new Error("request expected");
+
+    const cancelled = runtime.handleAction(
+      action(
+        confirmation.confirmationSurface.id,
+        "tool.cancel",
+        created.invocation.id,
+      ),
+    );
+    expect(cancelled).toMatchObject({
+      kind: "state-changed",
+      invocation: { status: "cancelled" },
+    });
+    expect(
+      runtime.actionStateSource.getSnapshot(confirmation.confirmationSurface.id)
+        .states[0],
+    ).toMatchObject({ status: "cancelled", attempt: 1 });
   });
 
   it("migrates aliased values and emits type conflicts", () => {

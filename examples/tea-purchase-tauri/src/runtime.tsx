@@ -8,6 +8,7 @@ import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   readDataPath,
+  recommendedSurfaceResourcePolicy,
 } from "@surfaceweave/core";
 import type { PreferenceDocument } from "@surfaceweave/core";
 import { generateSurface } from "@surfaceweave/generator";
@@ -55,7 +56,9 @@ function currentPlatform(): "windows" | "macos" | "linux" | "unknown" {
 
 export async function createExampleRuntime(): Promise<TauriExampleRuntime> {
   const componentRegistry = createStandardComponentRegistry();
-  const surfaceStore = new InMemorySurfaceStore(componentRegistry);
+  const surfaceStore = new InMemorySurfaceStore(componentRegistry, {
+    resourcePolicy: recommendedSurfaceResourcePolicy,
+  });
   const reactComponents =
     createStandardReactComponentRegistry(componentRegistry);
   reactComponents.registerPack(
@@ -99,6 +102,24 @@ export async function createExampleRuntime(): Promise<TauriExampleRuntime> {
     surfaceStore,
     preferenceService,
     toolRuntime,
+    {
+      clientCapabilities: {
+        rendererKind: "react",
+        enabledPackIds: ["default", "antd"],
+        terminalCapabilities: ["web", "desktop"],
+        supportedPackVersions: {
+          default: ["1.0.0"],
+          antd: ["1.0.0"],
+        },
+        runtimeCapabilities: [
+          "operations",
+          "preferences",
+          "tool-invocation",
+          "action-state",
+        ],
+        resourcePolicy: surfaceStore.getResourcePolicySummary(),
+      },
+    },
   );
   const preferenceTools = new PreferenceAgentToolRuntime(preferenceService);
   const host = new MockTeaHostExecutor();

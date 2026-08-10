@@ -1,5 +1,6 @@
 import { DynamicUIError } from "@surfaceweave/core";
 import type {
+  ActionExecutionStateSource,
   ComponentRegistry,
   SurfaceRendererDriver,
   SurfaceStore,
@@ -19,6 +20,7 @@ export interface ReactDOMRendererDriverOptions {
   componentRegistry: ComponentRegistry;
   reactComponents: ReactComponentRegistry;
   onActionIntent?: ActionIntentHandler;
+  actionStateSource?: ActionExecutionStateSource;
   onError?: SurfaceRendererProps["onError"];
   enabledPackIds?: readonly string[];
   capabilities?: readonly string[];
@@ -70,6 +72,9 @@ export function createReactDOMRendererDriver(
     ...(options.onActionIntent === undefined
       ? {}
       : { onActionIntent: options.onActionIntent }),
+    ...(options.actionStateSource === undefined
+      ? {}
+      : { actionStateSource: options.actionStateSource }),
     ...(options.onError === undefined ? {} : { onError: options.onError }),
     ...(options.enabledPackIds === undefined
       ? {}

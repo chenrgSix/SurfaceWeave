@@ -53,6 +53,10 @@ export default defineConfig({
               text: "Generic Renderer Driver",
               link: "/guide/generic-renderer-driver",
             },
+            {
+              text: "Capabilities and Action State",
+              link: "/guide/capabilities-action-state",
+            },
           ],
         },
         {
@@ -73,6 +77,10 @@ export default defineConfig({
             {
               text: "Milestone 6.2 audit",
               link: "/milestone-6.2-summary",
+            },
+            {
+              text: "Milestone 6.3 audit",
+              link: "/milestone-6.3-summary",
             },
             {
               text: "Wire protocol",

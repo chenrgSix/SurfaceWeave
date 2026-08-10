@@ -4,6 +4,7 @@ import {
   standardComponentManifests,
 } from "@surfaceweave/core";
 import type {
+  ActionExecutionState,
   JsonValue,
   SemanticLayoutFeature,
   SurfaceViewMode,
@@ -47,6 +48,29 @@ function valueForItem(item: JsonValue, index: number): JsonValue {
     return item.id ?? item.value ?? index;
   }
   return item;
+}
+
+function latestActionState(
+  states: readonly ActionExecutionState[] | undefined,
+  nodeId: string,
+  action: string,
+): ActionExecutionState | undefined {
+  return states
+    ?.filter((state) => state.nodeId === nodeId && state.action === action)
+    .sort(
+      (left, right) =>
+        right.startedAt - left.startedAt || right.attempt - left.attempt,
+    )[0];
+}
+
+function ActionErrorMessage({
+  state,
+}: {
+  state: ActionExecutionState | undefined;
+}) {
+  return state?.status === "failed" && state.error !== undefined ? (
+    <p role="alert">{state.error.message}</p>
+  ) : null;
 }
 
 function TextComponent({ node, value }: RendererComponentProps) {
@@ -285,20 +309,23 @@ function FormComponent({
   children,
   mode,
   onAction,
+  actionStates,
+  interactionDisabled,
 }: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
+  const submitAction = stringProp(node.props, "submitAction", "submit");
+  const actionState = latestActionState(actionStates, node.id, submitAction);
+  const pending =
+    node.props.submitting === true || actionState?.status === "pending";
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onAction(
-          stringProp(node.props, "submitAction", "submit"),
-          invocationId === "" ? null : { invocationId },
-        );
+        onAction(submitAction, invocationId === "" ? null : { invocationId });
       }}
     >
       <h2>{stringProp(node.props, "title")}</h2>
-      <fieldset disabled={node.props.submitting === true}>
+      <fieldset disabled={pending || interactionDisabled === true}>
         <div
           style={safeLayoutStyle(
             {
@@ -312,11 +339,15 @@ function FormComponent({
         >
           {children}
         </div>
-        <button type="submit">
-          {node.props.submitting === true
+        <button
+          type="submit"
+          disabled={pending || interactionDisabled === true}
+        >
+          {pending
             ? "Submitting…"
             : stringProp(node.props, "submitLabel", "Submit")}
         </button>
+        <ActionErrorMessage state={actionState} />
       </fieldset>
     </form>
   );
@@ -327,9 +358,13 @@ function CardListComponent({
   value,
   onValueChange,
   onAction,
+  actionStates,
+  interactionDisabled,
 }: RendererComponentProps) {
   const items = Array.isArray(node.props.items) ? node.props.items : [];
   const multiple = node.props.multiple === true;
+  const actionState = latestActionState(actionStates, node.id, "select");
+  const pending = actionState?.status === "pending";
   const selected = new Set(
     Array.isArray(value) ? value.map(String) : [String(value ?? "")],
   );
@@ -345,6 +380,7 @@ function CardListComponent({
               key={key}
               type="button"
               aria-pressed={selected.has(key)}
+              disabled={pending || interactionDisabled === true}
               onClick={() => {
                 const next: JsonValue = multiple
                   ? selected.has(key)
@@ -362,6 +398,7 @@ function CardListComponent({
           );
         })}
       </div>
+      <ActionErrorMessage state={actionState} />
     </section>
   );
 }
@@ -379,52 +416,75 @@ function TableComponent({ node }: RendererComponentProps) {
   );
 }
 
-function ButtonComponent({ node, onAction }: RendererComponentProps) {
+function ButtonComponent({
+  node,
+  onAction,
+  actionStates,
+  interactionDisabled,
+}: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
+  const action = stringProp(node.props, "action", "press");
+  const actionState = latestActionState(actionStates, node.id, action);
+  const pending = actionState?.status === "pending";
   return (
-    <button
-      type="button"
-      disabled={node.props.disabled === true}
-      onClick={() =>
-        onAction(
-          stringProp(node.props, "action", "press"),
-          invocationId === "" ? null : { invocationId },
-        )
-      }
-    >
-      {stringProp(node.props, "label", "Continue")}
-    </button>
+    <div>
+      <button
+        type="button"
+        disabled={
+          node.props.disabled === true ||
+          pending ||
+          interactionDisabled === true
+        }
+        onClick={() =>
+          onAction(action, invocationId === "" ? null : { invocationId })
+        }
+      >
+        {pending ? "Processing…" : stringProp(node.props, "label", "Continue")}
+      </button>
+      <ActionErrorMessage state={actionState} />
+    </div>
   );
 }
 
-function ConfirmComponent({ node, onAction }: RendererComponentProps) {
+function ConfirmComponent({
+  node,
+  onAction,
+  actionStates,
+  interactionDisabled,
+}: RendererComponentProps) {
   const invocationId = stringProp(node.props, "invocationId");
+  const confirmAction = stringProp(node.props, "confirmAction", "confirm");
+  const cancelAction = stringProp(node.props, "cancelAction", "cancel");
+  const confirmState = latestActionState(actionStates, node.id, confirmAction);
+  const cancelState = latestActionState(actionStates, node.id, cancelAction);
+  const pending =
+    confirmState?.status === "pending" || cancelState?.status === "pending";
   return (
     <section>
       <h2>{stringProp(node.props, "title", "Confirm")}</h2>
       <p>{stringProp(node.props, "message")}</p>
       <button
         type="button"
+        disabled={pending || interactionDisabled === true}
         onClick={() =>
           onAction(
-            stringProp(node.props, "confirmAction", "confirm"),
+            confirmAction,
             invocationId === "" ? null : { invocationId, confirmed: true },
           )
         }
       >
-        Confirm
+        {confirmState?.status === "pending" ? "Processing…" : "Confirm"}
       </button>
       <button
         type="button"
+        disabled={pending || interactionDisabled === true}
         onClick={() =>
-          onAction(
-            stringProp(node.props, "cancelAction", "cancel"),
-            invocationId === "" ? null : { invocationId },
-          )
+          onAction(cancelAction, invocationId === "" ? null : { invocationId })
         }
       >
         Cancel
       </button>
+      <ActionErrorMessage state={confirmState ?? cancelState} />
     </section>
   );
 }
