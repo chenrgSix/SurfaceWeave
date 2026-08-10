@@ -85,6 +85,7 @@ describe("SurfaceRenderer", () => {
     expect(safeLayoutItemStyle({ span: 2, columns: 4 }, "workspace")).toEqual({
       gridColumn: "span 2",
     });
+    expect(safeLayoutStyle({ span: 2 }, "workspace")).toEqual({});
   });
 
   it("renders Section with container layout while applying span as item placement", () => {
@@ -136,6 +137,11 @@ describe("SurfaceRenderer", () => {
       screen.getByRole("heading", { name: "Delivery" }).parentElement
         ?.parentElement?.style.gridColumn,
     ).toBe("span 2");
+    expect(
+      screen
+        .getByRole("heading", { name: "Delivery" })
+        .nextElementSibling?.getAttribute("style"),
+    ).not.toContain("grid-column");
   });
 
   it("keeps compact chat and full workspace views on the same Store state", async () => {

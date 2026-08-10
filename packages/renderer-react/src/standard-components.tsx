@@ -13,6 +13,14 @@ import type { CSSProperties, ChangeEvent, ReactNode } from "react";
 import { ReactComponentRegistry } from "./react-component-registry.js";
 import type { ReactComponentPack, RendererComponentProps } from "./types.js";
 
+const containerLayoutFeatures: SemanticLayoutFeature[] = [
+  "direction",
+  "columns",
+  "gap",
+  "align",
+  "justify",
+];
+
 function stringProp(
   props: Record<string, JsonValue>,
   key: string,
@@ -488,7 +496,11 @@ export function safeLayoutStyle(
   mode: SurfaceViewMode = "workspace",
   supportedFeatures?: readonly SemanticLayoutFeature[],
 ): CSSProperties {
-  const resolved = resolveSemanticLayout(layout, mode, supportedFeatures);
+  const resolved = resolveSemanticLayout(
+    layout,
+    mode,
+    supportedFeatures ?? containerLayoutFeatures,
+  );
   const layoutValues = resolved.layout;
   const style: CSSProperties = {};
   if (layoutValues.columns !== undefined) {
