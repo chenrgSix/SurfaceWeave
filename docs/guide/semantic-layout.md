@@ -99,3 +99,6 @@ The normative standalone schema is exported as
 `@surfaceweave/protocol/layout`. Wire Protocol 1.0 still accepts legacy safe
 layout records for compatibility, but portable new Surfaces should conform to
 LayoutSpec 1.0.
+
+See the [Milestone 6.2 audit summary](/milestone-6.2-summary) for verification
+evidence and known limits.

@@ -71,6 +71,10 @@ export default defineConfig({
           items: [
             { text: "Public API", link: "/public-api" },
             {
+              text: "Milestone 6.2 audit",
+              link: "/milestone-6.2-summary",
+            },
+            {
               text: "Wire protocol",
               link: "https://github.com/chenrgSix/SurfaceWeave/blob/main/protocol/component-pack-protocol.md",
             },
