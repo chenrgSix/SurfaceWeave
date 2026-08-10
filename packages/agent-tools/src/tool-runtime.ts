@@ -8,6 +8,10 @@ import {
   readDataPath,
 } from "@surfaceweave/core";
 import type {
+  ActionExecutionSnapshot,
+  ActionExecutionState,
+  ActionExecutionStateListener,
+  ActionExecutionStateSource,
   ActionError,
   ActionIntent,
   ComponentRegistry,
@@ -69,6 +73,7 @@ export interface ToolToUIRuntimeOptions {
   tools?: ToolRegistry;
   invocations?: ToolInvocationStore;
   onListenerError?: ToolRuntimeListenerErrorHandler;
+  now?: () => number;
 }
 
 export interface ToolExecutionError extends ActionError {
@@ -189,6 +194,15 @@ function intentObject(intent: ActionIntent): JsonObject {
     : {};
 }
 
+interface ToolActionProjectionMetadata {
+  intentId: string;
+  surfaceId: string;
+  nodeId: string;
+  action: string;
+  startedAt: number;
+  settledAt?: number;
+}
+
 /** Coordinates Tool Surfaces and host requests without executing business APIs. */
 export class ToolToUIRuntime {
   readonly #components: ComponentRegistry;
@@ -204,7 +218,17 @@ export class ToolToUIRuntime {
   readonly #requestListeners = new Set<InvocationRequestListener>();
   readonly #surfaceSubscriptions = new Map<string, () => void>();
   readonly #rawResults = new Map<string, JsonValue>();
+  readonly #lastRequests = new Map<string, ToolSubmissionRequest>();
+  readonly #pendingOutcomes = new Map<string, ToolActionOutcome>();
+  readonly #actionMetadata = new Map<string, ToolActionProjectionMetadata>();
+  readonly #actionListeners = new Map<
+    string,
+    Set<ActionExecutionStateListener>
+  >();
+  readonly #interactionDisabled = new Set<string>();
   readonly #onListenerError: ToolRuntimeListenerErrorHandler | undefined;
+  readonly #now: () => number;
+  readonly #actionStateSource: ActionExecutionStateSource;
   #sequence = 0;
   #invocationSequence = 0;
 
@@ -219,6 +243,12 @@ export class ToolToUIRuntime {
     this.#invocations =
       options.invocations ?? new InMemoryToolInvocationStore();
     this.#onListenerError = options.onListenerError;
+    this.#now = options.now ?? Date.now;
+    this.#actionStateSource = {
+      getSnapshot: (surfaceId) => this.#actionSnapshot(surfaceId),
+      subscribe: (surfaceId, listener) =>
+        this.#subscribeActionState(surfaceId, listener),
+    };
   }
 
   registerTool(definition: ToolDefinition): void {
@@ -240,6 +270,18 @@ export class ToolToUIRuntime {
   getRawResult(invocationId: string): JsonValue | undefined {
     const result = this.#rawResults.get(invocationId);
     return result === undefined ? undefined : cloneValue(result);
+  }
+
+  /** Read-only ToolInvocation projection for renderers and Component Packs. */
+  get actionStateSource(): ActionExecutionStateSource {
+    return this.#actionStateSource;
+  }
+
+  /** Host-only runtime gate used during recovery, reconnect, or mutual exclusion. */
+  setInteractionDisabled(surfaceId: string, disabled: boolean): void {
+    if (disabled) this.#interactionDisabled.add(surfaceId);
+    else this.#interactionDisabled.delete(surfaceId);
+    this.#publishActionState(surfaceId);
   }
 
   subscribe(listener: ToolRuntimeListener): () => void {
@@ -358,13 +400,37 @@ export class ToolToUIRuntime {
         "Action Surface does not belong to the invocation",
       );
     }
+    if (this.#interactionDisabled.has(intent.surfaceId)) {
+      throw new DynamicUIError(
+        "INVALID_ACTION_INTENT",
+        `Actions are temporarily disabled for Surface "${intent.surfaceId}"`,
+      );
+    }
+    if (invocation.status === "submitting") {
+      const pending = this.#pendingOutcomes.get(invocation.id);
+      if (
+        pending !== undefined &&
+        (intent.action === "tool.submit" ||
+          intent.action === "tool.request-confirmation" ||
+          intent.action === "tool.retry")
+      ) {
+        return cloneValue(pending);
+      }
+    }
     switch (intent.action) {
       case "tool.cancel": {
+        const wasSubmitting = invocation.status === "submitting";
         const cancelled = this.#invocations.transition(
           invocation.id,
           "cancelled",
         );
+        if (wasSubmitting) {
+          this.#setSubmitting(invocation.sourceSurfaceId, false);
+        }
+        this.#pendingOutcomes.delete(invocation.id);
+        this.#recordAction(intent, true);
         this.#publish(invocation.id, "tool.invocationCancelled");
+        this.#publishActionState(intent.surfaceId);
         return { kind: "state-changed", invocation: cancelled };
       }
       case "tool.edit": {
@@ -372,7 +438,7 @@ export class ToolToUIRuntime {
         return { kind: "state-changed", invocation: editing };
       }
       case "tool.retry":
-        return this.#retry(invocation);
+        return this.#retry(invocation, intent);
       case "tool.validate":
         this.#validate(invocation);
         return {
@@ -381,7 +447,7 @@ export class ToolToUIRuntime {
         };
       case "tool.request-confirmation":
       case "tool.submit":
-        return this.#submit(invocation, input.confirmed === true);
+        return this.#submit(invocation, input.confirmed === true, intent);
       case "result.continue":
         return { kind: "state-changed", invocation };
       default:
@@ -436,6 +502,8 @@ export class ToolToUIRuntime {
       resultSurfaceId: resultSurface.id,
     });
     this.#rawResults.set(invocationId, cloneValue(result));
+    this.#settleAction(invocationId);
+    this.#pendingOutcomes.delete(invocationId);
     this.#setSubmitting(invocation.sourceSurfaceId, false);
     this.#publish(invocationId, "tool.invocationSucceeded", {
       resultSurfaceId: resultSurface.id,
@@ -444,6 +512,7 @@ export class ToolToUIRuntime {
       surfaceId: resultSurface.id,
       resultSurfaceId: resultSurface.id,
     });
+    this.#publishActionForInvocation(invocationId);
     return invocation;
   }
 
@@ -476,6 +545,8 @@ export class ToolToUIRuntime {
       error: actionError,
       resultSurfaceId: resultSurface.id,
     });
+    this.#settleAction(invocationId);
+    this.#pendingOutcomes.delete(invocationId);
     this.#setSubmitting(invocation.sourceSurfaceId, false);
     this.#publish(invocationId, "tool.invocationFailed", {
       error: actionError,
@@ -485,6 +556,7 @@ export class ToolToUIRuntime {
       surfaceId: resultSurface.id,
       resultSurfaceId: resultSurface.id,
     });
+    this.#publishActionForInvocation(invocationId);
     return invocation;
   }
 
@@ -584,13 +656,11 @@ export class ToolToUIRuntime {
     ) as JsonObject;
   }
 
-  #submit(invocation: ToolInvocation, confirmed: boolean): ToolActionOutcome {
-    if (invocation.status === "submitting") {
-      throw new DynamicUIError(
-        "DUPLICATE_SUBMISSION",
-        `Invocation "${invocation.id}" is already submitting`,
-      );
-    }
+  #submit(
+    invocation: ToolInvocation,
+    confirmed: boolean,
+    intent: ActionIntent,
+  ): ToolActionOutcome {
     const definition = this.#tools.require(
       invocation.toolId,
       invocation.toolVersion,
@@ -624,10 +694,10 @@ export class ToolToUIRuntime {
         confirmationSurface,
       };
     }
-    return this.#request(invocation.id, argumentsValue, false);
+    return this.#request(invocation.id, argumentsValue, false, intent);
   }
 
-  #retry(invocation: ToolInvocation): ToolActionOutcome {
+  #retry(invocation: ToolInvocation, intent: ActionIntent): ToolActionOutcome {
     const definition = this.#tools.require(
       invocation.toolId,
       invocation.toolVersion,
@@ -641,11 +711,19 @@ export class ToolToUIRuntime {
         `Tool "${definition.id}" is not safely retryable`,
       );
     }
+    const previousRequest = this.#lastRequests.get(invocation.id);
+    if (previousRequest === undefined) {
+      throw new DynamicUIError(
+        "TOOL_RETRY_NOT_ALLOWED",
+        `Tool "${definition.id}" has no original validated request to retry`,
+      );
+    }
     this.#publish(invocation.id, "tool.retryRequested");
     return this.#request(
       invocation.id,
-      this.#validatedArguments(invocation),
+      previousRequest.validatedArguments,
       true,
+      intent,
     );
   }
 
@@ -677,6 +755,7 @@ export class ToolToUIRuntime {
     invocationId: string,
     argumentsValue: JsonObject,
     retry: boolean,
+    intent: ActionIntent,
   ): ToolActionOutcome {
     const current = this.#invocations.require(invocationId);
     const attempt = current.attempt + 1;
@@ -704,6 +783,8 @@ export class ToolToUIRuntime {
       sourceSurfaceId: invocation.sourceSurfaceId,
       sequence,
     };
+    this.#lastRequests.set(invocation.id, cloneValue(request));
+    this.#recordAction(intent, false);
     const definition = this.#tools.require(
       invocation.toolId,
       invocation.toolVersion,
@@ -729,7 +810,14 @@ export class ToolToUIRuntime {
         this.#reportListenerError(error, "request", request);
       }
     }
-    return { kind: "invocation-requested", invocation, request };
+    const outcome: ToolActionOutcome = {
+      kind: "invocation-requested",
+      invocation,
+      request,
+    };
+    this.#pendingOutcomes.set(invocation.id, cloneValue(outcome));
+    this.#publishActionState(intent.surfaceId);
+    return outcome;
   }
 
   #confirmationSurface(
@@ -806,6 +894,104 @@ export class ToolToUIRuntime {
     ]);
   }
 
+  #recordAction(intent: ActionIntent, settled: boolean): void {
+    this.#actionMetadata.set(
+      this.#surfaceInvocations.get(intent.surfaceId) ??
+        String(intentObject(intent).invocationId ?? ""),
+      {
+        intentId: intent.id,
+        surfaceId: intent.surfaceId,
+        nodeId: intent.nodeId,
+        action: intent.action,
+        startedAt: this.#now(),
+        ...(settled ? { settledAt: this.#now() } : {}),
+      },
+    );
+  }
+
+  #settleAction(invocationId: string): void {
+    const metadata = this.#actionMetadata.get(invocationId);
+    if (metadata !== undefined && metadata.settledAt === undefined) {
+      metadata.settledAt = this.#now();
+    }
+  }
+
+  #projectActionState(invocationId: string): ActionExecutionState | undefined {
+    const metadata = this.#actionMetadata.get(invocationId);
+    if (metadata === undefined) return undefined;
+    const invocation = this.#invocations.require(invocationId);
+    const status =
+      invocation.status === "submitting"
+        ? "pending"
+        : invocation.status === "success"
+          ? "succeeded"
+          : invocation.status === "error"
+            ? "failed"
+            : invocation.status === "cancelled"
+              ? "cancelled"
+              : undefined;
+    if (status === undefined) return undefined;
+    return {
+      intentId: metadata.intentId,
+      idempotencyKey: invocation.lastIdempotencyKey ?? metadata.intentId,
+      surfaceId: metadata.surfaceId,
+      nodeId: metadata.nodeId,
+      action: metadata.action,
+      status,
+      attempt: invocation.attempt,
+      startedAt: metadata.startedAt,
+      ...(metadata.settledAt === undefined
+        ? {}
+        : { settledAt: metadata.settledAt }),
+      ...(invocation.error === undefined ? {} : { error: invocation.error }),
+    };
+  }
+
+  #actionSnapshot(surfaceId: string): ActionExecutionSnapshot {
+    return cloneValue({
+      surfaceId,
+      interactionDisabled: this.#interactionDisabled.has(surfaceId),
+      states: [...this.#actionMetadata]
+        .filter(([, metadata]) => metadata.surfaceId === surfaceId)
+        .map(([invocationId]) => this.#projectActionState(invocationId))
+        .filter((state): state is ActionExecutionState => state !== undefined)
+        .sort((left, right) =>
+          left.idempotencyKey.localeCompare(right.idempotencyKey),
+        ),
+    });
+  }
+
+  #subscribeActionState(
+    surfaceId: string,
+    listener: ActionExecutionStateListener,
+  ): () => void {
+    const listeners =
+      this.#actionListeners.get(surfaceId) ??
+      new Set<ActionExecutionStateListener>();
+    listeners.add(listener);
+    this.#actionListeners.set(surfaceId, listeners);
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) this.#actionListeners.delete(surfaceId);
+    };
+  }
+
+  #publishActionState(surfaceId: string): void {
+    const snapshot = this.#actionSnapshot(surfaceId);
+    for (const listener of this.#actionListeners.get(surfaceId) ?? []) {
+      try {
+        listener(cloneValue(snapshot));
+      } catch {
+        // Action state is observational and cannot affect ToolInvocation.
+      }
+    }
+  }
+
+  #publishActionForInvocation(invocationId: string): void {
+    const metadata = this.#actionMetadata.get(invocationId);
+    if (metadata !== undefined) this.#publishActionState(metadata.surfaceId);
+  }
+
   #publish(
     invocationId: string,
     type: ToolRuntimeEvent["type"],
@@ -864,6 +1050,13 @@ export class ToolToUIRuntime {
     }
     this.#initialReadOnly.delete(invocationId);
     this.#rawResults.delete(invocationId);
+    this.#lastRequests.delete(invocationId);
+    this.#pendingOutcomes.delete(invocationId);
+    const metadata = this.#actionMetadata.get(invocationId);
+    if (metadata !== undefined) {
+      this.#actionMetadata.delete(invocationId);
+      this.#publishActionState(metadata.surfaceId);
+    }
   }
 
   /** Releases every listener and transient association owned by this Runtime. */
@@ -874,6 +1067,11 @@ export class ToolToUIRuntime {
     this.#surfaceInvocations.clear();
     this.#initialReadOnly.clear();
     this.#rawResults.clear();
+    this.#lastRequests.clear();
+    this.#pendingOutcomes.clear();
+    this.#actionMetadata.clear();
+    this.#actionListeners.clear();
+    this.#interactionDisabled.clear();
     this.#listeners.clear();
     this.#requestListeners.clear();
   }

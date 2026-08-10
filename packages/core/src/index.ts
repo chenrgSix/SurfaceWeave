@@ -1,5 +1,15 @@
 export { createActionIntent } from "./action-intent.js";
 export type { CreateActionIntentInput } from "./action-intent.js";
+export { InMemoryActionExecutionController } from "./action-state.js";
+export type {
+  ActionExecutionListenerErrorHandler,
+  ActionExecutionSnapshot,
+  ActionExecutionState,
+  ActionExecutionStateListener,
+  ActionExecutionStateSource,
+  ActionExecutionStatus,
+  InMemoryActionExecutionControllerOptions,
+} from "./action-state.js";
 export { InMemoryComponentRegistry } from "./component-registry.js";
 export {
   ComponentPackResolver,

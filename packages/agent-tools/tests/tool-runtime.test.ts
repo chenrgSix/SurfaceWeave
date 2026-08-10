@@ -243,9 +243,11 @@ describe("ToolToUIRuntime", () => {
     expect(surfaces.requireSurface(surface.id).tree.props.submitting).toBe(
       true,
     );
-    expect(() =>
-      runtime.handleAction(action(surface.id, "tool.submit", invocation.id)),
-    ).toThrow(/already submitting/);
+    const duplicate = runtime.handleAction(
+      action(surface.id, "tool.submit", invocation.id),
+    );
+    expect(duplicate).toEqual(submitted);
+    expect(requests).toHaveLength(1);
 
     runtime.markInvocationStarted(invocation.id);
     const resolved = runtime.resolveInvocation(invocation.id, {
@@ -355,7 +357,7 @@ describe("ToolToUIRuntime", () => {
   });
 
   it("retries only safe failures with the same idempotency key", () => {
-    const { runtime } = runtimeFixture();
+    const { runtime, surfaces } = runtimeFixture();
     const created = runtime.createToolSurface({
       toolId: "order.create",
       surfaceId: "retry-form",
@@ -376,13 +378,32 @@ describe("ToolToUIRuntime", () => {
     );
     if (submitted.kind !== "invocation-requested")
       throw new Error("request expected");
+    expect(
+      runtime.actionStateSource.getSnapshot(confirmation.confirmationSurface.id)
+        .states[0],
+    ).toMatchObject({
+      status: "pending",
+      attempt: 1,
+      idempotencyKey: submitted.request.idempotencyKey,
+    });
     runtime.rejectInvocation(created.invocation.id, {
       code: "TEMPORARY",
       message: "Try again",
     });
     expect(
+      runtime.actionStateSource.getSnapshot(confirmation.confirmationSurface.id)
+        .states[0],
+    ).toMatchObject({
+      status: "failed",
+      error: { code: "TEMPORARY" },
+    });
+    expect(
       runtime.inspectInvocation(created.invocation.id).resultSurfaceId,
     ).toBe("retry-form--result-1");
+    const edited = surfaces.requireSurface(created.surface.id);
+    surfaces.updateData(edited.id, edited.revision, [
+      { path: "buyer", value: "Changed after failure" },
+    ]);
     const retried = runtime.handleAction(
       action(created.surface.id, "tool.retry", created.invocation.id),
     );
@@ -392,6 +413,12 @@ describe("ToolToUIRuntime", () => {
         submitted.request.idempotencyKey,
       );
       expect(retried.invocation.attempt).toBe(2);
+      expect(retried.request.validatedArguments).toEqual(
+        submitted.request.validatedArguments,
+      );
+      expect(
+        runtime.actionStateSource.getSnapshot(created.surface.id).states[0],
+      ).toMatchObject({ status: "pending", attempt: 2 });
     }
   });
 
