@@ -129,6 +129,17 @@ describe("AgentUIToolRuntime", () => {
     const runtime = new AgentUIToolRuntime(
       registry,
       new InMemorySurfaceStore(registry),
+      undefined,
+      undefined,
+      {
+        clientCapabilities: {
+          rendererKind: "flutter",
+          enabledPackIds: ["material"],
+          terminalCapabilities: ["mobile"],
+          supportedPackVersions: { material: ["1.0.0"] },
+          runtimeCapabilities: ["operations"],
+        },
+      },
     );
     const result = runtime.execute("ui.inspectComponentPacks", {
       rendererKind: "flutter",
@@ -139,9 +150,10 @@ describe("AgentUIToolRuntime", () => {
       ok: true,
       value: {
         protocolVersion: "1.0",
+        rendererKind: "flutter",
         components: expect.arrayContaining([
           expect.objectContaining({
-            type: "ChoiceField",
+            type: "TextInput",
             layoutCapabilities: ["span"],
           }),
         ]),
@@ -154,6 +166,15 @@ describe("AgentUIToolRuntime", () => {
     expect(JSON.stringify(result)).not.toMatch(
       /ReactNode|JSX|className|onClick|function\s*\(/,
     );
+
+    const forged = runtime.execute("ui.inspectComponentPacks", {
+      rendererKind: "react",
+      capabilities: ["web", "admin"],
+    });
+    expect(forged).toMatchObject({
+      ok: true,
+      value: { packs: [], components: [] },
+    });
   });
 
   it("creates and inspects a surface", () => {

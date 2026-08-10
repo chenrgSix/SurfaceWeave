@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:surfaceweave:schema:surface-client-capabilities:1.0",
+  "title": "SurfaceWeave Surface Client Capabilities 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "wireProtocolVersion",
+    "rendererKind",
+    "terminalCapabilities",
+    "runtimeCapabilities",
+    "acceptedPackVersions",
+    "components",
+    "packs",
+    "resourcePolicy"
+  ],
+  "properties": {
+    "wireProtocolVersion": { "const": "1.0" },
+    "rendererKind": { "type": "string", "minLength": 1 },
+    "terminalCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "runtimeCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["operations", "preferences", "tool-invocation", "action-state"]
+      }
+    },
+    "acceptedPackVersions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": { "type": "string", "minLength": 1 }
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/componentDefinition" }
+    },
+    "packs": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:surfaceweave:schema:dynamic-ui-wire:1.0#/$defs/componentPackManifest"
+      }
+    },
+    "resourcePolicy": { "$ref": "#/$defs/resourcePolicy" }
+  },
+  "$defs": {
+    "jsonValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/jsonValue" } },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": { "enum": ["__proto__", "constructor", "prototype"] }
+          },
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "componentDefinition": {
+      "type": "object",
+      "required": ["type"],
+      "propertyNames": {
+        "not": { "enum": ["__proto__", "constructor", "prototype"] }
+      },
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "propsSchema": { "$ref": "#/$defs/jsonValue" },
+        "actionSchema": { "$ref": "#/$defs/jsonValue" },
+        "binding": { "$ref": "#/$defs/jsonValue" },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "layoutCapabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fallback": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonValue" }
+      },
+      "additionalProperties": false
+    },
+    "resourcePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "limits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

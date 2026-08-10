@@ -13,6 +13,19 @@ export type {
   ComponentPackValidationResult,
 } from "./component-pack.js";
 export {
+  createSurfaceClientCapabilities,
+  createSurfaceComponentCatalog,
+  inspectSurfaceComponentCatalog,
+} from "./client-capabilities.js";
+export type {
+  CreateSurfaceClientCapabilitiesOptions,
+  SurfaceClientCapabilities,
+  SurfaceComponentCatalog,
+  SurfaceComponentCatalogQuery,
+  SurfaceResourcePolicySummary,
+  SurfaceRuntimeCapability,
+} from "./client-capabilities.js";
+export {
   assertJsonValue,
   assertSafeDeclaration,
   bindingValueTypeMatches,

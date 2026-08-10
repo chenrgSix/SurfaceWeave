@@ -24,6 +24,17 @@ const layoutSchema = JSON.parse(
     "utf8",
   ),
 ) as object;
+const capabilitySchema = JSON.parse(
+  readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../../protocol/schemas/surface-client-capabilities-1.0.schema.json",
+        import.meta.url,
+      ),
+    ),
+    "utf8",
+  ),
+) as object;
 
 describe("language-independent wire schema", () => {
   it("validates manifests and Surfaces without TypeScript types", () => {
@@ -142,5 +153,36 @@ describe("language-independent wire schema", () => {
     ).toBe(true);
     expect(validate({ columns: 13 })).toBe(false);
     expect(validate({ className: "vendor-grid" })).toBe(false);
+  });
+
+  it("validates the optional JSON-only client capability handshake", () => {
+    const ajv = new Ajv2020({ strict: true, validateFormats: false });
+    ajv.addSchema(wireSchema);
+    const validate = ajv.compile(capabilitySchema);
+    expect(
+      validate({
+        wireProtocolVersion: "1.0",
+        rendererKind: "fake",
+        terminalCapabilities: ["terminal"],
+        runtimeCapabilities: ["operations", "action-state"],
+        acceptedPackVersions: { fake: ["1.0.0"] },
+        components: [],
+        packs: [],
+        resourcePolicy: { enabled: false },
+      }),
+    ).toBe(true);
+    expect(
+      validate({
+        wireProtocolVersion: "1.0",
+        rendererKind: "react",
+        terminalCapabilities: [],
+        runtimeCapabilities: [],
+        acceptedPackVersions: {},
+        components: [],
+        packs: [],
+        resourcePolicy: { enabled: false },
+        reactComponent: "Button",
+      }),
+    ).toBe(false);
   });
 });

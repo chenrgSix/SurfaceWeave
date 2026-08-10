@@ -1,6 +1,4 @@
 import type {
-  ComponentDefinition,
-  ComponentPackManifest,
   DataBinding,
   PreferenceConflict,
   PreferencePatch,
@@ -9,6 +7,8 @@ import type {
   SchemaFieldAliases,
   SchemaRef,
   Surface,
+  SurfaceComponentCatalog,
+  CreateSurfaceClientCapabilitiesOptions,
   SurfaceContext,
   SurfacePresentation,
   UINode,
@@ -78,6 +78,11 @@ export interface InspectComponentPacksToolInput {
   capabilities?: string[];
 }
 
+/** Trusted host policy used to generate Agent-readable client capabilities. */
+export interface AgentUIToolRuntimeOptions {
+  clientCapabilities?: CreateSurfaceClientCapabilitiesOptions;
+}
+
 export interface ApplyOperationsToolInput {
   surfaceId: string;
   baseRevision: number;
@@ -117,11 +122,7 @@ export interface SurfaceInspection {
 }
 
 /** Serializable discovery result; it never contains runtime bindings. */
-export interface ComponentCatalogInspection {
-  protocolVersion: "1.0";
-  components: ComponentDefinition[];
-  packs: ComponentPackManifest[];
-}
+export type ComponentCatalogInspection = SurfaceComponentCatalog;
 
 export type InspectPreferencesToolInput = Record<string, never>;
 

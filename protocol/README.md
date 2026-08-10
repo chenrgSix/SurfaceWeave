@@ -10,8 +10,9 @@ npm install @surfaceweave/protocol@next
 Import the normative wire schema from `@surfaceweave/protocol/schema`.
 
 The unreleased `main` branch also exposes the framework-neutral Semantic
-LayoutSpec document at `@surfaceweave/protocol/layout` and its strict JSON
-Schema at `@surfaceweave/protocol/layout-schema`. Those subpaths require a
+LayoutSpec and Surface Client Capabilities contracts. Import the capability
+document from `@surfaceweave/protocol/client-capabilities` and its Schema from
+`@surfaceweave/protocol/client-capabilities-schema`. These subpaths require a
 release after RC.3.
 
 The schema has the stable, non-resolvable identity

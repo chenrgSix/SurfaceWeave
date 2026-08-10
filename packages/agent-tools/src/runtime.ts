@@ -1,9 +1,16 @@
-import { DynamicUIError, cloneValue, walkNodes } from "@surfaceweave/core";
+import {
+  DynamicUIError,
+  cloneValue,
+  createSurfaceClientCapabilities,
+  inspectSurfaceComponentCatalog,
+  walkNodes,
+} from "@surfaceweave/core";
 import type {
   ComponentRegistry,
   DeveloperHardConstraints,
   JsonObject,
   Surface,
+  SurfaceClientCapabilities,
   SurfaceStore,
 } from "@surfaceweave/core";
 import { generateSurface } from "@surfaceweave/generator";
@@ -20,6 +27,7 @@ import {
 import type { ToolToUIRuntime } from "./tool-runtime.js";
 import type {
   ComponentCatalogInspection,
+  AgentUIToolRuntimeOptions,
   SurfaceInspection,
   ToolResult,
   UIToolDefinition,
@@ -147,17 +155,26 @@ export class AgentUIToolRuntime {
   readonly #preferences: PreferenceService | undefined;
   readonly #toolRuntime: ToolToUIRuntime | undefined;
   readonly #constraints = new Map<string, DeveloperHardConstraints>();
+  readonly #clientCapabilities: SurfaceClientCapabilities;
 
   constructor(
     registry: ComponentRegistry,
     store: SurfaceStore,
     preferences?: PreferenceService,
     toolRuntime?: ToolToUIRuntime,
+    options: AgentUIToolRuntimeOptions = {},
   ) {
     this.#registry = registry;
     this.#store = store;
     this.#preferences = preferences;
     this.#toolRuntime = toolRuntime;
+    this.#clientCapabilities = createSurfaceClientCapabilities(
+      registry,
+      options.clientCapabilities ?? {
+        rendererKind: "unknown",
+        enabledPackIds: [],
+      },
+    );
   }
 
   definitions(): UIToolDefinition[] {
@@ -245,25 +262,14 @@ export class AgentUIToolRuntime {
   ): ToolResult<ComponentCatalogInspection> {
     return runTool(() => {
       const input = parseInspectComponentPacks(argumentsValue);
-      const available = new Set(input.capabilities ?? []);
-      return {
-        protocolVersion: "1.0",
-        components: this.#registry.list(),
-        packs: this.#registry.listPacks().filter((pack) => {
-          if (
-            input.rendererKind !== undefined &&
-            pack.rendererKind !== input.rendererKind
-          ) {
-            return false;
-          }
-          return (
-            input.capabilities === undefined ||
-            (pack.capabilities ?? []).every((capability) =>
-              available.has(capability),
-            )
-          );
-        }),
-      };
+      return inspectSurfaceComponentCatalog(this.#clientCapabilities, {
+        ...(input.rendererKind === undefined
+          ? {}
+          : { rendererKind: input.rendererKind }),
+        ...(input.capabilities === undefined
+          ? {}
+          : { terminalCapabilities: input.capabilities }),
+      });
     });
   }
 
