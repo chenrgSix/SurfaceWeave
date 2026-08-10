@@ -106,24 +106,7 @@ jobs:
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           if [[ "${VERSION}" == *-* ]]; then DIST_TAG=next; else DIST_TAG=latest; fi
-          for PACKAGE_DIRECTORY in \
-            protocol \
-            packages/core \
-            packages/storage \
-            packages/preferences \
-            packages/generator \
-            packages/agent-tools \
-            packages/renderer-react \
-            packages/component-pack-react-aria \
-            packages/component-pack-antd \
-            packages/tauri
-          do
-            npm publish "./${PACKAGE_DIRECTORY}" \
-              --access public \
-              --tag "${DIST_TAG}" \
-              --provenance \
-              --registry https://registry.npmjs.org/
-          done
+          node scripts/publish-release-packages.mjs --tag "${DIST_TAG}"
           echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
           echo "DIST_TAG=${DIST_TAG}" >> "${GITHUB_ENV}"
 

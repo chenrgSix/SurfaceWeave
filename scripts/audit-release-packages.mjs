@@ -15,6 +15,21 @@ const errors = [];
 const rootLicense = readFileSync(resolve(repositoryRoot, "LICENSE"), "utf8");
 const releasePackageNames = new Set(releasePackages.map((item) => item.name));
 
+const releaseWorkflow = readFileSync(
+  resolve(repositoryRoot, ".github/workflows/release.yml"),
+  "utf8",
+);
+if (
+  !releaseWorkflow.includes(
+    'node scripts/publish-release-packages.mjs --tag "${DIST_TAG}"',
+  ) ||
+  releaseWorkflow.includes("npm publish")
+) {
+  fail(
+    "Release workflow must use the integrity-aware resumable publish script",
+  );
+}
+
 const allowedDependencies = {
   "@surfaceweave/protocol": [],
   "@surfaceweave/core": ["@cfworker/json-schema"],
