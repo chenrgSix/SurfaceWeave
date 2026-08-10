@@ -61,8 +61,8 @@ Action handling remain host configuration.
 
 ## Unreleased Runtime Hardening
 
-The current `main` branch adds optional, backward-compatible host controls that
-are not part of the published RC.3 tarballs:
+The current `main` branch adds host controls that are not part of the published
+RC.3 tarballs:
 
 - Core exports `SurfaceResourceLimits`, default/resolve/assert helpers,
   `InMemorySurfaceStoreOptions`, and `SurfaceListenerErrorHandler`;
@@ -73,8 +73,10 @@ are not part of the published RC.3 tarballs:
   `disposeInvocation()` and `dispose()`.
 
 These APIs bound untrusted payload work, isolate observer failures from
-committed state, and release Runtime-owned subscriptions. They require a new RC
-before consumers can install them from npm.
+committed state, and release Runtime-owned subscriptions. Default limits
+intentionally reject exceptionally large payloads that RC.3 did not bound, so
+the behavior needs explicit compatibility review and a new RC before consumers
+can install it from npm.
 
 ## Compatibility Policy
 
