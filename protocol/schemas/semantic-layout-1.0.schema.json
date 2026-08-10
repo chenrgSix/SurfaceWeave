@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:surfaceweave:schema:semantic-layout:1.0",
+  "title": "SurfaceWeave Semantic LayoutSpec 1.0",
+  "description": "Framework-neutral layout hints for SurfaceWeave UI nodes.",
+  "$ref": "#/$defs/semanticLayout",
+  "$defs": {
+    "layoutValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": { "enum": ["row", "column"] },
+        "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "gap": { "type": "number", "minimum": 0, "maximum": 64 },
+        "align": { "enum": ["start", "center", "end", "stretch"] },
+        "justify": { "enum": ["start", "center", "end", "between"] },
+        "span": { "type": "integer", "minimum": 1, "maximum": 12 }
+      }
+    },
+    "semanticLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": { "enum": ["row", "column"] },
+        "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "gap": { "type": "number", "minimum": 0, "maximum": 64 },
+        "align": { "enum": ["start", "center", "end", "stretch"] },
+        "justify": { "enum": ["start", "center", "end", "between"] },
+        "span": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "modes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "compact": { "$ref": "#/$defs/layoutValues" },
+            "workspace": { "$ref": "#/$defs/layoutValues" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@
   "sideEffects": false,
   "files": [
     "component-pack-protocol.md",
+    "layout-spec.md",
     "tool-to-ui-runtime-protocol.md",
     "schemas",
     "LICENSE"
@@ -17,6 +18,8 @@
     ".": "./schemas/dynamic-ui-wire.schema.json",
     "./schema": "./schemas/dynamic-ui-wire.schema.json",
     "./component-pack": "./component-pack-protocol.md",
+    "./layout": "./layout-spec.md",
+    "./layout-schema": "./schemas/semantic-layout-1.0.schema.json",
     "./tool-to-ui": "./tool-to-ui-runtime-protocol.md"
   },
   "publishConfig": {

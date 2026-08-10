@@ -454,6 +454,13 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/identifier" }
         },
+        "layoutCapabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["direction", "columns", "gap", "align", "justify", "span"]
+          }
+        },
         "fallback": { "$ref": "#/$defs/semanticType" },
         "extensions": {
           "type": "object",

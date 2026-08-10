@@ -27,6 +27,12 @@ export {
 export { migrateSurfaceData } from "./data-migration.js";
 export { DynamicUIError } from "./errors.js";
 export type { DynamicUIErrorCode } from "./errors.js";
+export {
+  parseSemanticLayout,
+  resolveSemanticLayout,
+  semanticLayoutFeatures,
+  serializeSemanticLayout,
+} from "./layout.js";
 export { applyOperationsToSurface, validateSurface } from "./operations.js";
 export {
   assertOperationResourceLimits,

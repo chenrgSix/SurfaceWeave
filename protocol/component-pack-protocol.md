@@ -33,6 +33,11 @@ A `ComponentPackManifest` declares:
 - a semantic fallback;
 - short, non-authoritative Agent guidance.
 
+Each semantic component may also declare `layoutCapabilities` from the
+framework-neutral [Semantic LayoutSpec 1.0](layout-spec.md). This describes
+portable layout behavior, not CSS or renderer props. A Runtime filters
+unsupported layout features and keeps document order as the universal fallback.
+
 Resolution filters by `rendererKind`, locally installed bindings, terminal capabilities, Surface or host `preferredPack`, host-accepted Pack versions, and developer priority. Ties are resolved deterministically by priority, pack id, and version. An incompatible preferred Pack or version produces a diagnostic. Fallback chains are semantic, must terminate, and must not contain cycles.
 
 Developer hard constraints apply to the semantic Surface before rendering. A pack cannot relax them because pack resolution never changes the stored semantic component.

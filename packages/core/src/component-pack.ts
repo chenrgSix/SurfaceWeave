@@ -18,6 +18,7 @@ import type {
   JsonSchema,
   JsonValue,
 } from "./types.js";
+import { semanticLayoutFeatures } from "./layout.js";
 
 const identifierPattern = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 const semanticTypePattern = /^[A-Za-z][A-Za-z0-9._-]*$/;
@@ -214,6 +215,7 @@ function componentManifest(value: unknown, label: string): ComponentManifest {
       "binding",
       "actions",
       "capabilities",
+      "layoutCapabilities",
       "fallback",
       "extensions",
     ],
@@ -301,6 +303,25 @@ function componentManifest(value: unknown, label: string): ComponentManifest {
       `${label}.capabilities`,
     );
   }
+  if (object.layoutCapabilities !== undefined) {
+    const capabilities = stringList(
+      object.layoutCapabilities,
+      `${label}.layoutCapabilities`,
+    );
+    const unsupported = capabilities.find(
+      (capability) =>
+        !(semanticLayoutFeatures as readonly string[]).includes(capability),
+    );
+    if (unsupported !== undefined) {
+      throw new DynamicUIError(
+        "INVALID_COMPONENT_PACK",
+        `${label}.layoutCapabilities contains unsupported feature "${unsupported}"`,
+      );
+    }
+    component.layoutCapabilities = capabilities as NonNullable<
+      ComponentManifest["layoutCapabilities"]
+    >;
+  }
   if (object.fallback !== undefined) {
     component.fallback = requiredString(
       object.fallback,
@@ -330,6 +351,7 @@ function definitionFromManifest(
     "binding",
     "actions",
     "capabilities",
+    "layoutCapabilities",
     "fallback",
     "extensions",
   ] as const) {

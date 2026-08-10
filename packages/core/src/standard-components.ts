@@ -5,6 +5,7 @@ import type {
   ComponentManifest,
   JsonObject,
   JsonSchema,
+  SemanticLayoutFeature,
 } from "./types.js";
 
 const stringSchema: JsonSchema = { type: "string" };
@@ -21,6 +22,21 @@ const toolActions = [
   "tool.edit",
   "result.continue",
 ];
+
+const containerLayoutCapabilities: SemanticLayoutFeature[] = [
+  "direction",
+  "columns",
+  "gap",
+  "align",
+  "justify",
+  "span",
+];
+
+function layoutCapabilitiesFor(semanticType: string): SemanticLayoutFeature[] {
+  return ["Form", "Stack", "Grid", "Accordion"].includes(semanticType)
+    ? containerLayoutCapabilities
+    : ["span"];
+}
 
 function propsSchema(
   properties: Record<string, JsonSchema> = {},
@@ -61,7 +77,7 @@ const fieldProps = {
 };
 
 /** Canonical semantic declarations. They contain no renderer binding. */
-export const standardComponentManifests: ComponentManifest[] = [
+const standardComponentManifestBase: ComponentManifest[] = [
   {
     semanticType: "Text",
     propsSchema: propsSchema({ text: stringSchema }),
@@ -211,6 +227,12 @@ export const standardComponentManifests: ComponentManifest[] = [
     propsSchema: propsSchema({ message: stringSchema }),
   },
 ];
+
+export const standardComponentManifests: ComponentManifest[] =
+  standardComponentManifestBase.map((component) => ({
+    ...component,
+    layoutCapabilities: layoutCapabilitiesFor(component.semanticType),
+  }));
 
 const legacyComponentManifests: ComponentManifest[] = [
   {

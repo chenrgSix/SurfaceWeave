@@ -56,6 +56,31 @@ describe("Component Pack Protocol", () => {
     ).toMatchObject({ packId: "zeta" });
   });
 
+  it("validates portable component layout capabilities", () => {
+    expect(
+      validateComponentPack({
+        ...pack("layout-aware", 0),
+        components: [
+          {
+            ...component("Grid"),
+            layoutCapabilities: ["columns", "gap", "span"],
+          },
+        ],
+      }),
+    ).toEqual({ valid: true, errors: [] });
+    expect(
+      validateComponentPack({
+        ...pack("layout-unsafe", 0),
+        components: [
+          {
+            ...component("Grid"),
+            layoutCapabilities: ["className"] as never[],
+          },
+        ],
+      }),
+    ).toMatchObject({ valid: false });
+  });
+
   it("reports an unavailable preferred pack instead of selecting it silently", () => {
     const registry = createStandardComponentRegistry();
     registry.registerPack(pack("available", 0));

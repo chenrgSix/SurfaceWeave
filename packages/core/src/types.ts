@@ -93,6 +93,55 @@ export interface SurfacePresentation {
   preferredPack?: string;
 }
 
+/** Portable layout features understood by LayoutSpec 1.0 renderers. */
+export type SemanticLayoutFeature =
+  "direction" | "columns" | "gap" | "align" | "justify" | "span";
+
+export type SemanticLayoutDirection = "row" | "column";
+export type SemanticLayoutAlignment = "start" | "center" | "end" | "stretch";
+export type SemanticLayoutJustification =
+  "start" | "center" | "end" | "between";
+
+/** Mode-independent values used by a semantic layout and its mode overrides. */
+export interface SemanticLayoutValues {
+  direction?: SemanticLayoutDirection;
+  columns?: number;
+  gap?: number;
+  align?: SemanticLayoutAlignment;
+  justify?: SemanticLayoutJustification;
+  span?: number;
+}
+
+/**
+ * Framework-neutral LayoutSpec 1.0 declaration.
+ *
+ * UINode.layout remains a JSON record for Wire Protocol 1.0 compatibility;
+ * generators and trusted authors should emit this portable subset.
+ */
+export interface SemanticLayout extends SemanticLayoutValues {
+  modes?: {
+    compact?: SemanticLayoutValues;
+    workspace?: SemanticLayoutValues;
+  };
+}
+
+export type SemanticLayoutDiagnosticCode =
+  | "UNKNOWN_LAYOUT_PROPERTY"
+  | "INVALID_LAYOUT_VALUE"
+  | "UNSUPPORTED_LAYOUT_FEATURE"
+  | "COMPACT_LAYOUT_FALLBACK";
+
+export interface SemanticLayoutDiagnostic {
+  code: SemanticLayoutDiagnosticCode;
+  path: string;
+  message: string;
+}
+
+export interface SemanticLayoutResolution {
+  layout: SemanticLayoutValues;
+  diagnostics: SemanticLayoutDiagnostic[];
+}
+
 /** Declarative node. The component name must exist in ComponentRegistry. */
 export interface UINode {
   id: string;
@@ -497,6 +546,8 @@ export interface ComponentManifest {
   binding?: ComponentBindingDefinition;
   actions?: Array<string | ComponentActionDefinition>;
   capabilities?: string[];
+  /** LayoutSpec features this semantic component can apply portably. */
+  layoutCapabilities?: SemanticLayoutFeature[];
   fallback?: string;
   extensions?: Record<string, ComponentExtensionSchema>;
 }
@@ -559,6 +610,7 @@ export interface ComponentDefinition {
   binding?: ComponentBindingDefinition;
   actions?: Array<string | ComponentActionDefinition>;
   capabilities?: string[];
+  layoutCapabilities?: SemanticLayoutFeature[];
   fallback?: string;
   extensions?: Record<string, ComponentExtensionSchema>;
 }

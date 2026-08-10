@@ -13,6 +13,17 @@ const schemaPath = fileURLToPath(
   ),
 );
 const wireSchema = JSON.parse(readFileSync(schemaPath, "utf8")) as object;
+const layoutSchema = JSON.parse(
+  readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../../protocol/schemas/semantic-layout-1.0.schema.json",
+        import.meta.url,
+      ),
+    ),
+    "utf8",
+  ),
+) as object;
 
 describe("language-independent wire schema", () => {
   it("validates manifests and Surfaces without TypeScript types", () => {
@@ -114,5 +125,22 @@ describe("language-independent wire schema", () => {
 
     expect(validate?.(event)).toBe(true);
     expect(validate?.({ type: "preference.saved", sequence: 1 })).toBe(false);
+  });
+
+  it("publishes a strict standalone cross-language LayoutSpec", () => {
+    const ajv = new Ajv2020({ strict: true, validateFormats: false });
+    const validate = ajv.compile(layoutSchema);
+
+    expect(
+      validate({
+        direction: "column",
+        columns: 2,
+        gap: 16,
+        align: "stretch",
+        modes: { compact: { columns: 1 } },
+      }),
+    ).toBe(true);
+    expect(validate({ columns: 13 })).toBe(false);
+    expect(validate({ className: "vendor-grid" })).toBe(false);
   });
 });
