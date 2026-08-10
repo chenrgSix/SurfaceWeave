@@ -59,19 +59,22 @@ Agent 不直接生产底层事件，也不直接执行组件动作。
 
 TypeScript Core 是参考实现，不是协议定义。Surface 只保存 `TextInput`、`ChoiceField`、`Card` 等语义类型；切换 `react/default`、`react/react-aria`、`react/antd`，以及未来的 `vue/element-plus` 或 `flutter/material` 时，不改写 Surface、DataBinding、`stableId` 或 Preference Patch。Renderer 只能启用宿主明确许可且能力兼容的 Pack；缺少业务组件实现时沿语义 fallback 降级。
 
-## 三、建议包结构
+## 三、当前包结构
 
 | 包                               | 职责                                |
 | ------------------------------- | --------------------------------- |
-| `@scope/dynamic-ui-core`        | Surface、组件树、数据绑定、Operations、事件和校验 |
-| `@scope/dynamic-ui-generator`   | 根据 Schema、数据和意图生成默认 UI            |
-| `@scope/dynamic-ui-agent-tools` | 向业务 Agent 暴露类型化 UI Tools          |
-| `@scope/dynamic-ui-react`       | React/Web Renderer，支持聊天和工作区       |
-| `@scope/dynamic-ui-storage`     | Memory、LocalStorage 和自定义后端存储接口    |
-| `@scope/dynamic-ui-tauri`       | Tauri Action Executor、Store 与事件桥接 |
-| `@scope/dynamic-ui-devtools`    | 查看 Surface、Operations、事件和偏好应用过程   |
+| `@surfaceweave/protocol`    | 语言无关协议文档与 JSON Schema                 |
+| `@surfaceweave/core`        | Surface、组件树、数据绑定、Operations、事件和校验 |
+| `@surfaceweave/generator`   | 根据 Schema、数据和意图生成默认 UI               |
+| `@surfaceweave/agent-tools` | 向业务 Agent 暴露类型化 UI Tools                 |
+| `@surfaceweave/storage`     | Memory、LocalStorage 和自定义后端存储接口         |
+| `@surfaceweave/preferences` | 偏好 Patch、范围、冲突与迁移                       |
+| `@surfaceweave/react`       | React Renderer 与可选 DOM Driver                 |
+| `@surfaceweave/react-aria`  | React Aria Component Pack                         |
+| `@surfaceweave/antd`        | Ant Design Component Pack                         |
+| `@surfaceweave/tauri`       | Tauri Action Executor、Store 与能力桥接            |
 
-当前仓库还提供 `@surfaceweave/protocol`、`@surfaceweave/react-aria` 和 `@surfaceweave/antd`。第三方 UI 库只存在于各自 Pack 的 peer/dev dependencies；Core 不依赖 React、DOM、Tauri 或任何组件库。
+第三方 UI 库只存在于各自 Pack 的 peer/dev dependencies；Core 不依赖 React、DOM、Tauri 或任何组件库。
 
 核心包不依赖 React、Tauri 或特定 Agent SDK。
 
@@ -360,7 +363,7 @@ Agent 不能静默执行模糊迁移。
 
 Tauri 前端运行在系统 WebView 中，React Renderer 可以直接使用；Rust 后端通过消息传递与前端通信。[Tauri 架构](https://v2.tauri.app/concept/architecture/)
 
-`@scope/dynamic-ui-tauri` 只需负责：
+`@surfaceweave/tauri` 只需负责：
 
 * 把 Action Intent 映射到受控 Rust Command；
 * 将 Rust 事件映射成 Runtime 事件；

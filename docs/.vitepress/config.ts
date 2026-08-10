@@ -29,10 +29,10 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.3 candidate",
+        text: "0.1.0-rc.3",
         items: [
           {
-            text: "Candidate summary",
+            text: "Release summary",
             link: "/rc3-release-candidate-summary",
           },
           { text: "RC.2 release", link: "/rc2-release-candidate-summary" },

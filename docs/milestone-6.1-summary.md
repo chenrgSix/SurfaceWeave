@@ -1,5 +1,8 @@
 # Milestone 6.1 Summary
 
+> Post-release status: the reviewed candidate was subsequently published as
+> `v0.1.0-rc.3`; npm `next` resolves to RC.3 and `latest` remains on RC.2.
+
 Milestone 6.1 adds a Generic Renderer Driver without changing Wire Protocol
 1.0. Core now exports four type-only contracts: `SurfaceViewMode`,
 `SurfaceViewReference`, `SurfaceViewHandle`, and
@@ -24,9 +27,9 @@ cleanup, and Vite build.
 No Vue Renderer, Web Component, workflow feature, Agentdown Adapter, new
 Component Pack, protocol change, tag, or npm publication was added.
 
-## RC.3 candidate
+## RC.3 release outcome
 
-All ten package manifests and exact internal dependency ranges are prepared as
-`0.1.0-rc.3` because Core gains additive public types and React gains an
-additive optional subpath. RC.2 remains immutable, and no RC.3 tag, GitHub
-Release, or npm publication is created without approval.
+All ten package manifests and exact internal dependency ranges were prepared as
+`0.1.0-rc.3` because Core gained additive public types and React gained an
+additive optional subpath. After separate approval, the protected OIDC workflow
+published the suite from annotated tag `v0.1.0-rc.3` with provenance.

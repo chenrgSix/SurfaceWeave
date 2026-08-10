@@ -2,7 +2,7 @@
 
 ## Status
 
-This document freezes the `0.1.0-rc.3` candidate API surface. Only package entry
+This document freezes the published `0.1.0-rc.3` API surface. Only package entry
 points declared in `exports` are public. Files under `src/` or `dist/`, relative
 monorepo paths, test helpers, and example modules are internal and may change
 without compatibility guarantees.
@@ -58,6 +58,23 @@ Core also exports the optional, framework-neutral `SurfaceViewMode`,
 `SurfaceRendererDriver<TTarget>` types. `SurfaceViewReference` contains only a
 Surface id and presentation mode; renderer capabilities, Pack policy, and
 Action handling remain host configuration.
+
+## Unreleased Runtime Hardening
+
+The current `main` branch adds optional, backward-compatible host controls that
+are not part of the published RC.3 tarballs:
+
+- Core exports `SurfaceResourceLimits`, default/resolve/assert helpers,
+  `InMemorySurfaceStoreOptions`, and `SurfaceListenerErrorHandler`;
+- `InMemorySurfaceStore` accepts resource and observer-error options and has an
+  idempotent `dispose()` method;
+- Agent Tools exports `ToolToUIRuntimeOptions` and
+  `ToolRuntimeListenerErrorHandler`; `ToolToUIRuntime` adds
+  `disposeInvocation()` and `dispose()`.
+
+These APIs bound untrusted payload work, isolate observer failures from
+committed state, and release Runtime-owned subscriptions. They require a new RC
+before consumers can install them from npm.
 
 ## Compatibility Policy
 

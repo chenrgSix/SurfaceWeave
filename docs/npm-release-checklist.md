@@ -1,30 +1,30 @@
 # npm Release Candidate Checklist
 
-## Release Candidate Version
+## Published Baseline
 
-All publishable workspace packages are synchronized as the unpublished
-`0.1.0-rc.3` candidate. The official npm Registry still serves RC.2 from
-`next` and `latest`; do not move either tag until RC.3 publication is approved
-and complete for all ten packages. The wire protocol remains `1.0`; npm package
-versions do not change Tool or Component Pack manifest versions.
+All ten publishable workspace packages are published as `0.1.0-rc.3` with npm
+provenance. The official npm Registry resolves `next` to RC.3 and intentionally
+keeps `latest` on the immutable RC.2 release. The wire protocol remains `1.0`;
+npm package versions do not change Tool or Component Pack manifest versions.
 
-If any package name already has a published version, derive its RC from that
-package's highest published SemVer instead of publishing this candidate.
+For a future candidate, derive the version from every package's highest
+published SemVer and synchronize all package manifests and exact internal
+dependencies before creating a tag.
 
 ## Release Inventory
 
-| Package                     | Candidate version | Current public dist-tags      |
-| --------------------------- | ----------------: | ----------------------------- |
-| `@surfaceweave/protocol`    |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/core`        |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/storage`     |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/preferences` |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/generator`   |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/agent-tools` |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react`       |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react-aria`  |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/antd`        |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/tauri`       |        0.1.0-rc.3 | `next`, `latest` → 0.1.0-rc.2 |
+| Package                     | Published version | Current public dist-tags             |
+| --------------------------- | ----------------: | ------------------------------------ |
+| `@surfaceweave/protocol`    |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |        0.1.0-rc.3 | `next` → RC.3, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -66,7 +66,7 @@ real publish.
 
 ## Trusted Publishing Status
 
-`0.1.0-rc.1` was published manually. `0.1.0-rc.2` proved the protected OIDC
+`0.1.0-rc.1` was published manually. RC.2 and RC.3 proved the protected OIDC
 workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md): all
 ten packages expose verified provenance for the same tag, release commit, and
 workflow run. Future releases must continue to:
@@ -81,6 +81,11 @@ workflow run. Future releases must continue to:
 Publish in the order encoded by `scripts/release-packages.mjs`: Protocol, Core,
 Storage, Preferences, Generator, Agent Tools, React, React Aria, Ant Design,
 then Tauri. Each downstream package therefore resolves its exact RC dependency.
+
+The workflow delegates publication to `scripts/publish-release-packages.mjs`.
+It packs each local artifact, compares npm integrity, skips an already-published
+identical artifact, and refuses an immutable version whose integrity differs.
+This allows a protected workflow retry to finish a partial suite safely.
 
 ## Future Release Gate
 
@@ -101,5 +106,5 @@ pnpm build:tauri --no-bundle
 
 The release workflow is the only repository path authorized to call real
 `npm publish`; this checklist alone does not authorize a push, tag, npm
-organization change, or release. RC.3 remains a candidate until the user gives
-separate publication approval.
+organization change, or release. Every future version still requires separate
+owner approval before its tag is pushed.

@@ -43,9 +43,11 @@ Official references: [npm Trusted Publishing](https://docs.npmjs.com/trusted-pub
 The workflow re-runs build, typecheck, lint, tests, package consumers, release
 metadata, and Tauri checks before approval. It rebuilds in the publish job,
 publishes packages in dependency order, checks Registry integrity and clean
-consumers, then creates the matching GitHub prerelease. A partial npm publish
-must never be overwritten or unpublished; finish with a new RC version after
-diagnosis.
+consumers, then creates the matching GitHub prerelease. A partial publish may
+be retried from the same immutable tag: the release script skips only artifacts
+whose locally packed integrity exactly matches npm and resumes with the first
+missing package. It stops on any integrity mismatch. Never overwrite or
+unpublish an accepted artifact; use a new RC after a mismatched build.
 
 Do not store `NODE_AUTH_TOKEN`, an npm token, or a user `.npmrc` in this
 repository or GitHub Actions once Trusted Publishing is configured.
