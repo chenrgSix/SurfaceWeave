@@ -46,6 +46,11 @@ describe("AgentUIToolRuntime", () => {
     for (const definition of uiToolDefinitions) {
       expect(definition.inputSchema.type).toBe("object");
     }
+    const applyOperations = surfaceToolDefinitions.find(
+      (definition) => definition.name === "ui.applyOperations",
+    );
+    expect(JSON.stringify(applyOperations?.inputSchema)).toContain('"columns"');
+    expect(JSON.stringify(applyOperations?.inputSchema)).toContain('"compact"');
   });
 
   it("exposes registered Tool discovery and proposal without allowing Agent registration", () => {
@@ -135,7 +140,10 @@ describe("AgentUIToolRuntime", () => {
       value: {
         protocolVersion: "1.0",
         components: expect.arrayContaining([
-          expect.objectContaining({ type: "ChoiceField" }),
+          expect.objectContaining({
+            type: "ChoiceField",
+            layoutCapabilities: ["span"],
+          }),
         ]),
         packs: [
           expect.objectContaining({ id: "material", rendererKind: "flutter" }),
@@ -185,8 +193,51 @@ describe("AgentUIToolRuntime", () => {
     expect(store.getSurface("purchase")).toBeUndefined();
   });
 
+  it("creates portable grouped layouts and rejects renderer-specific props", () => {
+    const { runtime, store } = createRuntime();
+    const created = runtime.execute("ui.createSurface", {
+      ...createArguments,
+      surfaceId: "grouped",
+      developer: {
+        softHints: {
+          layout: { columns: 2, gap: 16 },
+          groups: {
+            delivery: { title: "Delivery", layout: { gap: 8 } },
+          },
+          fields: {
+            buyer: { group: "delivery", layout: { span: 2 } },
+          },
+        },
+      },
+    });
+    const rejected = runtime.execute("ui.createSurface", {
+      ...createArguments,
+      surfaceId: "unsafe-layout",
+      developer: { softHints: { layout: { className: "grid" } } },
+    });
+
+    expect(created).toMatchObject({ ok: true });
+    const tree = store.requireSurface("grouped").tree;
+    expect(tree).toMatchObject({
+      layout: {
+        columns: 2,
+        gap: 16,
+        modes: { compact: { columns: 1 } },
+      },
+    });
+    expect(tree.children?.[0]).toMatchObject({
+      component: "Section",
+      props: { title: "Delivery" },
+    });
+    expect(rejected).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_TOOL_ARGUMENTS" },
+    });
+    expect(store.getSurface("unsafe-layout")).toBeUndefined();
+  });
+
   it("applies operation batches and returns revision conflicts as data", () => {
-    const { runtime } = createRuntime();
+    const { runtime, store } = createRuntime();
     runtime.createSurface(createArguments);
 
     const applied = runtime.execute("ui.applyOperations", {
@@ -200,6 +251,23 @@ describe("AgentUIToolRuntime", () => {
           target: "remark",
           props: { collapsed: true },
         },
+        {
+          type: "setLayout",
+          target: "remark",
+          layout: { span: 2, modes: { compact: { span: 1 } } },
+        },
+      ],
+    });
+    const invalidLayout = runtime.execute("ui.applyOperations", {
+      surfaceId: "purchase",
+      baseRevision: 1,
+      reason: "Inject renderer props",
+      operations: [
+        {
+          type: "setLayout",
+          target: "remark",
+          layout: { className: "vendor-grid" },
+        },
       ],
     });
     const conflict = runtime.execute("ui.applyOperations", {
@@ -210,10 +278,17 @@ describe("AgentUIToolRuntime", () => {
     });
 
     expect(applied).toMatchObject({ ok: true, value: { revision: 1 } });
+    expect(invalidLayout).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_TOOL_ARGUMENTS" },
+    });
     expect(conflict).toMatchObject({
       ok: false,
       error: { code: "REVISION_CONFLICT" },
     });
+    expect(store.requireSurface("purchase").tree.children?.[0]?.layout).toEqual(
+      { span: 2, modes: { compact: { span: 1 } } },
+    );
   });
 
   it("replaces a surface and migrates compatible stable bindings", () => {

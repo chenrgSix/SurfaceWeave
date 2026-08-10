@@ -1,3 +1,7 @@
+import {
+  parseSemanticLayout,
+  serializeSemanticLayout,
+} from "@surfaceweave/core";
 import type {
   DataBinding,
   DeveloperHardConstraints,
@@ -14,6 +18,7 @@ import type {
   DeveloperUIConfiguration,
   FieldMetadata,
   GeneratorMetadata,
+  LayoutGroupMetadata,
   SimpleJsonSchema,
 } from "@surfaceweave/generator";
 
@@ -213,11 +218,13 @@ function fieldMetadataValue(value: unknown, path: string): FieldMetadata {
       "order",
       "hidden",
       "collapsed",
+      "group",
+      "layout",
     ],
     path,
   );
   const field: FieldMetadata = {};
-  for (const key of ["label", "description", "component"] as const) {
+  for (const key of ["label", "description", "component", "group"] as const) {
     if (object[key] !== undefined) {
       field[key] = stringValue(object[key], `${path}.${key}`);
     }
@@ -236,7 +243,44 @@ function fieldMetadataValue(value: unknown, path: string): FieldMetadata {
       field[key] = booleanValue(object[key], `${path}.${key}`);
     }
   }
+  if (object.layout !== undefined) {
+    field.layout = semanticLayoutValue(object.layout, `${path}.layout`);
+  }
   return field;
+}
+
+function semanticLayoutValue(value: unknown, path: string) {
+  try {
+    return parseSemanticLayout(value);
+  } catch (error) {
+    throw new ToolInputError(
+      `${path} must conform to Semantic LayoutSpec 1.0: ${
+        error instanceof Error ? error.message : "invalid layout"
+      }`,
+    );
+  }
+}
+
+function layoutGroupValue(value: unknown, path: string): LayoutGroupMetadata {
+  const object = record(value, path);
+  allowedKeys(
+    object,
+    ["title", "description", "component", "collapsed", "layout"],
+    path,
+  );
+  const group: LayoutGroupMetadata = {};
+  for (const key of ["title", "description", "component"] as const) {
+    if (object[key] !== undefined) {
+      group[key] = stringValue(object[key], `${path}.${key}`);
+    }
+  }
+  if (object.collapsed !== undefined) {
+    group.collapsed = booleanValue(object.collapsed, `${path}.collapsed`);
+  }
+  if (object.layout !== undefined) {
+    group.layout = semanticLayoutValue(object.layout, `${path}.layout`);
+  }
+  return group;
 }
 
 function metadataValue(value: unknown, path: string): GeneratorMetadata {
@@ -250,6 +294,8 @@ function metadataValue(value: unknown, path: string): GeneratorMetadata {
       "itemsPath",
       "selectionPath",
       "itemComponent",
+      "layout",
+      "groups",
       "fields",
     ],
     path,
@@ -273,6 +319,18 @@ function metadataValue(value: unknown, path: string): GeneratorMetadata {
       Object.entries(fields).map(([key, field]) => [
         key,
         fieldMetadataValue(field, `${path}.fields.${key}`),
+      ]),
+    );
+  }
+  if (object.layout !== undefined) {
+    metadata.layout = semanticLayoutValue(object.layout, `${path}.layout`);
+  }
+  if (object.groups !== undefined) {
+    const groups = record(object.groups, `${path}.groups`);
+    metadata.groups = Object.fromEntries(
+      Object.entries(groups).map(([key, group]) => [
+        key,
+        layoutGroupValue(group, `${path}.groups.${key}`),
       ]),
     );
   }
@@ -553,7 +611,9 @@ function operationValue(value: unknown, path: string): UIOperation {
       return {
         type,
         target: stringValue(object.target, `${path}.target`),
-        layout: jsonRecord(object.layout, `${path}.layout`),
+        layout: serializeSemanticLayout(
+          semanticLayoutValue(object.layout, `${path}.layout`),
+        ),
       };
     case "setVisibility":
       allowedKeys(object, ["type", "target", "visible"], path);
@@ -590,9 +650,8 @@ function operationValue(value: unknown, path: string): UIOperation {
         groupDefinition.props = jsonRecord(group.props, `${path}.group.props`);
       }
       if (group.layout !== undefined) {
-        groupDefinition.layout = jsonRecord(
-          group.layout,
-          `${path}.group.layout`,
+        groupDefinition.layout = serializeSemanticLayout(
+          semanticLayoutValue(group.layout, `${path}.group.layout`),
         );
       }
       if (group.visible !== undefined) {

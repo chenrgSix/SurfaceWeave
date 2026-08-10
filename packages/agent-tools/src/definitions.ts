@@ -7,6 +7,37 @@ const intentSchema: JsonValue = {
   enum: ["form", "browse", "single-select", "multi-select", "confirm"],
 };
 
+const layoutValueProperties: Record<string, JsonValue> = {
+  direction: { enum: ["row", "column"] },
+  columns: { type: "integer", minimum: 1, maximum: 12 },
+  gap: { type: "number", minimum: 0, maximum: 64 },
+  align: { enum: ["start", "center", "end", "stretch"] },
+  justify: { enum: ["start", "center", "end", "between"] },
+  span: { type: "integer", minimum: 1, maximum: 12 },
+};
+
+const layoutOverrideSchema: JsonValue = {
+  type: "object",
+  additionalProperties: false,
+  properties: layoutValueProperties,
+};
+
+const semanticLayoutSchema: JsonValue = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    ...layoutValueProperties,
+    modes: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        compact: layoutOverrideSchema,
+        workspace: layoutOverrideSchema,
+      },
+    },
+  },
+};
+
 const operationSchema: JsonValue = {
   oneOf: [
     {
@@ -52,7 +83,7 @@ const operationSchema: JsonValue = {
       properties: {
         type: { const: "setLayout" },
         target: { type: "string" },
-        layout: { type: "object" },
+        layout: semanticLayoutSchema,
       },
     },
     {
@@ -72,7 +103,19 @@ const operationSchema: JsonValue = {
       properties: {
         type: { const: "groupNodes" },
         targets: { type: "array", minItems: 2, items: { type: "string" } },
-        group: { type: "object" },
+        group: {
+          type: "object",
+          additionalProperties: false,
+          required: ["id", "component"],
+          properties: {
+            id: { type: "string", minLength: 1 },
+            stableId: { type: "string", minLength: 1 },
+            component: { type: "string", minLength: 1 },
+            props: { type: "object" },
+            layout: semanticLayoutSchema,
+            visible: { type: "boolean" },
+          },
+        },
       },
     },
   ],

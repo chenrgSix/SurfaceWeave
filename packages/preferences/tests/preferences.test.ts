@@ -141,6 +141,52 @@ describe("PreferenceService", () => {
     );
   });
 
+  it("keeps layout hard constraints above preferences and Agent overrides", async () => {
+    const surface = defaultSurface();
+    const field = surface.tree.children?.[0];
+    if (field === undefined) throw new Error("Missing remark field");
+    field.layout = { span: 1 };
+    const patch: PreferencePatch = {
+      id: "wide-remark",
+      scope: "global",
+      targetStableId: "purchase.remark",
+      operation: {
+        type: "setLayout",
+        target: "purchase.remark",
+        layout: { span: 2 },
+      },
+    };
+    const { service } = await createService([patch]);
+    const constraints = {
+      fields: {
+        "purchase.remark": { locked: ["layout" as const] },
+      },
+    };
+
+    const result = service.applyPreferences(surface, {
+      hardConstraints: constraints,
+    });
+
+    expect(result.appliedPatchIds).toEqual([]);
+    expect(result.conflicts[0]?.code).toBe("HARD_CONSTRAINT");
+    expect(result.surface.tree.children?.[0]?.layout).toEqual({ span: 1 });
+    expect(() =>
+      service.assertTemporaryOperationsAllowed(
+        result.surface,
+        [
+          {
+            type: "setLayout",
+            target: "purchase.remark",
+            layout: { span: 2 },
+          },
+        ],
+        constraints,
+      ),
+    ).toThrowError(
+      expect.objectContaining({ code: "HARD_CONSTRAINT_VIOLATION" }),
+    );
+  });
+
   it("lets Agent operations override applied preferences without persisting them", async () => {
     const { registry, service } = await createService([
       propsPatch("collapsed", "global", "Preference"),
