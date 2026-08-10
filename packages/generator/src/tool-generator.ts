@@ -1,4 +1,4 @@
-import { cloneValue } from "@surfaceweave/core";
+import { cloneValue, parseSemanticLayout } from "@surfaceweave/core";
 import type { ComponentRegistry, JsonObject } from "@surfaceweave/core";
 
 import { generateSurface } from "./generator.js";
@@ -8,6 +8,7 @@ import type {
   FieldMetadata,
   GenerateToolSurfaceInput,
   GeneratedSurface,
+  LayoutGroupMetadata,
 } from "./types.js";
 
 function fieldMetadata(value: JsonObject): FieldMetadata {
@@ -19,12 +20,29 @@ function fieldMetadata(value: JsonObject): FieldMetadata {
   if (typeof value.order === "number") result.order = value.order;
   if (typeof value.hidden === "boolean") result.hidden = value.hidden;
   if (typeof value.collapsed === "boolean") result.collapsed = value.collapsed;
+  if (typeof value.group === "string") result.group = value.group;
+  if (value.layout !== undefined) {
+    result.layout = parseSemanticLayout(value.layout);
+  }
   if (
     typeof value.props === "object" &&
     value.props !== null &&
     !Array.isArray(value.props)
   ) {
     result.props = cloneValue(value.props);
+  }
+  return result;
+}
+
+function groupMetadata(value: JsonObject): LayoutGroupMetadata {
+  const result: LayoutGroupMetadata = {};
+  if (typeof value.title === "string") result.title = value.title;
+  if (typeof value.description === "string")
+    result.description = value.description;
+  if (typeof value.component === "string") result.component = value.component;
+  if (typeof value.collapsed === "boolean") result.collapsed = value.collapsed;
+  if (value.layout !== undefined) {
+    result.layout = parseSemanticLayout(value.layout);
   }
   return result;
 }
@@ -36,6 +54,12 @@ function softHints(
   const semantic = input.definition.uiHints?.semanticHints;
   if (hints === undefined && semantic === undefined) return undefined;
   const fields: Record<string, FieldMetadata> = {};
+  const groups = Object.fromEntries(
+    Object.entries(hints?.groups ?? {}).map(([id, value]) => [
+      id,
+      groupMetadata(value),
+    ]),
+  );
   for (const [path, value] of Object.entries(hints?.fields ?? {})) {
     fields[path] = fieldMetadata(value);
   }
@@ -44,9 +68,9 @@ function softHints(
       ...fields[path],
       ...(value.component === undefined ? {} : { component: value.component }),
       ...(value.purpose === undefined ? {} : { description: value.purpose }),
+      ...(value.group === undefined ? {} : { group: value.group }),
       props: {
         ...(fields[path]?.props ?? {}),
-        ...(value.group === undefined ? {} : { group: value.group }),
         ...(value.importance === undefined
           ? {}
           : { importance: value.importance }),
@@ -61,6 +85,10 @@ function softHints(
     ...(hints?.rootComponent === undefined
       ? {}
       : { rootComponent: hints.rootComponent }),
+    ...(hints?.layout === undefined
+      ? {}
+      : { layout: parseSemanticLayout(hints.layout) }),
+    ...(Object.keys(groups).length === 0 ? {} : { groups }),
     ...(Object.keys(fields).length === 0 ? {} : { fields }),
   };
 }

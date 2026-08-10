@@ -3,6 +3,7 @@ import type {
   JsonObject,
   JsonSchema,
   JsonValue,
+  SemanticLayout,
   SchemaRef,
   Surface,
   SurfaceContext,
@@ -45,6 +46,16 @@ export interface FieldMetadata {
   order?: number;
   hidden?: boolean;
   collapsed?: boolean;
+  group?: string;
+  layout?: SemanticLayout;
+}
+
+export interface LayoutGroupMetadata {
+  title?: string;
+  description?: string;
+  component?: string;
+  collapsed?: boolean;
+  layout?: SemanticLayout;
 }
 
 export interface DeveloperSoftHints {
@@ -54,6 +65,8 @@ export interface DeveloperSoftHints {
   itemsPath?: string;
   selectionPath?: string;
   itemComponent?: string;
+  layout?: SemanticLayout;
+  groups?: Record<string, LayoutGroupMetadata>;
   fields?: Record<string, FieldMetadata>;
 }
 

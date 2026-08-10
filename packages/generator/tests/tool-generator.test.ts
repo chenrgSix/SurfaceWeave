@@ -120,6 +120,55 @@ describe("Tool Schema adapters and generator", () => {
     });
   });
 
+  it("projects Tool UI layout hints into portable grouped form nodes", () => {
+    const definition = fromAgentToolDefinition({
+      name: "purchase.create",
+      version: "1.0.0",
+      inputSchema: {
+        type: "object",
+        properties: {
+          address: { type: "string" },
+          receiver: { type: "string" },
+          remark: { type: "string" },
+        },
+      },
+    });
+    definition.uiHints = {
+      softHints: {
+        layout: { columns: 2, gap: 16 },
+        groups: {
+          delivery: {
+            title: "Delivery",
+            layout: { columns: 2, gap: 8 },
+          },
+        },
+        fields: {
+          address: { group: "delivery", layout: { span: 2 } },
+          receiver: { group: "delivery" },
+        },
+      },
+    };
+
+    const surface = generateToolSurface(
+      { definition, surfaceId: "purchase-input" },
+      createStandardComponentRegistry(),
+    );
+
+    expect(surface.tree.layout).toEqual({
+      columns: 2,
+      gap: 16,
+      modes: { compact: { columns: 1 } },
+    });
+    expect(surface.tree.children?.[0]).toMatchObject({
+      component: "Section",
+      props: { title: "Delivery" },
+      layout: { columns: 2, gap: 8 },
+    });
+    expect(surface.tree.children?.[0]?.children?.[0]?.layout).toEqual({
+      span: 2,
+    });
+  });
+
   it("rejects invalid schemas and deterministically falls back for unsupported valid keywords", () => {
     expect(() => normalizeToolSchema({ type: "not-a-type" })).toThrow();
     expect(normalizeToolSchema({ allOf: [{ type: "string" }] })).toEqual({

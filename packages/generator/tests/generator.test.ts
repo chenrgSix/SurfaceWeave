@@ -165,4 +165,57 @@ describe("generateSurface", () => {
     ]);
     expect(surface.tree.children?.[0]?.component).toBe("TextInput");
   });
+
+  it("generates deterministic sections and compact-safe form layouts", () => {
+    const input: GenerateSurfaceInput = {
+      surfaceId: "grouped-purchase",
+      schema: formSchema,
+      intent: "form",
+      data: { buyer: "Ada", quantity: 2, remark: "Gate 2" },
+      developer: {
+        softHints: {
+          layout: { columns: 2, gap: 20, align: "stretch" },
+          groups: {
+            delivery: {
+              title: "Delivery information",
+              description: "Where the tea should arrive.",
+              layout: { columns: 2, gap: 8 },
+            },
+          },
+          fields: {
+            buyer: { group: "delivery", order: -2, layout: { span: 2 } },
+            quantity: { group: "delivery", order: -1 },
+          },
+        },
+      },
+    };
+
+    const first = generateSurface(input, createStandardComponentRegistry());
+    const second = generateSurface(input, createStandardComponentRegistry());
+    const section = first.tree.children?.[0];
+
+    expect(first).toEqual(second);
+    expect(first.tree.layout).toEqual({
+      columns: 2,
+      gap: 20,
+      align: "stretch",
+      modes: { compact: { columns: 1 } },
+    });
+    expect(section).toMatchObject({
+      stableId: "grouped-purchase.group.delivery",
+      component: "Section",
+      props: {
+        title: "Delivery information",
+        description: "Where the tea should arrive.",
+      },
+      layout: { columns: 2, gap: 8 },
+    });
+    expect(section?.children?.map((node) => node.stableId)).toEqual([
+      "buyer",
+      "quantity",
+    ]);
+    expect(section?.children?.[0]?.layout).toEqual({ span: 2 });
+    expect(first.tree.children?.[1]?.stableId).toBe("remark");
+    expect(first.data).toEqual({ buyer: "Ada", quantity: 2, remark: "Gate 2" });
+  });
 });

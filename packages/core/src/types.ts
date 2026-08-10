@@ -44,6 +44,8 @@ export interface ToolUIHints {
     title?: string;
     description?: string;
     rootComponent?: string;
+    layout?: JsonObject;
+    groups?: Record<string, JsonObject>;
     fields?: Record<string, JsonObject>;
   };
   semanticHints?: Record<string, ToolSemanticFieldHint>;

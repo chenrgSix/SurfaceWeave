@@ -2,6 +2,7 @@ import {
   DynamicUIError,
   cloneValue,
   readDataPath,
+  serializeSemanticLayout,
   validateSurface,
   writeDataPath,
 } from "@surfaceweave/core";
@@ -21,6 +22,7 @@ import type {
   GenerateSurfaceInput,
   GeneratedSurface,
   GeneratorMetadata,
+  LayoutGroupMetadata,
   SimpleJsonSchema,
 } from "./types.js";
 
@@ -244,6 +246,9 @@ function createFieldNode(
     props,
   };
   if (schema.type === "object") {
+    node.layout = serializeSemanticLayout(
+      field?.layout ?? { direction: "column", gap: 12 },
+    );
     node.children = sortedProperties(schema, path, metadata)
       .map(([childName, childSchema]) =>
         createFieldNode(
@@ -259,6 +264,9 @@ function createFieldNode(
       )
       .filter((child): child is UINode => child !== undefined);
   } else {
+    if (field?.layout !== undefined) {
+      node.layout = serializeSemanticLayout(field.layout);
+    }
     node.binding = {
       path,
       valueType: bindingType(schema),
@@ -267,6 +275,65 @@ function createFieldNode(
     };
   }
   return node;
+}
+
+function formLayout(metadata: GeneratorMetadata | undefined) {
+  const declared = metadata?.layout ?? {
+    direction: "column" as const,
+    columns: 1,
+    gap: 16,
+  };
+  return serializeSemanticLayout({
+    ...declared,
+    modes: {
+      ...declared.modes,
+      compact: {
+        ...declared.modes?.compact,
+        columns: 1,
+      },
+    },
+  });
+}
+
+function groupNode(
+  input: GenerateSurfaceInput,
+  groupId: string,
+  group: LayoutGroupMetadata | undefined,
+  children: UINode[],
+  registry: ComponentRegistry,
+  constraints: DeveloperHardConstraints | undefined,
+): UINode {
+  const collapsed = group?.collapsed === true;
+  const component = chooseComponent(
+    registry,
+    undefined,
+    group?.component,
+    collapsed
+      ? ["Accordion", "Section", "Stack"]
+      : ["Section", "Stack", "Accordion"],
+    constraints,
+  );
+  const title = group?.title ?? labelFor(groupId, { type: "object" });
+  const props: Record<string, JsonValue> =
+    component === "Stack"
+      ? {}
+      : {
+          title,
+          ...(component === "Accordion" ? { label: title, collapsed } : {}),
+          ...(component !== "Section" || group?.description === undefined
+            ? {}
+            : { description: group.description }),
+        };
+  return {
+    id: stableNodeId(input.surfaceId, `group.${groupId}`),
+    stableId: `${input.surfaceId}.group.${groupId}`,
+    component,
+    props,
+    layout: serializeSemanticLayout(
+      group?.layout ?? { direction: "column", gap: 12 },
+    ),
+    children,
+  };
 }
 
 function applySchemaDefaults(
@@ -305,6 +372,43 @@ function generateForm(
     ["Form"],
     constraints,
   );
+  const fields = sortedProperties(input.schema, "", metadata)
+    .map(([name, schema]) => ({
+      name,
+      group: metadata?.fields?.[name]?.group,
+      node: createFieldNode(
+        input.surfaceId,
+        name,
+        name,
+        schema,
+        input.schema.required?.includes(name) ?? false,
+        metadata,
+        constraints,
+        registry,
+      ),
+    }))
+    .filter(
+      (field): field is typeof field & { node: UINode } =>
+        field.node !== undefined,
+    );
+  const emittedGroups = new Set<string>();
+  const children = fields.flatMap((field) => {
+    if (field.group === undefined) return [field.node];
+    if (emittedGroups.has(field.group)) return [];
+    emittedGroups.add(field.group);
+    return [
+      groupNode(
+        input,
+        field.group,
+        metadata?.groups?.[field.group],
+        fields
+          .filter((candidate) => candidate.group === field.group)
+          .map((candidate) => candidate.node),
+        registry,
+        constraints,
+      ),
+    ];
+  });
   return {
     id: stableNodeId(input.surfaceId, "root"),
     stableId: `${input.surfaceId}.root`,
@@ -315,20 +419,8 @@ function generateForm(
         ? {}
         : { description: metadata.description }),
     },
-    children: sortedProperties(input.schema, "", metadata)
-      .map(([name, schema]) =>
-        createFieldNode(
-          input.surfaceId,
-          name,
-          name,
-          schema,
-          input.schema.required?.includes(name) ?? false,
-          metadata,
-          constraints,
-          registry,
-        ),
-      )
-      .filter((child): child is UINode => child !== undefined),
+    layout: formLayout(metadata),
+    children,
   };
 }
 
