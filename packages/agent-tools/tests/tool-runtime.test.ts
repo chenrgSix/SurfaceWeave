@@ -71,6 +71,28 @@ describe("ToolToUIRuntime", () => {
     expect(surfaces.getSurface("orphan-form")).toBeUndefined();
   });
 
+  it("preflights empty invocation metadata without leaving a Surface", () => {
+    const { runtime, surfaces } = runtimeFixture();
+
+    expect(() =>
+      runtime.createToolSurface({
+        toolId: "order.create",
+        surfaceId: "empty-invocation-form",
+        invocationId: "",
+      }),
+    ).toThrow(/Invocation id cannot be empty/);
+    expect(surfaces.getSurface("empty-invocation-form")).toBeUndefined();
+
+    expect(() =>
+      runtime.createToolSurface({
+        toolId: "order.create",
+        surfaceId: "empty-correlation-form",
+        correlationId: "",
+      }),
+    ).toThrow(/correlationId cannot be empty/);
+    expect(surfaces.getSurface("empty-correlation-form")).toBeUndefined();
+  });
+
   it("isolates event and request listener failures", () => {
     const components = createStandardComponentRegistry();
     const surfaces = new InMemorySurfaceStore(components);

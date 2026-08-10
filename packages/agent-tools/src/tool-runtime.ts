@@ -265,6 +265,12 @@ export class ToolToUIRuntime {
     }
     let nextInvocationSequence = this.#invocationSequence;
     let invocationId = input.invocationId;
+    if (invocationId !== undefined && invocationId.trim() === "") {
+      throw new DynamicUIError(
+        "INVALID_INVOCATION_TRANSITION",
+        "Invocation id cannot be empty",
+      );
+    }
     if (invocationId === undefined) {
       do {
         nextInvocationSequence += 1;
@@ -277,6 +283,12 @@ export class ToolToUIRuntime {
       );
     }
     const correlationId = input.correlationId ?? invocationId;
+    if (correlationId.trim() === "") {
+      throw new DynamicUIError(
+        "INVALID_INVOCATION_TRANSITION",
+        "Invocation correlationId cannot be empty",
+      );
+    }
     const generated = generateToolSurface(
       {
         definition,

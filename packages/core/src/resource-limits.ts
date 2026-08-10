@@ -10,7 +10,7 @@ export const defaultSurfaceResourceLimits: SurfaceResourceLimits = {
   maxNodes: 2_000,
   maxTreeDepth: 64,
   maxOperationsPerBatch: 100,
-  maxJsonDepth: 64,
+  maxJsonDepth: 128,
   maxJsonValues: 50_000,
   maxStringLength: 100_000,
 };
