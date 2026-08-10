@@ -29,10 +29,20 @@ export { DynamicUIError } from "./errors.js";
 export type { DynamicUIErrorCode } from "./errors.js";
 export { applyOperationsToSurface, validateSurface } from "./operations.js";
 export {
+  assertOperationResourceLimits,
+  assertSurfaceResourceLimits,
+  defaultSurfaceResourceLimits,
+  resolveSurfaceResourceLimits,
+} from "./resource-limits.js";
+export {
   assertMatchesJsonSchema,
   assertValidJsonSchema,
 } from "./json-schema.js";
 export { InMemorySurfaceStore } from "./surface-store.js";
+export type {
+  InMemorySurfaceStoreOptions,
+  SurfaceListenerErrorHandler,
+} from "./surface-store.js";
 export { InMemoryToolInvocationStore } from "./tool-invocation.js";
 export { InMemoryToolRegistry, parseToolDefinition } from "./tool-registry.js";
 export {

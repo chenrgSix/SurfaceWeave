@@ -53,6 +53,127 @@ function runtimeFixture() {
 }
 
 describe("ToolToUIRuntime", () => {
+  it("preflights duplicate invocation ids without leaving an orphan Surface", () => {
+    const { runtime, surfaces } = runtimeFixture();
+    runtime.createToolSurface({
+      toolId: "order.create",
+      surfaceId: "first-form",
+      invocationId: "shared-invocation",
+    });
+
+    expect(() =>
+      runtime.createToolSurface({
+        toolId: "order.create",
+        surfaceId: "orphan-form",
+        invocationId: "shared-invocation",
+      }),
+    ).toThrowError(expect.objectContaining({ code: "INVOCATION_EXISTS" }));
+    expect(surfaces.getSurface("orphan-form")).toBeUndefined();
+  });
+
+  it("isolates event and request listener failures", () => {
+    const components = createStandardComponentRegistry();
+    const surfaces = new InMemorySurfaceStore(components);
+    const listenerErrors: Array<{ channel: string; message: string }> = [];
+    const runtime = new ToolToUIRuntime(components, surfaces, {
+      onListenerError(error, channel) {
+        listenerErrors.push({
+          channel,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      },
+    });
+    runtime.registerTool({
+      id: "safe.read",
+      version: "1.0.0",
+      inputSchema: { type: "object" },
+    });
+    runtime.subscribe(() => {
+      throw new Error("event observer failed");
+    });
+    const healthyEventListener = vi.fn();
+    runtime.subscribe(healthyEventListener);
+    runtime.onInvocationRequested(() => {
+      throw new Error("request observer failed");
+    });
+    const healthyRequestListener = vi.fn();
+    runtime.onInvocationRequested(healthyRequestListener);
+    const created = runtime.createToolSurface({
+      toolId: "safe.read",
+      surfaceId: "safe-form",
+    });
+
+    const outcome = runtime.handleAction(
+      action(created.surface.id, "tool.submit", created.invocation.id),
+    );
+
+    expect(outcome.kind).toBe("invocation-requested");
+    expect(healthyEventListener).toHaveBeenCalled();
+    expect(healthyRequestListener).toHaveBeenCalledOnce();
+    expect(listenerErrors).toEqual(
+      expect.arrayContaining([
+        { channel: "event", message: "event observer failed" },
+        { channel: "request", message: "request observer failed" },
+      ]),
+    );
+  });
+
+  it("rejects an out-of-order result without creating result state", () => {
+    const { runtime, surfaces } = runtimeFixture();
+    const created = runtime.createToolSurface({
+      toolId: "order.create",
+      surfaceId: "early-result-form",
+    });
+
+    expect(() =>
+      runtime.resolveInvocation(created.invocation.id, { orderId: "early" }),
+    ).toThrowError(
+      expect.objectContaining({ code: "INVALID_INVOCATION_TRANSITION" }),
+    );
+    expect(runtime.getRawResult(created.invocation.id)).toBeUndefined();
+    expect(
+      surfaces.getSurface(`${created.surface.id}--result-0`),
+    ).toBeUndefined();
+  });
+
+  it("releases Runtime-owned Surface subscriptions", () => {
+    const components = createStandardComponentRegistry();
+    const surfaces = new InMemorySurfaceStore(components);
+    const originalSubscribe = surfaces.subscribe.bind(surfaces);
+    let activeSubscriptions = 0;
+    vi.spyOn(surfaces, "subscribe").mockImplementation(
+      (surfaceId, listener) => {
+        activeSubscriptions += 1;
+        const unsubscribe = originalSubscribe(surfaceId, listener);
+        return () => {
+          activeSubscriptions -= 1;
+          unsubscribe();
+        };
+      },
+    );
+    const runtime = new ToolToUIRuntime(components, surfaces);
+    runtime.registerTool({
+      id: "safe.read",
+      version: "1.0.0",
+      inputSchema: { type: "object" },
+    });
+    const first = runtime.createToolSurface({
+      toolId: "safe.read",
+      surfaceId: "first-release-form",
+    });
+    runtime.createToolSurface({
+      toolId: "safe.read",
+      surfaceId: "second-release-form",
+    });
+    expect(activeSubscriptions).toBe(2);
+
+    runtime.disposeInvocation(first.invocation.id);
+    expect(activeSubscriptions).toBe(1);
+    runtime.dispose();
+    runtime.dispose();
+    expect(activeSubscriptions).toBe(0);
+  });
+
   it("validates, confirms, redacts events, and emits a host request without executing it", () => {
     const { runtime, surfaces } = runtimeFixture();
     const events: ToolRuntimeEvent[] = [];

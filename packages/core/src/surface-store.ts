@@ -7,6 +7,7 @@ import {
 import { migrateSurfaceData } from "./data-migration.js";
 import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
+import { resolveSurfaceResourceLimits } from "./resource-limits.js";
 import type {
   ComponentRegistry,
   DataBinding,
@@ -14,12 +15,24 @@ import type {
   Surface,
   SurfaceEvent,
   SurfaceListener,
+  SurfaceResourceLimits,
   SurfaceStore,
   UIOperation,
 } from "./types.js";
 
 type SurfaceInput = Omit<Surface, "revision"> & { revision?: number };
 type SurfaceReplacement = Omit<Surface, "id" | "revision">;
+
+export type SurfaceListenerErrorHandler = (
+  error: unknown,
+  event: SurfaceEvent,
+  surface: Surface,
+) => void;
+
+export interface InMemorySurfaceStoreOptions {
+  limits?: Partial<SurfaceResourceLimits>;
+  onListenerError?: SurfaceListenerErrorHandler;
+}
 
 function assertRevision(surface: Surface, baseRevision: number): void {
   if (surface.revision !== baseRevision) {
@@ -36,10 +49,17 @@ export class InMemorySurfaceStore implements SurfaceStore {
   readonly #registry: ComponentRegistry;
   readonly #surfaces = new Map<string, Surface>();
   readonly #listeners = new Map<string, Set<SurfaceListener>>();
+  readonly #limits: SurfaceResourceLimits;
+  readonly #onListenerError: SurfaceListenerErrorHandler | undefined;
   #sequence = 0;
 
-  constructor(registry: ComponentRegistry) {
+  constructor(
+    registry: ComponentRegistry,
+    options: InMemorySurfaceStoreOptions = {},
+  ) {
     this.#registry = registry;
+    this.#limits = resolveSurfaceResourceLimits(options.limits);
+    this.#onListenerError = options.onListenerError;
   }
 
   createSurface(input: SurfaceInput): Surface {
@@ -49,11 +69,12 @@ export class InMemorySurfaceStore implements SurfaceStore {
         `Surface "${input.id}" already exists`,
       );
     }
-    const surface: Surface = {
-      ...cloneValue(input),
+    const candidate: Surface = {
+      ...input,
       revision: 0,
     };
-    validateSurface(surface, this.#registry);
+    validateSurface(candidate, this.#registry, this.#limits);
+    const surface = cloneValue(candidate);
     this.#surfaces.set(surface.id, surface);
     this.#publish(surface.id, {
       type: "surface.created",
@@ -102,7 +123,12 @@ export class InMemorySurfaceStore implements SurfaceStore {
   ): Surface {
     const current = this.#current(surfaceId);
     assertRevision(current, baseRevision);
-    const next = applyOperationsToSurface(current, operations, this.#registry);
+    const next = applyOperationsToSurface(
+      current,
+      operations,
+      this.#registry,
+      this.#limits,
+    );
     next.revision = current.revision + 1;
     this.#surfaces.set(surfaceId, next);
     this.#publish(surfaceId, {
@@ -151,6 +177,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
       }
       writeDataPath(next.data, change.path, change.value);
     }
+    validateSurface(next, this.#registry, this.#limits);
     next.revision = current.revision + 1;
     this.#surfaces.set(surfaceId, next);
     this.#publish(surfaceId, {
@@ -170,12 +197,13 @@ export class InMemorySurfaceStore implements SurfaceStore {
   ): Surface {
     const current = this.#current(surfaceId);
     assertRevision(current, baseRevision);
-    const next: Surface = {
-      ...cloneValue(replacement),
+    const candidate: Surface = {
+      ...replacement,
       id: surfaceId,
       revision: current.revision + 1,
     };
-    validateSurface(next, this.#registry);
+    validateSurface(candidate, this.#registry, this.#limits);
+    const next = cloneValue(candidate);
     const migrated = migrateSurfaceData(current, next);
     next.data = migrated.surface.data;
     this.#surfaces.set(surfaceId, next);
@@ -213,7 +241,25 @@ export class InMemorySurfaceStore implements SurfaceStore {
       return;
     }
     for (const listener of this.#listeners.get(surfaceId) ?? []) {
-      listener(cloneValue(event), cloneValue(surface));
+      try {
+        listener(cloneValue(event), cloneValue(surface));
+      } catch (error) {
+        try {
+          this.#onListenerError?.(
+            error,
+            cloneValue(event),
+            cloneValue(surface),
+          );
+        } catch {
+          // Observer error reporting must never change committed Store state.
+        }
+      }
     }
+  }
+
+  /** Releases every in-memory Surface and subscription owned by this Store. */
+  dispose(): void {
+    this.#listeners.clear();
+    this.#surfaces.clear();
   }
 }

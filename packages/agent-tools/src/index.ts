@@ -13,6 +13,8 @@ export type {
   ResolveInvocationOptions,
   ToolActionOutcome,
   ToolExecutionError,
+  ToolRuntimeListenerErrorHandler,
   ToolRuntimeListener,
+  ToolToUIRuntimeOptions,
 } from "./tool-runtime.js";
 export type * from "./types.js";

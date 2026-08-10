@@ -5,6 +5,79 @@ import type { DynamicUIError, Surface } from "../src/index.js";
 import { createFormSurface, createRegistry } from "./fixtures.js";
 
 describe("InMemorySurfaceStore", () => {
+  it("isolates observer failures after a committed update", () => {
+    const observerErrors: unknown[] = [];
+    const store = new InMemorySurfaceStore(createRegistry(), {
+      onListenerError(error) {
+        observerErrors.push(error);
+      },
+    });
+    const surface = store.createSurface(createFormSurface());
+    const healthyListener = vi.fn();
+    store.subscribe(surface.id, () => {
+      throw new Error("observer failed");
+    });
+    store.subscribe(surface.id, healthyListener);
+
+    const updated = store.updateData(surface.id, surface.revision, [
+      { path: "purchase.name", value: "Lin" },
+    ]);
+
+    expect(updated.revision).toBe(1);
+    expect(store.requireSurface(surface.id).revision).toBe(1);
+    expect(healthyListener).toHaveBeenCalledOnce();
+    expect(observerErrors).toEqual([expect.any(Error)]);
+  });
+
+  it("rejects resource limits before changing Store state", () => {
+    const store = new InMemorySurfaceStore(createRegistry(), {
+      limits: { maxNodes: 2, maxOperationsPerBatch: 1 },
+    });
+    expect(() => store.createSurface(createFormSurface())).toThrowError(
+      expect.objectContaining<Partial<DynamicUIError>>({
+        code: "RESOURCE_LIMIT_EXCEEDED",
+      }),
+    );
+    expect(store.getSurface("purchase")).toBeUndefined();
+
+    const operationStore = new InMemorySurfaceStore(createRegistry(), {
+      limits: { maxOperationsPerBatch: 1 },
+    });
+    const surface = operationStore.createSurface(createFormSurface());
+    expect(() =>
+      operationStore.applyOperations(surface.id, surface.revision, [
+        {
+          type: "setVisibility",
+          target: "purchase.name",
+          visible: false,
+        },
+        {
+          type: "setVisibility",
+          target: "purchase.remark",
+          visible: false,
+        },
+      ]),
+    ).toThrowError(
+      expect.objectContaining<Partial<DynamicUIError>>({
+        code: "RESOURCE_LIMIT_EXCEEDED",
+      }),
+    );
+    expect(operationStore.requireSurface(surface.id)).toEqual(surface);
+  });
+
+  it("disposes in-memory state and subscriptions idempotently", () => {
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(createFormSurface());
+    const listener = vi.fn();
+    store.subscribe(surface.id, listener);
+
+    store.dispose();
+    store.dispose();
+
+    expect(store.getSurface(surface.id)).toBeUndefined();
+    expect(() => store.requireSurface(surface.id)).toThrow(/does not exist/);
+  });
+
   it("does not modify a surface when any operation in a batch is invalid", () => {
     const store = new InMemorySurfaceStore(createRegistry());
     const before = store.createSurface(createFormSurface());

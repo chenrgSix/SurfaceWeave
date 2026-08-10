@@ -118,6 +118,16 @@ export interface Surface {
   presentation?: SurfacePresentation;
 }
 
+/** Host-configurable guardrails for untrusted Surface and Operation payloads. */
+export interface SurfaceResourceLimits {
+  maxNodes: number;
+  maxTreeDepth: number;
+  maxOperationsPerBatch: number;
+  maxJsonDepth: number;
+  maxJsonValues: number;
+  maxStringLength: number;
+}
+
 export type NodePosition = "first" | "last" | number;
 
 export interface MoveNodeOperation {

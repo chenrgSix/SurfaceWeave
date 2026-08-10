@@ -59,6 +59,18 @@ export type InvocationRequestListener = (
   request: ToolSubmissionRequest,
 ) => void;
 
+export type ToolRuntimeListenerErrorHandler = (
+  error: unknown,
+  channel: "event" | "request",
+  payload: ToolRuntimeEvent | ToolSubmissionRequest,
+) => void;
+
+export interface ToolToUIRuntimeOptions {
+  tools?: ToolRegistry;
+  invocations?: ToolInvocationStore;
+  onListenerError?: ToolRuntimeListenerErrorHandler;
+}
+
 export interface ToolExecutionError extends ActionError {
   retryable?: boolean;
 }
@@ -190,20 +202,23 @@ export class ToolToUIRuntime {
   >();
   readonly #listeners = new Set<ToolRuntimeListener>();
   readonly #requestListeners = new Set<InvocationRequestListener>();
+  readonly #surfaceSubscriptions = new Map<string, () => void>();
   readonly #rawResults = new Map<string, JsonValue>();
+  readonly #onListenerError: ToolRuntimeListenerErrorHandler | undefined;
   #sequence = 0;
   #invocationSequence = 0;
 
   constructor(
     components: ComponentRegistry,
     surfaces: SurfaceStore,
-    options: { tools?: ToolRegistry; invocations?: ToolInvocationStore } = {},
+    options: ToolToUIRuntimeOptions = {},
   ) {
     this.#components = components;
     this.#surfaces = surfaces;
     this.#tools = options.tools ?? new InMemoryToolRegistry();
     this.#invocations =
       options.invocations ?? new InMemoryToolInvocationStore();
+    this.#onListenerError = options.onListenerError;
   }
 
   registerTool(definition: ToolDefinition): void {
@@ -242,9 +257,25 @@ export class ToolToUIRuntime {
     surface: Surface;
   } {
     const definition = this.#tools.require(input.toolId, input.toolVersion);
-    this.#invocationSequence += 1;
-    const invocationId =
-      input.invocationId ?? `invocation-${this.#invocationSequence}`;
+    if (this.#surfaces.getSurface(input.surfaceId) !== undefined) {
+      throw new DynamicUIError(
+        "SURFACE_EXISTS",
+        `Surface "${input.surfaceId}" already exists`,
+      );
+    }
+    let nextInvocationSequence = this.#invocationSequence;
+    let invocationId = input.invocationId;
+    if (invocationId === undefined) {
+      do {
+        nextInvocationSequence += 1;
+        invocationId = `invocation-${nextInvocationSequence}`;
+      } while (this.#invocations.get(invocationId) !== undefined);
+    } else if (this.#invocations.get(invocationId) !== undefined) {
+      throw new DynamicUIError(
+        "INVOCATION_EXISTS",
+        `Invocation "${invocationId}" already exists`,
+      );
+    }
     const correlationId = input.correlationId ?? invocationId;
     const generated = generateToolSurface(
       {
@@ -272,19 +303,21 @@ export class ToolToUIRuntime {
       correlationId,
       status: "editing",
     });
+    this.#invocationSequence = nextInvocationSequence;
     this.#surfaceInvocations.set(surface.id, invocation.id);
     const readOnly = new Map<string, JsonValue | undefined>();
     for (const path of collectReadOnlyPaths(definition.inputSchema)) {
       readOnly.set(path, cloneValue(readDataPath(surface.data, path)));
     }
     this.#initialReadOnly.set(invocation.id, readOnly);
-    this.#surfaces.subscribe(surface.id, (event) => {
+    const unsubscribe = this.#surfaces.subscribe(surface.id, (event) => {
       if (event.type === "surface.dataChanged") {
         this.#publish(invocation.id, "tool.inputChanged", {
           surfaceId: surface.id,
         });
       }
     });
+    this.#surfaceSubscriptions.set(surface.id, unsubscribe);
     this.#publish(invocation.id, "tool.surfaceCreated", {
       surfaceId: surface.id,
     });
@@ -365,6 +398,12 @@ export class ToolToUIRuntime {
     options: ResolveInvocationOptions = {},
   ): ToolInvocation {
     const current = this.#invocations.require(invocationId);
+    if (current.status !== "submitting") {
+      throw new DynamicUIError(
+        "INVALID_INVOCATION_TRANSITION",
+        `Invocation "${invocationId}" cannot resolve while ${current.status}`,
+      );
+    }
     const definition = this.#tools.require(current.toolId, current.toolVersion);
     if (definition.outputSchema !== undefined) {
       assertMatchesJsonSchema(
@@ -374,7 +413,6 @@ export class ToolToUIRuntime {
         "TOOL_OUTPUT_INVALID",
       );
     }
-    this.#rawResults.set(invocationId, cloneValue(result));
     const resultSurface = this.#createResultSurface(
       current,
       result,
@@ -385,6 +423,7 @@ export class ToolToUIRuntime {
     const invocation = this.#invocations.transition(invocationId, "success", {
       resultSurfaceId: resultSurface.id,
     });
+    this.#rawResults.set(invocationId, cloneValue(result));
     this.#setSubmitting(invocation.sourceSurfaceId, false);
     this.#publish(invocationId, "tool.invocationSucceeded", {
       resultSurfaceId: resultSurface.id,
@@ -401,6 +440,12 @@ export class ToolToUIRuntime {
     error: ToolExecutionError,
   ): ToolInvocation {
     const current = this.#invocations.require(invocationId);
+    if (current.status !== "submitting") {
+      throw new DynamicUIError(
+        "INVALID_INVOCATION_TRANSITION",
+        `Invocation "${invocationId}" cannot fail while ${current.status}`,
+      );
+    }
     const definition = this.#tools.require(current.toolId, current.toolVersion);
     const retryable =
       error.retryable !== false && definition.annotations?.retry === "safe";
@@ -665,8 +710,13 @@ export class ToolToUIRuntime {
         definition.annotations?.sensitiveInputPaths ?? [],
       ),
     });
-    for (const listener of this.#requestListeners)
-      listener(cloneValue(request));
+    for (const listener of this.#requestListeners) {
+      try {
+        listener(cloneValue(request));
+      } catch (error) {
+        this.#reportListenerError(error, "request", request);
+      }
+    }
     return { kind: "invocation-requested", invocation, request };
   }
 
@@ -770,7 +820,50 @@ export class ToolToUIRuntime {
   }
 
   #emit(event: ToolRuntimeEvent): void {
-    for (const listener of this.#listeners) listener(cloneValue(event));
+    for (const listener of this.#listeners) {
+      try {
+        listener(cloneValue(event));
+      } catch (error) {
+        this.#reportListenerError(error, "event", event);
+      }
+    }
+  }
+
+  #reportListenerError(
+    error: unknown,
+    channel: "event" | "request",
+    payload: ToolRuntimeEvent | ToolSubmissionRequest,
+  ): void {
+    try {
+      this.#onListenerError?.(error, channel, cloneValue(payload));
+    } catch {
+      // Error reporting is observational and must not alter Runtime state.
+    }
+  }
+
+  /** Releases subscriptions and transient data for one completed host interaction. */
+  disposeInvocation(invocationId: string): void {
+    this.#invocations.require(invocationId);
+    for (const [surfaceId, mappedInvocationId] of this.#surfaceInvocations) {
+      if (mappedInvocationId !== invocationId) continue;
+      this.#surfaceSubscriptions.get(surfaceId)?.();
+      this.#surfaceSubscriptions.delete(surfaceId);
+      this.#surfaceInvocations.delete(surfaceId);
+    }
+    this.#initialReadOnly.delete(invocationId);
+    this.#rawResults.delete(invocationId);
+  }
+
+  /** Releases every listener and transient association owned by this Runtime. */
+  dispose(): void {
+    for (const unsubscribe of this.#surfaceSubscriptions.values())
+      unsubscribe();
+    this.#surfaceSubscriptions.clear();
+    this.#surfaceInvocations.clear();
+    this.#initialReadOnly.clear();
+    this.#rawResults.clear();
+    this.#listeners.clear();
+    this.#requestListeners.clear();
   }
 
   #nextSequence(): number {

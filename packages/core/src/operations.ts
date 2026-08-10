@@ -8,10 +8,16 @@ import {
   walkNodes,
 } from "./data.js";
 import { DynamicUIError } from "./errors.js";
+import {
+  assertOperationResourceLimits,
+  assertSurfaceResourceLimits,
+  resolveSurfaceResourceLimits,
+} from "./resource-limits.js";
 import type {
   ComponentRegistry,
   NodePosition,
   Surface,
+  SurfaceResourceLimits,
   UINode,
   UIOperation,
 } from "./types.js";
@@ -196,7 +202,10 @@ function applyOperation(root: UINode, operation: UIOperation): void {
 export function validateSurface(
   surface: Surface,
   registry: ComponentRegistry,
+  resourceLimits: Partial<SurfaceResourceLimits> = {},
 ): void {
+  const limits = resolveSurfaceResourceLimits(resourceLimits);
+  assertSurfaceResourceLimits(surface, limits);
   if (surface.id.trim() === "") {
     throw new DynamicUIError("INVALID_SURFACE", "Surface id cannot be empty");
   }
@@ -273,6 +282,7 @@ export function applyOperationsToSurface(
   surface: Surface,
   operations: UIOperation[],
   registry: ComponentRegistry,
+  resourceLimits: Partial<SurfaceResourceLimits> = {},
 ): Surface {
   if (operations.length === 0) {
     throw new DynamicUIError(
@@ -280,10 +290,12 @@ export function applyOperationsToSurface(
       "At least one operation is required",
     );
   }
+  const limits = resolveSurfaceResourceLimits(resourceLimits);
+  assertOperationResourceLimits(operations, limits);
   const candidate = cloneValue(surface);
   for (const operation of operations) {
     applyOperation(candidate.tree, operation);
   }
-  validateSurface(candidate, registry);
+  validateSurface(candidate, registry, limits);
   return candidate;
 }
