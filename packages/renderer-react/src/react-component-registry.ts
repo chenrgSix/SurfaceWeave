@@ -20,6 +20,47 @@ export interface ReactComponentPackValidationResult {
   errors: string[];
 }
 
+function normalizedRecord(
+  record: Record<string, number> | undefined,
+): Array<[string, number]> {
+  return Object.entries(record ?? {}).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
+}
+
+function normalizedVersions(
+  record: Record<string, string[]> | undefined,
+): Array<[string, string[]]> {
+  return Object.entries(record ?? {})
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, versions]) => [key, [...versions].sort()]);
+}
+
+function resolutionCacheKey(
+  type: string,
+  options: Omit<ComponentResolutionRequest, "semanticType" | "rendererKind">,
+  availablePackIds: string[],
+): string {
+  return JSON.stringify({
+    type,
+    preferredPack: options.preferredPack ?? null,
+    capabilities: [...(options.capabilities ?? [])].sort(),
+    packPriorities: normalizedRecord(options.packPriorities),
+    supportedPackVersions: normalizedVersions(options.supportedPackVersions),
+    availablePackIds: [...availablePackIds].sort(),
+  });
+}
+
+function copyResolution(
+  value: ReactComponentResolution,
+): ReactComponentResolution {
+  return {
+    component: value.component,
+    ...(value.Provider === undefined ? {} : { Provider: value.Provider }),
+    resolution: cloneValue(value.resolution),
+  };
+}
+
 /** Validates manifest/binding completeness without exposing React to Core. */
 export function validateReactComponentPack(
   pack: ReactComponentPack,
@@ -64,6 +105,7 @@ export function validateReactComponentPack(
 export class ReactComponentRegistry {
   readonly #legacyComponents = new Map<string, ReactRendererComponent>();
   readonly #packs = new Map<string, ReactComponentPack>();
+  readonly #resolutionCache = new Map<string, ReactComponentResolution>();
   readonly #trustedComponents: ComponentRegistry;
   readonly #resolver: ComponentPackResolver;
 
@@ -82,6 +124,7 @@ export class ReactComponentRegistry {
       );
     }
     this.#legacyComponents.set(type, component);
+    this.#resolutionCache.clear();
   }
 
   registerPack(pack: ReactComponentPack): void {
@@ -107,6 +150,7 @@ export class ReactComponentRegistry {
       manifest: cloneValue(pack.manifest),
       bindings: { ...pack.bindings },
     });
+    this.#resolutionCache.clear();
   }
 
   has(type: string): boolean {
@@ -130,7 +174,6 @@ export class ReactComponentRegistry {
       "semanticType" | "rendererKind"
     > = {},
   ): ReactComponentResolution {
-    this.#trustedComponents.require(type);
     const legacy = this.#legacyComponents.get(type);
     if (legacy !== undefined) {
       return {
@@ -146,11 +189,16 @@ export class ReactComponentRegistry {
         },
       };
     }
+    const availablePackIds =
+      options.availablePackIds ?? [...this.#packs.keys()].sort();
+    const cacheKey = resolutionCacheKey(type, options, availablePackIds);
+    const cached = this.#resolutionCache.get(cacheKey);
+    if (cached !== undefined) return copyResolution(cached);
+    this.#trustedComponents.require(type);
     const resolution = this.#resolver.resolve({
       semanticType: type,
       rendererKind: "react",
-      availablePackIds:
-        options.availablePackIds ?? [...this.#packs.keys()].sort(),
+      availablePackIds,
       ...options,
     });
     const pack = this.#packs.get(resolution.packId);
@@ -161,11 +209,13 @@ export class ReactComponentRegistry {
         `Resolved React pack "${resolution.packId}" has no binding for "${resolution.resolvedSemanticType}"`,
       );
     }
-    return {
+    const result: ReactComponentResolution = {
       component,
       ...(pack.Provider === undefined ? {} : { Provider: pack.Provider }),
       resolution,
     };
+    this.#resolutionCache.set(cacheKey, result);
+    return copyResolution(result);
   }
 
   listPacks(): ReactComponentPack["manifest"][] {
