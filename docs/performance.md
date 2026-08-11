@@ -71,3 +71,9 @@ resource policy enforcement, and Core's framework independence. Existing
 custom `SurfaceStore` implementations must keep compiling and receive a
 compatible fallback path when optional optimized observation capabilities are
 not present.
+
+`InMemorySurfaceStore` exposes that optimization through the separate
+`SurfaceObservationSource` capability. Capability consumers receive shared,
+deeply frozen snapshots and event-only notifications, while the stable
+`SurfaceStore.subscribe()` API continues to provide a separate mutable event
+and Surface copy to every listener.

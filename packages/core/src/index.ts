@@ -46,6 +46,7 @@ export {
   splitDataPath,
   walkNodes,
   writeDataPath,
+  writeDataPathImmutable,
 } from "./data.js";
 export { migrateSurfaceData } from "./data-migration.js";
 export { DynamicUIError } from "./errors.js";
@@ -77,6 +78,17 @@ export type {
   InMemorySurfaceStoreOptions,
   SurfaceListenerErrorHandler,
 } from "./surface-store.js";
+export {
+  getSurfaceObservationSource,
+  surfaceObservation,
+} from "./surface-observation.js";
+export type {
+  SurfaceObservationEvent,
+  SurfaceObservationListener,
+  SurfaceObservationProvider,
+  SurfaceObservationSource,
+  SurfaceSnapshot,
+} from "./surface-observation.js";
 export { InMemoryToolInvocationStore } from "./tool-invocation.js";
 export { InMemoryToolRegistry, parseToolDefinition } from "./tool-registry.js";
 export {

@@ -1,4 +1,9 @@
-import { bindingValueTypeMatches, cloneValue, writeDataPath } from "./data.js";
+import {
+  bindingValueTypeMatches,
+  cloneValue,
+  deepFreezeValue,
+  writeDataPathImmutable,
+} from "./data.js";
 import { migrateSurfaceData } from "./data-migration.js";
 import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
@@ -6,9 +11,18 @@ import {
   createSurfaceResourcePolicySummary,
   resolveSurfaceResourcePolicy,
 } from "./resource-limits.js";
-import { buildSurfaceIndex } from "./surface-index.js";
+import {
+  buildSurfaceIndex,
+  findAffectedBindingNodeIds,
+} from "./surface-index.js";
+import { surfaceObservation } from "./surface-observation.js";
 import type { SurfaceResourcePolicySummary } from "./client-capabilities.js";
 import type { SurfaceIndex } from "./surface-index.js";
+import type {
+  SurfaceObservationListener,
+  SurfaceObservationSource,
+  SurfaceSnapshot,
+} from "./surface-observation.js";
 import type {
   ComponentRegistry,
   DataChange,
@@ -57,9 +71,22 @@ export class InMemorySurfaceStore implements SurfaceStore {
   readonly #registry: ComponentRegistry;
   readonly #surfaces = new Map<string, StoredSurface>();
   readonly #listeners = new Map<string, Set<SurfaceListener>>();
+  readonly #observationListeners = new Map<
+    string,
+    Set<SurfaceObservationListener>
+  >();
   readonly #resourcePolicy: SurfaceResourcePolicy | undefined;
   readonly #onListenerError: SurfaceListenerErrorHandler | undefined;
   #sequence = 0;
+
+  readonly [surfaceObservation]: SurfaceObservationSource = {
+    getSnapshot: (surfaceId) =>
+      this.#current(surfaceId).surface as SurfaceSnapshot,
+    selectAffectedNodeIds: (surfaceId, changedPaths) =>
+      findAffectedBindingNodeIds(this.#current(surfaceId).index, changedPaths),
+    subscribe: (surfaceId, listener) =>
+      this.#subscribeToObservations(surfaceId, listener),
+  };
 
   constructor(
     registry: ComponentRegistry,
@@ -93,10 +120,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     };
     validateSurface(candidate, this.#registry, this.#resourcePolicy);
     const surface = cloneValue(candidate);
-    this.#surfaces.set(surface.id, {
-      surface,
-      index: buildSurfaceIndex(surface),
-    });
+    this.#commit(surface);
     this.#publish(surface.id, {
       type: "surface.created",
       sequence: this.#nextSequence(),
@@ -151,10 +175,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
       this.#resourcePolicy,
     );
     next.revision = current.revision + 1;
-    this.#surfaces.set(surfaceId, {
-      surface: next,
-      index: buildSurfaceIndex(next),
-    });
+    this.#commit(next);
     this.#publish(surfaceId, {
       type: "surface.operationsApplied",
       sequence: this.#nextSequence(),
@@ -179,7 +200,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     const stored = this.#current(surfaceId);
     const { surface: current, index } = stored;
     assertRevision(current, baseRevision);
-    const next = cloneValue(current);
+    let data = current.data;
     for (const change of changes) {
       const bindings = index.bindingsByPath.get(change.path);
       if (bindings === undefined) {
@@ -196,14 +217,12 @@ export class InMemorySurfaceStore implements SurfaceStore {
           );
         }
       }
-      writeDataPath(next.data, change.path, change.value);
+      data = writeDataPathImmutable(data, change.path, change.value);
     }
+    const next: Surface = { ...current, data };
     validateSurface(next, this.#registry, this.#resourcePolicy);
     next.revision = current.revision + 1;
-    this.#surfaces.set(surfaceId, {
-      surface: next,
-      index: buildSurfaceIndex(next),
-    });
+    this.#commit(next, index);
     this.#publish(surfaceId, {
       type: "surface.dataChanged",
       sequence: this.#nextSequence(),
@@ -231,10 +250,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     const migrated = migrateSurfaceData(current, next);
     next.data = migrated.surface.data;
     validateSurface(next, this.#registry, this.#resourcePolicy);
-    this.#surfaces.set(surfaceId, {
-      surface: next,
-      index: buildSurfaceIndex(next),
-    });
+    this.#commit(next);
     this.#publish(surfaceId, {
       type: "surface.replaced",
       sequence: this.#nextSequence(),
@@ -258,6 +274,28 @@ export class InMemorySurfaceStore implements SurfaceStore {
     return stored;
   }
 
+  #commit(surface: Surface, index = buildSurfaceIndex(surface)): void {
+    const committed = deepFreezeValue(surface) as Surface;
+    this.#surfaces.set(surface.id, { surface: committed, index });
+  }
+
+  #subscribeToObservations(
+    surfaceId: string,
+    listener: SurfaceObservationListener,
+  ): () => void {
+    const listeners =
+      this.#observationListeners.get(surfaceId) ??
+      new Set<SurfaceObservationListener>();
+    listeners.add(listener);
+    this.#observationListeners.set(surfaceId, listeners);
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) {
+        this.#observationListeners.delete(surfaceId);
+      }
+    };
+  }
+
   getResourcePolicySummary(): SurfaceResourcePolicySummary {
     return createSurfaceResourcePolicySummary(this.#resourcePolicy);
   }
@@ -273,9 +311,25 @@ export class InMemorySurfaceStore implements SurfaceStore {
       return;
     }
     const { surface } = stored;
+    const observationEvent = deepFreezeValue(event);
     for (const listener of this.#listeners.get(surfaceId) ?? []) {
       try {
         listener(cloneValue(event), cloneValue(surface));
+      } catch (error) {
+        try {
+          this.#onListenerError?.(
+            error,
+            cloneValue(event),
+            cloneValue(surface),
+          );
+        } catch {
+          // Observer error reporting must never change committed Store state.
+        }
+      }
+    }
+    for (const listener of this.#observationListeners.get(surfaceId) ?? []) {
+      try {
+        listener(observationEvent);
       } catch (error) {
         try {
           this.#onListenerError?.(
@@ -293,6 +347,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
   /** Releases every in-memory Surface and subscription owned by this Store. */
   dispose(): void {
     this.#listeners.clear();
+    this.#observationListeners.clear();
     this.#surfaces.clear();
   }
 }

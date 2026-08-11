@@ -113,6 +113,13 @@ RC.4 adds:
 - React `SurfaceRenderer`, `RendererComponentProps`, and the `./dom` Driver add
   optional read-only Action state without adding React DOM to the root entry.
 
+The performance read path additionally exports the separate optional
+`SurfaceObservationSource` capability, `surfaceObservation`, and
+`getSurfaceObservationSource()`. Its snapshots and events are deeply frozen
+and may be shared safely; `SurfaceStore` itself is unchanged, and legacy
+subscribers continue receiving independent mutable copies.
+`writeDataPathImmutable()` provides copy-on-write data updates.
+
 These APIs bound untrusted payload work, isolate observer failures from
 committed state, and release Runtime-owned subscriptions. Numeric resource
 limits are opt-in, so the existing Store constructor retains its accepted

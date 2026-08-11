@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { InMemorySurfaceStore, readDataPath } from "../src/index.js";
+import {
+  InMemorySurfaceStore,
+  getSurfaceObservationSource,
+  readDataPath,
+} from "../src/index.js";
 import type { DynamicUIError, Surface } from "../src/index.js";
 import { createFormSurface, createRegistry } from "./fixtures.js";
 
@@ -27,6 +31,49 @@ describe("InMemorySurfaceStore", () => {
     expect(store.requireSurface(surface.id).revision).toBe(1);
     expect(healthyListener).toHaveBeenCalledOnce();
     expect(observerErrors).toEqual([expect.any(Error)]);
+  });
+
+  it("offers shared immutable observations without changing legacy copies", () => {
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(createFormSurface());
+    const source = getSurfaceObservationSource(store);
+    if (source === undefined) throw new Error("Missing observation source");
+    const snapshot = source.getSnapshot(surface.id);
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.tree)).toBe(true);
+    expect(Object.isFrozen(snapshot.data.purchase)).toBe(true);
+    expect(() => {
+      (snapshot.data as { purchase: { name: string } }).purchase.name =
+        "mutated";
+    }).toThrow(TypeError);
+
+    const observedA: unknown[] = [];
+    const observedB: unknown[] = [];
+    source.subscribe(surface.id, (event) => observedA.push(event));
+    source.subscribe(surface.id, (event) => observedB.push(event));
+    let secondLegacySource = "";
+    store.subscribe(surface.id, (event, next) => {
+      if (event.type === "surface.dataChanged") {
+        event.changes.push({ path: "purchase.remark", value: "mutated" });
+      }
+      next.context.source = "mutated";
+    });
+    store.subscribe(surface.id, (_event, next) => {
+      secondLegacySource = next.context.source ?? "";
+    });
+
+    store.updateData(surface.id, surface.revision, [
+      { path: "purchase.name", value: "Lin" },
+    ]);
+
+    expect(observedA[0]).toBe(observedB[0]);
+    expect(Object.isFrozen(observedA[0])).toBe(true);
+    expect(secondLegacySource).toBe("test");
+    expect(store.requireSurface(surface.id).context.source).toBe("test");
+    expect(source.selectAffectedNodeIds(surface.id, ["purchase"])).toEqual([
+      "name-node",
+      "remark-node",
+    ]);
   });
 
   it("rejects resource limits before changing Store state", () => {
