@@ -92,7 +92,7 @@ toolRuntime.onInvocationRequested((request) => {
 export const searchFlow = toolRuntime.createToolSurface({
   toolId: searchTeaProducts.id,
   surfaceId: "tea-search-form",
-  initialValues: { kind: null, origin: null, maxPrice: null },
+  initialValues: {},
 });
 
 export function createSelectionSurface(): string {

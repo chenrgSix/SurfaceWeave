@@ -2,6 +2,8 @@ import type { ActionIntent } from "@surfaceweave/core";
 import { SurfaceRenderer, useSurface } from "@surfaceweave/react";
 import { useEffect, useState } from "react";
 
+import { openApiAcceptanceEvidence } from "./openapi-tools.js";
+
 import {
   applyAgentLayoutOperations,
   componentRegistry,
@@ -25,7 +27,9 @@ export function App() {
   const [surfaceId, setSurfaceId] = useState(searchFlow.surface.id);
   const [pack, setPack] = useState<PackChoice>("default");
   const [lastIntent, setLastIntent] = useState<ActionIntent>();
-  const [message, setMessage] = useState("模拟 Agent 已选择 searchTeaProducts");
+  const [message, setMessage] = useState(
+    "真实 OpenAPI Operation 已生成默认 Surface",
+  );
   const surface = useSurface(surfaceStore, surfaceId);
 
   useEffect(
@@ -93,9 +97,12 @@ export function App() {
   return (
     <main>
       <header className="hero">
-        <p className="eyebrow">PACKAGE-FIRST · MILESTONE 5</p>
-        <h1>Tool-to-UI 茶叶采购闭环</h1>
-        <p>注册 Tool → Schema UI → Host 执行 → 结果 UI → 下一 Tool。</p>
+        <p className="eyebrow">OPENAPI · REAL SURFACEWEAVE RUNTIME</p>
+        <h1>OpenAPI 到动态采购界面</h1>
+        <p>
+          OpenAPI Operation → ToolDefinition → SurfaceStore → 可信 Component
+          Pack。下方两个视图由同一个真实 Surface 驱动。
+        </p>
       </header>
       <section className="status-bar">
         <span>{message}</span>
@@ -156,12 +163,15 @@ export function App() {
       </section>
       <section className="evidence-grid">
         <article>
-          <h2>Invocation</h2>
+          <h2>真实 OpenAPI 链路</h2>
           <pre>
             {JSON.stringify(
-              toolRuntime
-                .listTools()
-                .map(({ id, version }) => ({ id, version })),
+              {
+                ...openApiAcceptanceEvidence,
+                registeredTools: toolRuntime
+                  .listTools()
+                  .map(({ id, version }) => ({ id, version })),
+              },
               null,
               2,
             )}

@@ -5,6 +5,8 @@ import type {
   ToolSubmissionRequest,
 } from "@surfaceweave/core";
 
+import { searchTeaProductsFromOpenApi } from "./openapi-tools.js";
+
 export interface TeaProduct {
   id: string;
   name: string;
@@ -38,22 +40,7 @@ export const teaProducts: TeaProduct[] = [
 ];
 
 export const searchTeaProducts: ToolDefinition = {
-  id: "searchTeaProducts",
-  version: "1.0.0",
-  title: "查询茶叶商品",
-  inputSchema: {
-    type: "object",
-    properties: {
-      kind: {
-        type: ["string", "null"],
-        title: "茶叶种类",
-        enum: [null, "green", "oolong"],
-      },
-      origin: { type: ["string", "null"], title: "产地" },
-      maxPrice: { type: ["number", "null"], title: "最高单价", minimum: 0 },
-    },
-  },
-  outputSchema: { type: "array", items: { type: "object" } },
+  ...searchTeaProductsFromOpenApi,
   annotations: { sideEffect: false, confirmation: "never", retry: "safe" },
   uiHints: { softHints: { title: "筛选茶叶商品" } },
 };
@@ -113,8 +100,8 @@ export const createPurchaseOrder: ToolDefinition = {
 export class MockTeaHostExecutor implements ToolHostExecutor {
   async execute(request: ToolSubmissionRequest): Promise<JsonValue> {
     if (request.toolId === searchTeaProducts.id) {
-      const { kind, origin, maxPrice } = request.validatedArguments;
-      return teaProducts
+      const { kind, origin, maxPrice, pageSize } = request.validatedArguments;
+      const matches = teaProducts
         .filter(
           (tea) =>
             (typeof kind !== "string" || tea.kind === kind) &&
@@ -128,6 +115,9 @@ export class MockTeaHostExecutor implements ToolHostExecutor {
           origin: teaOrigin,
           price,
         }));
+      return typeof pageSize === "number"
+        ? matches.slice(0, pageSize)
+        : matches;
     }
     if (request.toolId === createPurchaseOrder.id) {
       return { orderId: `PO-${request.invocationId}`, status: "created" };

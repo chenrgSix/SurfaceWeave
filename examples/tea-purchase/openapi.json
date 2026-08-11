@@ -48,6 +48,7 @@
             "description": "产地关键字",
             "schema": {
               "type": "string",
+              "title": "产地",
               "minLength": 1,
               "maxLength": 40
             }
@@ -58,6 +59,7 @@
             "description": "最高单价，单位为人民币元",
             "schema": {
               "type": "number",
+              "title": "最高单价",
               "minimum": 0,
               "maximum": 100000,
               "multipleOf": 0.01
@@ -69,6 +71,7 @@
             "description": "返回商品数量",
             "schema": {
               "type": "integer",
+              "title": "返回数量",
               "minimum": 1,
               "maximum": 100,
               "default": 20

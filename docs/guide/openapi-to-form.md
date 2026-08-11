@@ -104,6 +104,34 @@ The resulting Surface contains only semantic components and JSON data. It does
 not retain `servers`, credentials, HTTP clients, callbacks, DOM values, or
 renderer-specific properties.
 
+## Run the real acceptance UI
+
+The tea-purchase example uses the checked-in OpenAPI fixture as its actual
+search Tool source. Its example-only Host preprocessing resolves local `$ref`
+values and selects `GET /tea-products`; the selected, dereferenced Operation is
+then passed through the published `fromOpenApiOperation` and
+`generateToolSurface` APIs. The resulting Surface is rendered twice from one
+`SurfaceStore`, so edits in the compact chat view immediately appear in the
+workspace view.
+
+```bash
+nvm use 22
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+The initial form must contain `kind`, `maxPrice`, `origin`, and `pageSize`.
+`pageSize` starts at the OpenAPI default of `20`. The evidence panel identifies
+the fixture and Operation used; it is not a hand-authored HTML mock. The same
+fixture's purchase Operation is covered by an acceptance test that includes
+the path parameter while excluding `X-Tenant-Id`, authentication, server URLs,
+and other Host-owned transport context.
+
+The local reference resolver under `examples/` is deliberately not exported.
+Applications may use their preferred OpenAPI parser before calling the current
+single-Operation adapter. SurfaceWeave does not fetch documents or inherit
+credentials from them.
+
 ## Full-document acceptance target
 
 The planned adapter will discover operations by `operationId` or
