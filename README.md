@@ -121,6 +121,7 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm benchmark
+pnpm benchmark:browser
 pnpm verify:packages
 pnpm verify:release
 pnpm docs:dev

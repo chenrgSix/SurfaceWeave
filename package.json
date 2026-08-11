@@ -11,6 +11,8 @@
   "scripts": {
     "audit:release": "pnpm release:check && node scripts/audit-release-packages.mjs",
     "benchmark": "pnpm benchmark:core && pnpm benchmark:react",
+    "benchmark:browser": "pnpm --filter @surfaceweave/core build && pnpm --filter @surfaceweave/react build && pnpm --filter @surfaceweave/performance-benchmark test:browser",
+    "benchmark:browser:install": "pnpm --filter @surfaceweave/performance-benchmark exec playwright install chromium",
     "benchmark:core": "pnpm --filter @surfaceweave/core build && node scripts/performance/core-surface-benchmark.mjs",
     "benchmark:react": "pnpm --filter @surfaceweave/core build && pnpm --filter @surfaceweave/react build && node packages/renderer-react/benchmarks/react-surface-benchmark.mjs",
     "benchmark:smoke": "pnpm --filter @surfaceweave/core build && pnpm --filter @surfaceweave/react build && node scripts/performance/core-surface-benchmark.mjs --smoke && node packages/renderer-react/benchmarks/react-surface-benchmark.mjs --smoke",

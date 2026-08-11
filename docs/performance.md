@@ -13,6 +13,8 @@ pnpm benchmark
 pnpm benchmark:smoke
 pnpm benchmark:core -- --json
 pnpm benchmark:react -- --json
+pnpm benchmark:browser:install
+pnpm benchmark:browser
 ```
 
 The Core benchmark covers traversal, defensive cloning, validation, data
@@ -23,7 +25,9 @@ override the default Core matrix.
 
 `benchmark:smoke` is a short wiring and correctness check run by CI. Wall-clock
 results remain informational because shared CI runners are noisy. Render-count
-and semantic assertions may be used as hard gates.
+and semantic assertions may be used as hard gates. The separate Chromium suite
+runs a production Vite build with one Playwright worker and enforces the 16.7
+ms update p95 target; it also runs weekly and on manual dispatch.
 
 ## RC.5 baseline
 
@@ -61,7 +65,8 @@ optimization target is one target component per mounted view, zero unrelated
 sibling renders, a 2,000-node Core update p50 no higher than 15 ms and p95 no
 higher than 20 ms on the reference machine, and at least a 5x improvement over
 this baseline. A real Chromium benchmark is required before making browser
-frame-budget claims; jsdom is only the deterministic local diagnostic layer.
+frame-budget claims; jsdom is only the deterministic local diagnostic layer,
+and the optimized result below includes that browser gate.
 
 ## Compatibility constraints
 
@@ -77,3 +82,31 @@ not present.
 deeply frozen snapshots and event-only notifications, while the stable
 `SurfaceStore.subscribe()` API continues to provide a separate mutable event
 and Surface copy to every listener.
+
+## Optimized result
+
+Recorded on the same Node 22.23.1 macOS arm64 reference machine after the
+Schema, Pack resolution, index, copy-on-write, and node subscription changes.
+
+| 2,000-node scenario                      |    p50 |    p95 | Change from RC.5 p50 |
+| ---------------------------------------- | -----: | -----: | -------------------: |
+| Core one-path update, 0 legacy listeners | 10.599 | 15.906 |         10.4x faster |
+| React jsdom update through commit        |  9.937 | 10.802 |         17.2x faster |
+| React jsdom initial mount and unmount    | 74.904 | 79.686 |         33.7% faster |
+
+The React update renders exactly one target component, no root component, and
+no unrelated sibling. Because cached full validation now remains inside the
+Core target, data updates continue to run the complete Surface validation path;
+no incremental-validation bypass was introduced.
+
+The production Chromium 151 benchmark measured five warmed initial mounts and
+20 warmed one-path updates:
+
+| 2,000-node Chromium scenario        |    p50 |    p95 |
+| ----------------------------------- | -----: | -----: |
+| Initial mount                       | 38.600 | 43.200 |
+| Update through layout-effect commit |  5.800 |  6.200 |
+
+The browser test hard-fails if the target renders other than once, if the root
+or an unrelated sibling renders, or if update p95 exceeds 16.7 ms. The JSON and
+HTML reports are retained as workflow artifacts for 30 days.

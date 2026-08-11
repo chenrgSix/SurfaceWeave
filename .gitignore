@@ -4,6 +4,9 @@ dist/
 target/
 gen/
 coverage/
+benchmark-results/
+playwright-report/
+test-results/
 .vite/
 *.tsbuildinfo
 .DS_Store
