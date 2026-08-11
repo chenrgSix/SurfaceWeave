@@ -10,6 +10,10 @@
   },
   "scripts": {
     "audit:release": "pnpm release:check && node scripts/audit-release-packages.mjs",
+    "benchmark": "pnpm benchmark:core && pnpm benchmark:react",
+    "benchmark:core": "pnpm --filter @surfaceweave/core build && node scripts/performance/core-surface-benchmark.mjs",
+    "benchmark:react": "pnpm --filter @surfaceweave/core build && pnpm --filter @surfaceweave/react build && node packages/renderer-react/benchmarks/react-surface-benchmark.mjs",
+    "benchmark:smoke": "pnpm --filter @surfaceweave/core build && pnpm --filter @surfaceweave/react build && node scripts/performance/core-surface-benchmark.mjs --smoke && node packages/renderer-react/benchmarks/react-surface-benchmark.mjs --smoke",
     "build": "pnpm -r --workspace-concurrency=1 --if-present build",
     "build:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:build",
     "check:tauri": "pnpm --filter @surfaceweave/tea-purchase-tauri tauri:check",

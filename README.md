@@ -120,12 +120,16 @@ pnpm build
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm benchmark
 pnpm verify:packages
 pnpm verify:release
 pnpm docs:dev
 pnpm docs:build
 pnpm dev
 ```
+
+See the [performance guide](./docs/performance.md) for benchmark methodology,
+the RC.5 baseline, and compatibility constraints.
 
 `pnpm dev` starts the tea-purchase flow. Submit the generated search form, select products, fill the purchase form, confirm the side effect, and inspect the result. Switch among `default`, `react-aria`, and `antd`; chat and workspace retain one Surface Store. `pnpm verify:packages` also installs the Tool Runtime from tarballs in a clean consumer.
 

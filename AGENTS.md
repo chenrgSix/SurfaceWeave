@@ -14,6 +14,8 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm typecheck` — type-check every workspace project in strict mode.
 - `pnpm lint` — run ESLint and Prettier checks.
 - `pnpm test` — run Vitest across package tests.
+- `pnpm benchmark` — build Core and React, then run the reproducible Node/jsdom performance suite.
+- `pnpm benchmark:smoke` — run the short benchmark wiring check used by CI.
 - `pnpm verify:packages` — run `npm pack` and test isolated clean consumers.
 - `pnpm audit:release` — audit release metadata, package boundaries, and tarball contents without registry access.
 - `pnpm verify:release` — run the release audit and npm publish dry-runs against the official registry.
