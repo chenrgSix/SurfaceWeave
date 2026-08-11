@@ -1,0 +1,355 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SurfaceWeave Tea Purchase API",
+    "version": "1.0.0",
+    "description": "A representative OpenAPI document used to verify deterministic default form generation."
+  },
+  "servers": [
+    {
+      "url": "https://api.example.invalid/v1",
+      "description": "Documentation placeholder; hosts must inject the trusted base URL."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Tea Products"
+    },
+    {
+      "name": "Purchase Orders"
+    }
+  ],
+  "paths": {
+    "/tea-products": {
+      "get": {
+        "operationId": "searchTeaProducts",
+        "summary": "查询茶叶商品",
+        "description": "根据种类、产地和最高单价筛选可采购的茶叶。",
+        "tags": ["Tea Products"],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "茶叶种类",
+            "schema": {
+              "$ref": "#/components/schemas/TeaKind"
+            }
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "description": "产地关键字",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "description": "最高单价，单位为人民币元",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100000,
+              "multipleOf": 0.01
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "返回商品数量",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "匹配的茶叶商品",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeaProduct"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/suppliers/{supplierId}/purchase-orders": {
+      "parameters": [
+        {
+          "name": "supplierId",
+          "in": "path",
+          "required": true,
+          "description": "供应商稳定标识",
+          "schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{2,40}$"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "createPurchaseOrder",
+        "summary": "创建茶叶采购单",
+        "description": "为指定供应商创建采购单。该操作具有副作用，应由 Host 要求确认。",
+        "tags": ["Purchase Orders"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "description": "业务租户标识，不包含鉴权凭据",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 64
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "仅校验采购单，不实际创建",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "采购商品和收货信息",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "采购单创建成功",
+            "headers": {
+              "Location": {
+                "description": "采购单资源地址",
+                "schema": {
+                  "type": "string",
+                  "format": "uri-reference"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrder"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "请求参数不合法",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "TeaKind": {
+        "type": "string",
+        "title": "茶叶种类",
+        "enum": ["green", "black", "oolong", "white", "dark"]
+      },
+      "TeaProduct": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "kind", "origin", "price"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "title": "名称"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TeaKind"
+          },
+          "origin": {
+            "type": "string",
+            "title": "产地"
+          },
+          "price": {
+            "type": "number",
+            "title": "单价",
+            "minimum": 0,
+            "multipleOf": 0.01
+          }
+        }
+      },
+      "PurchaseItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["teaId", "quantity"],
+        "properties": {
+          "teaId": {
+            "type": "string",
+            "title": "茶叶商品"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "数量",
+            "minimum": 1,
+            "maximum": 10000,
+            "default": 1
+          }
+        }
+      },
+      "DeliveryAddress": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["recipient", "phone", "address"],
+        "properties": {
+          "recipient": {
+            "type": "string",
+            "title": "收货人",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "phone": {
+            "type": "string",
+            "title": "联系电话",
+            "pattern": "^\\+?[0-9 -]{7,24}$"
+          },
+          "address": {
+            "type": "string",
+            "title": "收货地址",
+            "minLength": 5,
+            "maxLength": 300
+          },
+          "requestedDate": {
+            "type": ["string", "null"],
+            "title": "期望送达日期",
+            "format": "date"
+          }
+        }
+      },
+      "PurchaseOrderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "delivery"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "title": "采购商品",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PurchaseItem"
+            }
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/DeliveryAddress"
+          },
+          "priority": {
+            "type": "string",
+            "title": "优先级",
+            "enum": ["normal", "urgent"],
+            "default": "normal"
+          },
+          "remark": {
+            "type": ["string", "null"],
+            "title": "备注",
+            "maxLength": 500
+          }
+        }
+      },
+      "OrderIdentity": {
+        "type": "object",
+        "required": ["orderId", "createdAt"],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "readOnly": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "PurchaseOrder": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OrderIdentity"
+          },
+          {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["created", "validated"]
+              }
+            }
+          }
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "field": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    }
+  }
+}
