@@ -29,10 +29,10 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.5 candidate",
+        text: "0.1.0-rc.5",
         items: [
           {
-            text: "RC.5 candidate summary",
+            text: "RC.5 release summary",
             link: "/rc5-release-candidate-summary",
           },
           {
@@ -84,7 +84,7 @@ export default defineConfig({
           items: [
             { text: "Public API", link: "/public-api" },
             {
-              text: "RC.5 candidate",
+              text: "RC.5 release",
               link: "/rc5-release-candidate-summary",
             },
             {

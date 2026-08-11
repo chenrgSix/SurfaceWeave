@@ -30,7 +30,7 @@ idempotent teardown, subscription release, and production bundling. Agentdown,
 Vue, React, and React DOM remain consumer dependencies and do not appear in
 Core or unrelated release packages.
 
-## RC.5 candidate verification
+## RC.5 verification
 
 RC.5 preserves every package entry point, peer range, and dependency boundary
 listed above. The Generator root adds typed OpenAPI parameter-source policy;
@@ -38,7 +38,7 @@ Protocol and Core remain unchanged and framework-neutral. The tea-purchase
 fixture's local reference resolver stays under the private example and is not
 included in any public tarball.
 
-Candidate tarballs verify that Host-owned header/cookie context does not enter
+Published tarballs verify that Host-owned header/cookie context does not enter
 the canonical Tool Schema and that protected transport parameters cannot be
 opted into user control. The existing eleven-consumer suite continues to prove
 React-root isolation, independent Pack installation, DOM Driver lifecycle,

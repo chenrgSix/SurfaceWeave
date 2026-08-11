@@ -1,11 +1,13 @@
-# RC.5 Release Candidate Summary
+# RC.5 Release Summary
 
 ## Status
 
-SurfaceWeave `0.1.0-rc.5` is prepared as a release candidate for all ten public
-packages. It is not published yet: npm `next` still resolves to RC.4 and
-`latest` intentionally remains on immutable RC.2. No tag, GitHub Release, or
-npm publication is authorized by this document.
+SurfaceWeave `0.1.0-rc.5` is published for all ten public packages. npm `next`
+resolves to RC.5 and `latest` intentionally remains on immutable RC.2. The
+annotated `v0.1.0-rc.5` tag fixes the release at commit
+`dc8e8349adfed0c933b197435959fca0f5862efc`; the protected OIDC workflow and
+[GitHub Prerelease](https://github.com/chenrgSix/SurfaceWeave/releases/tag/v0.1.0-rc.5)
+record the same source boundary.
 
 ## OpenAPI parameter ownership
 
@@ -48,21 +50,29 @@ fetching, credential selection, HTTP execution, and arbitrary API calls remain
 out of scope. Applications continue to select and dereference one Operation in
 trusted Host code before invoking `fromOpenApiOperation`.
 
-## Candidate verification
+## Release verification
 
-Under Node 22, the candidate passes cold build, typecheck, lint, 37 Vitest files
-/ 155 tests, ten package tarballs / eleven clean consumers, release metadata
-audit, VitePress build, and Tauri cargo check. Browser acceptance additionally
-verifies that the OpenAPI-derived compact and workspace views synchronize
-values and forward `ActionIntent` to the Host.
+Under Node 22, the tagged source passes cold build, typecheck, lint, 37 Vitest
+files / 155 tests, ten package tarballs / eleven clean consumers, release
+metadata audit, VitePress build, and Tauri cargo check. Browser acceptance
+additionally verifies that the OpenAPI-derived compact and workspace views
+synchronize values and forward `ActionIntent` to the Host.
+
+Post-publication validation downloaded all ten immutable tarballs from the
+official Registry, verified metadata, integrity, `gitHead`, MIT licenses, and
+SLSA provenance, then passed ten clean Registry consumers including Core,
+React root isolation, React DOM Driver, Vue/Agentdown, both optional Packs,
+Tool Runtime, and Tauri. The first workflow attempt observed Tauri before npm
+propagation completed; a safe retry of the same immutable tag verified the
+published artifact without rebuilding the tag or overwriting a version.
 
 Known Vite large-chunk warnings remain limited to the multi-Pack demo, Ant
 Design itself, and the Agentdown/Mermaid consumer. Package isolation tests
 confirm that unselected Packs do not enter ordinary consumers.
 
-## Installation after publication
+## Installation
 
-After an explicitly approved OIDC release, install the RC through `next`:
+Install the RC through `next`:
 
 ```bash
 npm install @surfaceweave/core@next \
@@ -70,12 +80,12 @@ npm install @surfaceweave/core@next \
   @surfaceweave/agent-tools@next
 ```
 
-React hosts add `@surfaceweave/react@next`. The current npm Registry continues
-to serve RC.4 through `next` until the protected RC.5 workflow succeeds.
+React hosts add `@surfaceweave/react@next`. The current npm Registry serves
+RC.5 through `next`; unqualified installs continue to resolve to RC.2.
 
-## Release boundary
+## Immutable release boundary
 
-The candidate must be committed and reviewed before an annotated
-`v0.1.0-rc.5` tag is created. Only the protected `npm-release` OIDC workflow may
-publish it. `latest` must remain unchanged unless the owner separately
+The annotated `v0.1.0-rc.5` tag and published versions must not be moved,
+rebuilt, overwritten, or unpublished. Only a new version may change an
+accepted artifact. `latest` remains unchanged unless the owner separately
 authorizes a dist-tag move.

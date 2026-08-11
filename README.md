@@ -3,16 +3,16 @@
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: RC.5 candidate](https://img.shields.io/badge/status-0.1.0--rc.5%20candidate-orange.svg)
+![Status: RC.5](https://img.shields.io/badge/status-0.1.0--rc.5-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** `0.1.0-rc.5` is prepared but not published. npm `next` still
-> resolves to the provenance-backed RC.4 release, while `latest` intentionally
-> remains on immutable RC.2. Review the
-> [RC.5 candidate summary](docs/rc5-release-candidate-summary.md) before use.
+> **Status:** `0.1.0-rc.5` is published with npm provenance. npm `next`
+> resolves to RC.5, while `latest` intentionally remains on immutable RC.2.
+> Review the [RC.5 release summary](docs/rc5-release-candidate-summary.md)
+> before use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
@@ -21,7 +21,8 @@ Milestones 1–6.3 implement the Surface runtime, deterministic Tool Schema gene
 RC.5 hardens OpenAPI parameter ownership so tenant, authorization, cookie, and
 other Host context stay outside generated forms. The checked-in OpenAPI fixture
 now drives the real tea-purchase Generator, Store, and Renderer acceptance UI.
-Until RC.5 is explicitly published, npm `next` continues to install RC.4.
+Install the release through npm `next`; `latest` remains on RC.2 while RC.5 is
+evaluated.
 
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
