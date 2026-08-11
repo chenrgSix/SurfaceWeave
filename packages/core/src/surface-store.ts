@@ -1,9 +1,4 @@
-import {
-  bindingValueTypeMatches,
-  cloneValue,
-  walkNodes,
-  writeDataPath,
-} from "./data.js";
+import { bindingValueTypeMatches, cloneValue, writeDataPath } from "./data.js";
 import { migrateSurfaceData } from "./data-migration.js";
 import { DynamicUIError } from "./errors.js";
 import { applyOperationsToSurface, validateSurface } from "./operations.js";
@@ -11,10 +6,11 @@ import {
   createSurfaceResourcePolicySummary,
   resolveSurfaceResourcePolicy,
 } from "./resource-limits.js";
+import { buildSurfaceIndex } from "./surface-index.js";
 import type { SurfaceResourcePolicySummary } from "./client-capabilities.js";
+import type { SurfaceIndex } from "./surface-index.js";
 import type {
   ComponentRegistry,
-  DataBinding,
   DataChange,
   Surface,
   SurfaceEvent,
@@ -27,6 +23,11 @@ import type {
 
 type SurfaceInput = Omit<Surface, "revision"> & { revision?: number };
 type SurfaceReplacement = Omit<Surface, "id" | "revision">;
+
+interface StoredSurface {
+  surface: Surface;
+  index: SurfaceIndex;
+}
 
 export type SurfaceListenerErrorHandler = (
   error: unknown,
@@ -54,7 +55,7 @@ function assertRevision(surface: Surface, baseRevision: number): void {
 /** Framework-independent in-memory state owner with optimistic concurrency. */
 export class InMemorySurfaceStore implements SurfaceStore {
   readonly #registry: ComponentRegistry;
-  readonly #surfaces = new Map<string, Surface>();
+  readonly #surfaces = new Map<string, StoredSurface>();
   readonly #listeners = new Map<string, Set<SurfaceListener>>();
   readonly #resourcePolicy: SurfaceResourcePolicy | undefined;
   readonly #onListenerError: SurfaceListenerErrorHandler | undefined;
@@ -92,7 +93,10 @@ export class InMemorySurfaceStore implements SurfaceStore {
     };
     validateSurface(candidate, this.#registry, this.#resourcePolicy);
     const surface = cloneValue(candidate);
-    this.#surfaces.set(surface.id, surface);
+    this.#surfaces.set(surface.id, {
+      surface,
+      index: buildSurfaceIndex(surface),
+    });
     this.#publish(surface.id, {
       type: "surface.created",
       sequence: this.#nextSequence(),
@@ -104,20 +108,20 @@ export class InMemorySurfaceStore implements SurfaceStore {
   }
 
   getSurface(surfaceId: string): Surface | undefined {
-    const surface = this.#surfaces.get(surfaceId);
-    return surface === undefined ? undefined : cloneValue(surface);
+    const stored = this.#surfaces.get(surfaceId);
+    return stored === undefined ? undefined : cloneValue(stored.surface);
   }
 
   requireSurface(surfaceId: string): Surface {
-    const surface = this.#surfaces.get(surfaceId);
-    if (surface === undefined) {
+    const stored = this.#surfaces.get(surfaceId);
+    if (stored === undefined) {
       throw new DynamicUIError(
         "SURFACE_NOT_FOUND",
         `Surface "${surfaceId}" does not exist`,
         { surfaceId },
       );
     }
-    return cloneValue(surface);
+    return cloneValue(stored.surface);
   }
 
   subscribe(surfaceId: string, listener: SurfaceListener): () => void {
@@ -138,7 +142,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     baseRevision: number,
     operations: UIOperation[],
   ): Surface {
-    const current = this.#current(surfaceId);
+    const current = this.#current(surfaceId).surface;
     assertRevision(current, baseRevision);
     const next = applyOperationsToSurface(
       current,
@@ -147,7 +151,10 @@ export class InMemorySurfaceStore implements SurfaceStore {
       this.#resourcePolicy,
     );
     next.revision = current.revision + 1;
-    this.#surfaces.set(surfaceId, next);
+    this.#surfaces.set(surfaceId, {
+      surface: next,
+      index: buildSurfaceIndex(next),
+    });
     this.#publish(surfaceId, {
       type: "surface.operationsApplied",
       sequence: this.#nextSequence(),
@@ -169,34 +176,34 @@ export class InMemorySurfaceStore implements SurfaceStore {
         "At least one data change is required",
       );
     }
-    const current = this.#current(surfaceId);
+    const stored = this.#current(surfaceId);
+    const { surface: current, index } = stored;
     assertRevision(current, baseRevision);
-    const boundPaths = new Map<string, DataBinding>();
-    walkNodes(current.tree, (node) => {
-      if (node.binding !== undefined) {
-        boundPaths.set(node.binding.path, node.binding);
-      }
-    });
     const next = cloneValue(current);
     for (const change of changes) {
-      const binding = boundPaths.get(change.path);
-      if (binding === undefined) {
+      const bindings = index.bindingsByPath.get(change.path);
+      if (bindings === undefined) {
         throw new DynamicUIError(
           "INVALID_OPERATION",
           `Data path "${change.path}" is not bound by the surface`,
         );
       }
-      if (!bindingValueTypeMatches(binding.valueType, change.value)) {
-        throw new DynamicUIError(
-          "INVALID_OPERATION",
-          `Data at "${change.path}" is incompatible with ${binding.valueType} binding`,
-        );
+      for (const { binding } of bindings) {
+        if (!bindingValueTypeMatches(binding.valueType, change.value)) {
+          throw new DynamicUIError(
+            "INVALID_OPERATION",
+            `Data at "${change.path}" is incompatible with ${binding.valueType} binding`,
+          );
+        }
       }
       writeDataPath(next.data, change.path, change.value);
     }
     validateSurface(next, this.#registry, this.#resourcePolicy);
     next.revision = current.revision + 1;
-    this.#surfaces.set(surfaceId, next);
+    this.#surfaces.set(surfaceId, {
+      surface: next,
+      index: buildSurfaceIndex(next),
+    });
     this.#publish(surfaceId, {
       type: "surface.dataChanged",
       sequence: this.#nextSequence(),
@@ -212,7 +219,7 @@ export class InMemorySurfaceStore implements SurfaceStore {
     baseRevision: number,
     replacement: SurfaceReplacement,
   ): Surface {
-    const current = this.#current(surfaceId);
+    const current = this.#current(surfaceId).surface;
     assertRevision(current, baseRevision);
     const candidate: Surface = {
       ...replacement,
@@ -224,7 +231,10 @@ export class InMemorySurfaceStore implements SurfaceStore {
     const migrated = migrateSurfaceData(current, next);
     next.data = migrated.surface.data;
     validateSurface(next, this.#registry, this.#resourcePolicy);
-    this.#surfaces.set(surfaceId, next);
+    this.#surfaces.set(surfaceId, {
+      surface: next,
+      index: buildSurfaceIndex(next),
+    });
     this.#publish(surfaceId, {
       type: "surface.replaced",
       sequence: this.#nextSequence(),
@@ -236,16 +246,16 @@ export class InMemorySurfaceStore implements SurfaceStore {
     return cloneValue(next);
   }
 
-  #current(surfaceId: string): Surface {
-    const surface = this.#surfaces.get(surfaceId);
-    if (surface === undefined) {
+  #current(surfaceId: string): StoredSurface {
+    const stored = this.#surfaces.get(surfaceId);
+    if (stored === undefined) {
       throw new DynamicUIError(
         "SURFACE_NOT_FOUND",
         `Surface "${surfaceId}" does not exist`,
         { surfaceId },
       );
     }
-    return surface;
+    return stored;
   }
 
   getResourcePolicySummary(): SurfaceResourcePolicySummary {
@@ -258,10 +268,11 @@ export class InMemorySurfaceStore implements SurfaceStore {
   }
 
   #publish(surfaceId: string, event: SurfaceEvent): void {
-    const surface = this.#surfaces.get(surfaceId);
-    if (surface === undefined) {
+    const stored = this.#surfaces.get(surfaceId);
+    if (stored === undefined) {
       return;
     }
+    const { surface } = stored;
     for (const listener of this.#listeners.get(surfaceId) ?? []) {
       try {
         listener(cloneValue(event), cloneValue(surface));

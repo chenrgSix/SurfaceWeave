@@ -151,6 +151,95 @@ describe("InMemorySurfaceStore", () => {
     expect(store.requireSurface(surface.id)).toEqual(surface);
   });
 
+  it("enforces every binding that shares a data path", () => {
+    const input = createFormSurface();
+    input.data = { purchase: { shared: null } };
+    input.tree.children = [
+      {
+        id: "shared-number",
+        stableId: "shared.number",
+        component: "NumberInput",
+        props: { label: "Number" },
+        binding: { path: "purchase.shared", valueType: "number" },
+      },
+      {
+        id: "shared-text",
+        stableId: "shared.text",
+        component: "TextInput",
+        props: { label: "Text" },
+        binding: { path: "purchase.shared", valueType: "string" },
+      },
+    ];
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(input);
+    const listener = vi.fn();
+    store.subscribe(surface.id, listener);
+
+    expect(() =>
+      store.updateData(surface.id, surface.revision, [
+        { path: "purchase.shared", value: "text" },
+      ]),
+    ).toThrow(/incompatible with number binding/);
+    expect(store.requireSurface(surface.id)).toEqual(surface);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("refreshes binding indexes after structural operations", () => {
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(createFormSurface());
+    const changed = store.applyOperations(surface.id, surface.revision, [
+      {
+        type: "replaceComponent",
+        target: "purchase.name",
+        component: "TextInput",
+        binding: {
+          path: "order.buyer",
+          valueType: "string",
+          semantic: "customer-name",
+        },
+      },
+    ]);
+
+    expect(() =>
+      store.updateData(changed.id, changed.revision, [
+        { path: "purchase.name", value: "Stale" },
+      ]),
+    ).toThrow(/is not bound by the surface/);
+    const updated = store.updateData(changed.id, changed.revision, [
+      { path: "order.buyer", value: "Lin" },
+    ]);
+    expect(readDataPath(updated.data, "order.buyer")).toBe("Lin");
+  });
+
+  it("keeps the committed index and event sequence after a failed batch", () => {
+    const store = new InMemorySurfaceStore(createRegistry());
+    const surface = store.createSurface(createFormSurface());
+    const events: number[] = [];
+    store.subscribe(surface.id, (event) => events.push(event.sequence));
+
+    expect(() =>
+      store.applyOperations(surface.id, surface.revision, [
+        {
+          type: "replaceComponent",
+          target: "purchase.name",
+          component: "TextInput",
+          binding: { path: "order.buyer", valueType: "string" },
+        },
+        {
+          type: "setProps",
+          target: "missing",
+          props: { label: "Missing" },
+        },
+      ]),
+    ).toThrow(/does not exist/);
+
+    const updated = store.updateData(surface.id, surface.revision, [
+      { path: "purchase.name", value: "Lin" },
+    ]);
+    expect(updated.revision).toBe(1);
+    expect(events).toEqual([2]);
+  });
+
   it("rejects prototype-polluting binding paths", () => {
     const unsafe = createFormSurface();
     const firstNode = unsafe.tree.children?.[0];
