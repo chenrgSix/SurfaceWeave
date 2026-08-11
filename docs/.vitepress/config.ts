@@ -29,7 +29,7 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.4 candidate",
+        text: "0.1.0-rc.4",
         items: [
           {
             text: "RC.4 release summary",
@@ -48,6 +48,10 @@ export default defineConfig({
           items: [
             { text: "Introduction", link: "/guide/getting-started" },
             { text: "Tool-to-UI runtime", link: "/guide/tool-to-ui" },
+            {
+              text: "OpenAPI to default form",
+              link: "/guide/openapi-to-form",
+            },
             { text: "React renderer", link: "/guide/react-renderer" },
             { text: "Semantic layout", link: "/guide/semantic-layout" },
             {

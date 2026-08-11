@@ -235,7 +235,7 @@ runtime.handleAction({
 void agentTools;
 ```
 
-`fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
+`fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. In RC.4, the OpenAPI adapter accepts one host-selected, dereferenced OpenAPI 3.1 operation rather than importing a complete document directly. The validated [tea-purchase OpenAPI fixture](examples/tea-purchase/openapi.json) is the acceptance baseline for the next full-document adapter increment; see [OpenAPI to Default Form](docs/guide/openapi-to-form.md). Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
 
 ## Register a Component Pack
 

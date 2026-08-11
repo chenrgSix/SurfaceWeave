@@ -31,6 +31,13 @@ schemas but discard URLs and transport authority. Generation supports nested
 objects, arrays, enums, nullable unions, defaults, required/read-only fields,
 common formats, constraints, and practical `oneOf`/`anyOf` fallback.
 
+The validated
+[`examples/tea-purchase/openapi.json`](https://github.com/chenrgSix/SurfaceWeave/blob/main/examples/tea-purchase/openapi.json)
+fixture intentionally includes full-document discovery, local references,
+path-level parameters, and parameter-location grouping that the current RC.4
+adapter does not yet perform. See [OpenAPI to Default Form](guide/openapi-to-form.md)
+for the exact current boundary and the next acceptance target.
+
 Generation priority is defaults and developer soft/semantic hints → persisted
 Preference Patches → Agent session Operations → developer hard constraints.
 Tool schemas and confirmation policy sit outside UI composition.
