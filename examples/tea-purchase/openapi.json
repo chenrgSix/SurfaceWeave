@@ -3,7 +3,11 @@
   "info": {
     "title": "SurfaceWeave Tea Purchase API",
     "version": "1.0.0",
-    "description": "A representative OpenAPI document used to verify deterministic default form generation."
+    "description": "A representative OpenAPI document used to verify deterministic default form generation.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
   },
   "servers": [
     {
@@ -13,10 +17,12 @@
   ],
   "tags": [
     {
-      "name": "Tea Products"
+      "name": "Tea Products",
+      "description": "Read-only tea product discovery operations."
     },
     {
-      "name": "Purchase Orders"
+      "name": "Purchase Orders",
+      "description": "Side-effecting tea purchase order operations."
     }
   ],
   "paths": {
@@ -26,6 +32,7 @@
         "summary": "查询茶叶商品",
         "description": "根据种类、产地和最高单价筛选可采购的茶叶。",
         "tags": ["Tea Products"],
+        "security": [],
         "parameters": [
           {
             "name": "kind",
