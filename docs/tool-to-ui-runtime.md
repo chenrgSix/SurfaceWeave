@@ -43,9 +43,11 @@ canonical input Schema before creating `validatedArguments`.
 The validated
 [`examples/tea-purchase/openapi.json`](https://github.com/chenrgSix/SurfaceWeave/blob/main/examples/tea-purchase/openapi.json)
 fixture intentionally includes full-document discovery, local references,
-path-level parameters, and parameter-location grouping that the current RC.4
-adapter does not yet perform. See [OpenAPI to Default Form](guide/openapi-to-form.md)
-for the exact current boundary and the next acceptance target.
+path-level parameters, and parameter-location grouping. The example Host
+preprocesses those features before invoking the current RC.5 single-Operation
+adapter; the published Generator does not yet perform them. See
+[OpenAPI to Default Form](guide/openapi-to-form.md) for the exact boundary and
+the next acceptance target.
 
 Generation priority is defaults and developer soft/semantic hints → persisted
 Preference Patches → Agent session Operations → developer hard constraints.

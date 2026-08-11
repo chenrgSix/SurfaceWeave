@@ -29,8 +29,12 @@ export default defineConfig({
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.4",
+        text: "0.1.0-rc.5 candidate",
         items: [
+          {
+            text: "RC.5 candidate summary",
+            link: "/rc5-release-candidate-summary",
+          },
           {
             text: "RC.4 release summary",
             link: "/rc4-release-candidate-summary",
@@ -79,6 +83,10 @@ export default defineConfig({
           text: "References",
           items: [
             { text: "Public API", link: "/public-api" },
+            {
+              text: "RC.5 candidate",
+              link: "/rc5-release-candidate-summary",
+            },
             {
               text: "RC.4 release",
               link: "/rc4-release-candidate-summary",

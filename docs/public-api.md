@@ -2,11 +2,11 @@
 
 ## Status
 
-This document freezes the published `0.1.0-rc.4` API surface. npm `next` serves
-RC.4 and `latest` intentionally remains on RC.2. Only package entry
-points declared in `exports` are public. Files under `src/` or `dist`, relative
-monorepo paths, test helpers, and example modules are internal and may change
-without compatibility guarantees.
+This document freezes the prepared `0.1.0-rc.5` API surface. The candidate is
+not published: npm `next` still serves RC.4 and `latest` intentionally remains
+on RC.2. Only package entry points declared in `exports` are public. Files under
+`src/` or `dist`, relative monorepo paths, test helpers, and example modules are
+internal and may change without compatibility guarantees.
 
 All JavaScript packages are ESM-only. `main`, `module`, and the default/import
 conditions resolve to the same ESM entry; CommonJS is not claimed for this RC.
@@ -60,6 +60,11 @@ interfaces.
 The Generator exports `OpenApiParameterLocation`, `OpenApiParameterSource`, and
 `OpenApiParameterSourceKey` for trusted OpenAPI input policy. These types do not
 carry Host context values or execution authority.
+
+RC.5 adds no entry point. Its additive Generator types and
+`OpenApiToolInput.parameterSources` remain available only through the existing
+`@surfaceweave/generator` root export. The example-local OpenAPI reference
+resolver is not public API.
 
 Core also exports the optional, framework-neutral `SurfaceViewMode`,
 `SurfaceViewReference`, `SurfaceViewHandle`, and

@@ -1,26 +1,28 @@
 # npm Release Candidate Checklist
 
-## Published RC.4 Baseline
+## Published baseline and RC.5 candidate
 
 All ten publishable workspace packages are published as `0.1.0-rc.4` with npm
 provenance. The official npm Registry resolves `next` to RC.4 and intentionally
 keeps `latest` on the immutable RC.2 release. The wire protocol remains `1.0`;
 npm package versions do not change Tool or Component Pack manifest versions.
+The repository prepares exact `0.1.0-rc.5` artifacts, but no RC.5 tag or
+publication exists yet.
 
 ## Release Inventory
 
-| Package                     | Published | Current public dist-tags             |
-| --------------------------- | --------: | ------------------------------------ |
-| `@surfaceweave/protocol`    |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/core`        |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/storage`     |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/preferences` |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/generator`   |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/agent-tools` |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react`       |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react-aria`  |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/antd`        |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/tauri`       |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| Package                     | Candidate | Published | Current public dist-tags             |
+| --------------------------- | --------: | --------: | ------------------------------------ |
+| `@surfaceweave/protocol`    |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |      RC.5 |      RC.4 | `next` → RC.4, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -41,8 +43,8 @@ real publish.
 
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
-- Internal package dependencies use the exact prerelease range
-  `0.1.0-rc.4`; the lockfile records the same suite version.
+- Internal package dependencies use the exact candidate range
+  `0.1.0-rc.5`; the lockfile records the same suite version.
 - Release metadata fixes the official registry, public access, and `next` tag.
 - The protocol Schema uses the stable URN
   `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain

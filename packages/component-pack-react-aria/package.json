@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/react-aria",
-  "version": "0.1.0-rc.4",
+  "version": "0.1.0-rc.5",
   "description": "Accessible React Aria bindings for the SurfaceWeave semantic UI protocol",
   "license": "MIT",
   "type": "module",
@@ -33,8 +33,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "0.1.0-rc.4",
-    "@surfaceweave/react": "0.1.0-rc.4"
+    "@surfaceweave/core": "0.1.0-rc.5",
+    "@surfaceweave/react": "0.1.0-rc.5"
   },
   "peerDependencies": {
     "react": ">=18.2.0 <20",

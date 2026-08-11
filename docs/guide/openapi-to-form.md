@@ -5,11 +5,11 @@ been converted into a canonical `ToolDefinition`. The Runtime still does not
 fetch API descriptions, select credentials, call endpoints, or infer business
 authorization.
 
-::: warning Current RC.4 boundary
+::: warning Current RC.5 candidate boundary
 `fromOpenApiOperation` currently accepts one OpenAPI 3.1 operation whose Schema
 references have already been dereferenced by the host. Direct full-document
 operation discovery, local `$ref` resolution, and automatic parameter sections
-are the next adapter increment; they are not claimed by RC.4.
+are the next adapter increment; they are not claimed by RC.5.
 :::
 
 ## Acceptance document

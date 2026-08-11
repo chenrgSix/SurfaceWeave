@@ -3,25 +3,25 @@
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: experimental RC](https://img.shields.io/badge/status-0.1.0--rc.4-orange.svg)
+![Status: RC.5 candidate](https://img.shields.io/badge/status-0.1.0--rc.5%20candidate-orange.svg)
 
 **SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
 
 面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
 
-> **Status:** all ten packages are published as experimental `0.1.0-rc.4` with
-> npm provenance. npm `next` resolves to RC.4, while `latest` intentionally
+> **Status:** `0.1.0-rc.5` is prepared but not published. npm `next` still
+> resolves to the provenance-backed RC.4 release, while `latest` intentionally
 > remains on immutable RC.2. Review the
-> [RC.4 release summary](docs/rc4-release-candidate-summary.md) before use.
+> [RC.5 candidate summary](docs/rc5-release-candidate-summary.md) before use.
 
 JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
 
 Milestones 1–6.3 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral protocols, generic Renderer Driver, Semantic LayoutSpec, capability handshake, Action state projection, and resource policy. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
 
-RC.4 adds Semantic LayoutSpec 1.0, deterministic form sections,
-strict Agent layout tools, a host-generated capability handshake, unified
-read-only Action state, and opt-in Surface resource policy. These APIs are
-available from npm through the `next` dist-tag.
+RC.5 hardens OpenAPI parameter ownership so tenant, authorization, cookie, and
+other Host context stay outside generated forms. The checked-in OpenAPI fixture
+now drives the real tea-purchase Generator, Store, and Renderer acceptance UI.
+Until RC.5 is explicitly published, npm `next` continues to install RC.4.
 
 SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
 declarative component-tree ideas in A2UI, but is not protocol-compatible with
@@ -235,7 +235,7 @@ runtime.handleAction({
 void agentTools;
 ```
 
-`fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. In RC.4, the OpenAPI adapter accepts one host-selected, dereferenced OpenAPI 3.1 operation rather than importing a complete document directly. Header and cookie parameters are Host-owned by default, so tenant, authorization, and session values do not enter the generated form; a trusted Host may explicitly expose only a non-sensitive business Header. The [tea-purchase OpenAPI fixture](examples/tea-purchase/openapi.json) now drives the example's real initial Surface through the public Generator, Store, and React Renderer APIs; it remains the acceptance baseline for the next full-document adapter increment. See [OpenAPI to Default Form](docs/guide/openapi-to-form.md). Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
+`fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. In RC.5, the OpenAPI adapter accepts one host-selected, dereferenced OpenAPI 3.1 operation rather than importing a complete document directly. Header and cookie parameters are Host-owned by default, so tenant, authorization, and session values do not enter the generated form; a trusted Host may explicitly expose only a non-sensitive business Header. The [tea-purchase OpenAPI fixture](examples/tea-purchase/openapi.json) now drives the example's real initial Surface through the public Generator, Store, and React Renderer APIs; it remains the acceptance baseline for the next full-document adapter increment. See [OpenAPI to Default Form](docs/guide/openapi-to-form.md). Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
 
 ## Register a Component Pack
 
