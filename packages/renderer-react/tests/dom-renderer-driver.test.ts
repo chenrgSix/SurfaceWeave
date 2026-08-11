@@ -3,11 +3,12 @@
 import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  surfaceObservation,
   type ActionIntent,
   type ActionExecutionSnapshot,
   type ActionExecutionStateListener,
   type ActionExecutionStateSource,
-  type SurfaceListener,
+  type SurfaceObservationListener,
 } from "@surfaceweave/core";
 import { fireEvent } from "@testing-library/react";
 import { act } from "react";
@@ -138,10 +139,11 @@ describe("createReactDOMRendererDriver", () => {
 
   it("mounts shared views, updates references, forwards actions, and cleans subscriptions", async () => {
     const { registry, store } = createRuntime();
-    const originalSubscribe = store.subscribe.bind(store);
+    const observation = store[surfaceObservation];
+    const originalSubscribe = observation.subscribe.bind(observation);
     let activeSubscriptions = 0;
-    vi.spyOn(store, "subscribe").mockImplementation(
-      (surfaceId: string, listener: SurfaceListener) => {
+    vi.spyOn(observation, "subscribe").mockImplementation(
+      (surfaceId: string, listener: SurfaceObservationListener) => {
         activeSubscriptions += 1;
         const unsubscribe = originalSubscribe(surfaceId, listener);
         let active = true;

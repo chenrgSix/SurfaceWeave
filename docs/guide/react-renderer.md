@@ -56,6 +56,14 @@ Render the same `surfaceId` and `SurfaceStore` twice:
 Both views subscribe to the same Store. A field update from either view writes
 through its `DataBinding` and is visible in the other view immediately.
 
+With `InMemorySurfaceStore`, the renderer uses the optional immutable
+observation capability and subscribes each rendered node to its binding path.
+A data-only change rerenders the bound node and any prefix-dependent nodes,
+not unrelated siblings. Structural operations and Surface replacement rebuild
+the per-view tree. Custom Stores that implement only the stable `SurfaceStore`
+interface use the same node-level read model through the existing
+`subscribe()` fallback; they do not need a new required method.
+
 Semantic `direction`, `columns`, `gap`, `align`, `justify`, and `span` values
 are resolved before conversion to local styles. Compact mode safely reduces
 multi-column declarations to one column. The same rules are used by the

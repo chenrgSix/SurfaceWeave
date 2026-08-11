@@ -1,23 +1,26 @@
-import {
-  DynamicUIError,
-  createActionIntent,
-  readDataPath,
-} from "@surfaceweave/core";
+import { DynamicUIError, createActionIntent } from "@surfaceweave/core";
 import type {
+  ActionExecutionSnapshot,
   ActionExecutionStateSource,
   ComponentRegistry,
   JsonValue,
   SurfaceStore,
-  UINode,
 } from "@surfaceweave/core";
-import { Fragment, useRef } from "react";
+import {
+  PureComponent,
+  useCallback,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import type { ReactNode } from "react";
 
 import type { ReactComponentRegistry } from "./react-component-registry.js";
 import { safeLayoutItemStyle } from "./standard-components.js";
+import { SurfaceReadModel } from "./surface-read-model.js";
+import type { SurfaceNodeSnapshot } from "./surface-read-model.js";
 import type { ActionIntentHandler, RendererMode } from "./types.js";
 import { useActionExecution } from "./use-action-execution.js";
-import { useSurface } from "./use-surface.js";
 
 export interface SurfaceRendererProps {
   surfaceId: string;
@@ -36,6 +39,29 @@ export interface SurfaceRendererProps {
   onError?: (error: DynamicUIError) => void;
 }
 
+interface NodeRenderContext {
+  surfaceId: string;
+  store: SurfaceStore;
+  componentRegistry: ComponentRegistry;
+  reactComponents: ReactComponentRegistry;
+  mode: RendererMode;
+  preferredPack: string | undefined;
+  enabledPackIds: string[] | undefined;
+  capabilities: string[] | undefined;
+  packPriorities: Record<string, number> | undefined;
+  supportedPackVersions: Record<string, string[]> | undefined;
+  onActionIntent: ActionIntentHandler | undefined;
+  actionExecution: ActionExecutionSnapshot;
+  report(error: unknown): void;
+  nextActionId(nodeId: string, action: string): string;
+}
+
+interface SurfaceNodeProps {
+  model: SurfaceReadModel;
+  nodeId: string;
+  context: NodeRenderContext;
+}
+
 function asDynamicUIError(error: unknown): DynamicUIError {
   if (error instanceof DynamicUIError) {
     return error;
@@ -43,6 +69,140 @@ function asDynamicUIError(error: unknown): DynamicUIError {
   return new DynamicUIError("INVALID_SURFACE", "React renderer failed", {
     cause: error instanceof Error ? error.message : String(error),
   });
+}
+
+class SurfaceNode extends PureComponent<SurfaceNodeProps, SurfaceNodeSnapshot> {
+  state = this.props.model.getNodeSnapshot(this.props.nodeId);
+  #unsubscribe: (() => void) | undefined;
+
+  componentDidMount(): void {
+    this.#subscribe();
+  }
+
+  componentDidUpdate(previous: SurfaceNodeProps): void {
+    if (
+      previous.model === this.props.model &&
+      previous.nodeId === this.props.nodeId
+    ) {
+      return;
+    }
+    this.#unsubscribe?.();
+    this.setState(this.props.model.getNodeSnapshot(this.props.nodeId));
+    this.#subscribe();
+  }
+
+  componentWillUnmount(): void {
+    this.#unsubscribe?.();
+  }
+
+  #subscribe(): void {
+    this.#unsubscribe = this.props.model.subscribeNode(
+      this.props.nodeId,
+      () => {
+        this.setState(this.props.model.getNodeSnapshot(this.props.nodeId));
+      },
+    );
+  }
+
+  render(): ReactNode {
+    const { model, context } = this.props;
+    const { node, value } = this.state;
+    if (node === undefined || node.visible === false) return null;
+
+    const resolved = context.reactComponents.resolve(node.component, {
+      ...(context.preferredPack === undefined
+        ? {}
+        : { preferredPack: context.preferredPack }),
+      ...(context.capabilities === undefined
+        ? {}
+        : { capabilities: context.capabilities }),
+      ...(context.enabledPackIds === undefined
+        ? {}
+        : { availablePackIds: context.enabledPackIds }),
+      ...(context.packPriorities === undefined
+        ? {}
+        : { packPriorities: context.packPriorities }),
+      ...(context.supportedPackVersions === undefined
+        ? {}
+        : { supportedPackVersions: context.supportedPackVersions }),
+    });
+    const Component = resolved.component;
+    const children = node.children?.map((child) => (
+      <SurfaceNode
+        key={child.id}
+        model={model}
+        nodeId={child.id}
+        context={context}
+      />
+    ));
+    const component = (
+      <Component
+        node={node}
+        value={value}
+        mode={context.mode}
+        actionStates={context.actionExecution.states}
+        interactionDisabled={context.actionExecution.interactionDisabled}
+        onValueChange={(nextValue) => {
+          if (node.binding === undefined) {
+            context.report(
+              new DynamicUIError(
+                "INVALID_OPERATION",
+                `Component "${node.component}" has no data binding`,
+              ),
+            );
+            return;
+          }
+          try {
+            context.store.updateData(
+              context.surfaceId,
+              model.getSurface().revision,
+              [{ path: node.binding.path, value: nextValue }],
+            );
+          } catch (error) {
+            context.report(error);
+          }
+        }}
+        onAction={(action, input: JsonValue) => {
+          if (
+            context.onActionIntent === undefined ||
+            context.actionExecution.interactionDisabled
+          ) {
+            return;
+          }
+          try {
+            context.onActionIntent(
+              createActionIntent(
+                context.componentRegistry,
+                model.getSurface(),
+                {
+                  id: context.nextActionId(node.id, action),
+                  nodeId: node.id,
+                  action,
+                  input,
+                },
+              ),
+            );
+          } catch (error) {
+            context.report(error);
+          }
+        }}
+      >
+        {children}
+      </Component>
+    );
+    const rendered =
+      resolved.Provider === undefined ? (
+        component
+      ) : (
+        <resolved.Provider>{component}</resolved.Provider>
+      );
+    const layoutStyle = safeLayoutItemStyle(node.layout, context.mode);
+    return Object.keys(layoutStyle).length === 0 ? (
+      rendered
+    ) : (
+      <div style={layoutStyle}>{rendered}</div>
+    );
+  }
 }
 
 /** Renders only locally registered components and writes values through SurfaceStore. */
@@ -61,109 +221,71 @@ export function SurfaceRenderer({
   actionStateSource,
   onError,
 }: SurfaceRendererProps) {
-  const surface = useSurface(store, surfaceId);
+  const model = useMemo(
+    () => new SurfaceReadModel(store, surfaceId),
+    [store, surfaceId],
+  );
+  const surface = useSyncExternalStore(
+    model.subscribeSurface,
+    model.getSurface,
+    model.getSurface,
+  );
   const actionExecution = useActionExecution(actionStateSource, surfaceId);
   const actionSequence = useRef(0);
-
-  function report(error: unknown): void {
-    const dynamicError = asDynamicUIError(error);
-    if (onError !== undefined) {
-      onError(dynamicError);
-      return;
-    }
-    throw dynamicError;
-  }
-
-  function renderNode(node: UINode): ReactNode {
-    if (node.visible === false) {
-      return null;
-    }
-    const selectedPreferredPack =
-      preferredPack ?? surface.presentation?.preferredPack;
-    const resolved = reactComponents.resolve(node.component, {
-      ...(selectedPreferredPack === undefined
-        ? {}
-        : { preferredPack: selectedPreferredPack }),
-      ...(capabilities === undefined ? {} : { capabilities }),
-      ...(enabledPackIds === undefined
-        ? {}
-        : { availablePackIds: enabledPackIds }),
-      ...(packPriorities === undefined ? {} : { packPriorities }),
-      ...(supportedPackVersions === undefined ? {} : { supportedPackVersions }),
-    });
-    const Component = resolved.component;
-    const value =
-      node.binding === undefined
-        ? undefined
-        : readDataPath(surface.data, node.binding.path);
-    const children = node.children?.map((child) => (
-      <Fragment key={child.id}>{renderNode(child)}</Fragment>
-    ));
-    const component = (
-      <Component
-        node={node}
-        value={value}
-        mode={mode}
-        actionStates={actionExecution.states}
-        interactionDisabled={actionExecution.interactionDisabled}
-        onValueChange={(nextValue) => {
-          if (node.binding === undefined) {
-            report(
-              new DynamicUIError(
-                "INVALID_OPERATION",
-                `Component "${node.component}" has no data binding`,
-              ),
-            );
-            return;
-          }
-          try {
-            const current = store.requireSurface(surfaceId);
-            store.updateData(surfaceId, current.revision, [
-              { path: node.binding.path, value: nextValue },
-            ]);
-          } catch (error) {
-            report(error);
-          }
-        }}
-        onAction={(action, input: JsonValue) => {
-          if (
-            onActionIntent === undefined ||
-            actionExecution.interactionDisabled
-          ) {
-            return;
-          }
-          try {
-            actionSequence.current += 1;
-            const current = store.requireSurface(surfaceId);
-            onActionIntent(
-              createActionIntent(componentRegistry, current, {
-                id: `${surfaceId}:${node.id}:${action}:${actionSequence.current}`,
-                nodeId: node.id,
-                action,
-                input,
-              }),
-            );
-          } catch (error) {
-            report(error);
-          }
-        }}
-      >
-        {children}
-      </Component>
-    );
-    const rendered =
-      resolved.Provider === undefined ? (
-        component
-      ) : (
-        <resolved.Provider>{component}</resolved.Provider>
-      );
-    const layoutStyle = safeLayoutItemStyle(node.layout, mode);
-    return Object.keys(layoutStyle).length === 0 ? (
-      rendered
-    ) : (
-      <div style={layoutStyle}>{rendered}</div>
-    );
-  }
+  const report = useCallback(
+    (error: unknown): void => {
+      const dynamicError = asDynamicUIError(error);
+      if (onError !== undefined) {
+        onError(dynamicError);
+        return;
+      }
+      throw dynamicError;
+    },
+    [onError],
+  );
+  const nextActionId = useCallback(
+    (nodeId: string, action: string): string => {
+      actionSequence.current += 1;
+      return `${surfaceId}:${nodeId}:${action}:${actionSequence.current}`;
+    },
+    [surfaceId],
+  );
+  const selectedPreferredPack =
+    preferredPack ?? surface.presentation?.preferredPack;
+  const context = useMemo<NodeRenderContext>(
+    () => ({
+      surfaceId,
+      store,
+      componentRegistry,
+      reactComponents,
+      mode,
+      preferredPack: selectedPreferredPack,
+      enabledPackIds,
+      capabilities,
+      packPriorities,
+      supportedPackVersions,
+      onActionIntent,
+      actionExecution,
+      report,
+      nextActionId,
+    }),
+    [
+      surfaceId,
+      store,
+      componentRegistry,
+      reactComponents,
+      mode,
+      selectedPreferredPack,
+      enabledPackIds,
+      capabilities,
+      packPriorities,
+      supportedPackVersions,
+      onActionIntent,
+      actionExecution,
+      report,
+      nextActionId,
+    ],
+  );
 
   return (
     <div
@@ -175,7 +297,12 @@ export function SurfaceRenderer({
         padding: mode === "compact" ? 12 : 20,
       }}
     >
-      {renderNode(surface.tree)}
+      <SurfaceNode
+        key={surface.id}
+        model={model}
+        nodeId={surface.tree.id}
+        context={context}
+      />
     </div>
   );
 }
