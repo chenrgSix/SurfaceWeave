@@ -415,8 +415,9 @@ createApp(App).mount("#app");
       "src/runtime.ts": `import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
+  surfaceObservation,
   type ActionIntent,
-  type SurfaceListener,
+  type SurfaceObservationListener,
 } from "@surfaceweave/core";
 import { createStandardReactComponentRegistry } from "@surfaceweave/react";
 import { createReactDOMRendererDriver } from "@surfaceweave/react/dom";
@@ -467,8 +468,9 @@ store.createSurface({
 
 let activeSubscriptions = 0;
 export const subscriptionEvents: string[] = [];
-const subscribe = store.subscribe.bind(store);
-store.subscribe = (surfaceId: string, listener: SurfaceListener) => {
+const observation = store[surfaceObservation];
+const subscribe = observation.subscribe.bind(observation);
+observation.subscribe = (surfaceId: string, listener: SurfaceObservationListener) => {
   activeSubscriptions += 1;
   subscriptionEvents.push(\`subscribe:\${surfaceId}:\${activeSubscriptions}\`);
   const unsubscribe = subscribe(surfaceId, listener);

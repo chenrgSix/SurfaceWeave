@@ -9,6 +9,15 @@ export interface JsonObject {
   [key: string]: JsonValue;
 }
 
+/** Recursive readonly projection used only by opt-in immutable read APIs. */
+export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly (infer Item)[]
+    ? readonly DeepReadonly<Item>[]
+    : T extends object
+      ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+      : T;
+
 /** JSON Schema document. The protocol uses the 2020-12 dialect. */
 export type JsonSchema = boolean | JsonObject;
 

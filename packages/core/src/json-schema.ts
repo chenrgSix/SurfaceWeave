@@ -148,6 +148,10 @@ function validationMessage(
     .join("; ");
 }
 
+export interface CompiledJsonSchemaValidator {
+  assert(value: JsonValue, label?: string, code?: DynamicUIErrorCode): void;
+}
+
 /** Validates a JSON Schema 2020-12 document without runtime code generation. */
 export function assertValidJsonSchema(
   schema: JsonSchema,
@@ -164,6 +168,40 @@ export function assertValidJsonSchema(
   }
 }
 
+/** Compiles a trusted schema once for repeated CSP-safe value validation. */
+export function compileJsonSchemaValidator(
+  schema: JsonSchema,
+  label = "schema",
+  code: DynamicUIErrorCode = "INVALID_COMPONENT_PACK",
+): CompiledJsonSchemaValidator {
+  assertValidJsonSchema(schema, label, code);
+  let validator: Validator;
+  try {
+    validator = new Validator(
+      cloneValue(schema) as JsonObject,
+      "2020-12",
+      false,
+    );
+  } catch (error) {
+    throw new DynamicUIError(
+      code,
+      `Cannot compile ${label} because it is invalid`,
+      { cause: error instanceof Error ? error.message : String(error) },
+    );
+  }
+  return {
+    assert(value, valueLabel = "value", valueCode = "INVALID_SURFACE"): void {
+      const result = validator.validate(value);
+      if (!result.valid) {
+        throw new DynamicUIError(
+          valueCode,
+          `${valueLabel} does not match its JSON Schema: ${validationMessage(result.errors, "invalid value")}`,
+        );
+      }
+    },
+  };
+}
+
 /** Validates a JSON value without eval/new Function, including under strict CSP. */
 export function assertMatchesJsonSchema(
   schema: JsonSchema,
@@ -171,25 +209,9 @@ export function assertMatchesJsonSchema(
   label = "value",
   code: DynamicUIErrorCode = "INVALID_SURFACE",
 ): void {
-  assertValidJsonSchema(schema, `${label} schema`, code);
-  let result;
-  try {
-    result = new Validator(
-      cloneValue(schema) as JsonObject,
-      "2020-12",
-      false,
-    ).validate(value);
-  } catch (error) {
-    throw new DynamicUIError(
-      code,
-      `Cannot validate ${label} because its schema is invalid`,
-      { cause: error instanceof Error ? error.message : String(error) },
-    );
-  }
-  if (!result.valid) {
-    throw new DynamicUIError(
-      code,
-      `${label} does not match its JSON Schema: ${validationMessage(result.errors, "invalid value")}`,
-    );
-  }
+  compileJsonSchemaValidator(schema, `${label} schema`, code).assert(
+    value,
+    label,
+    code,
+  );
 }

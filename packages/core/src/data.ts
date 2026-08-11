@@ -3,6 +3,7 @@ import type { DynamicUIErrorCode } from "./errors.js";
 import type {
   BindingValueType,
   DataBinding,
+  DeepReadonly,
   JsonObject,
   JsonValue,
   UINode,
@@ -44,6 +45,19 @@ export function cloneValue<T>(value: T): T {
   return Object.fromEntries(
     Object.entries(value).map(([key, item]) => [key, cloneValue(item)]),
   ) as T;
+}
+
+/** Recursively freezes one already-validated JSON-compatible value. */
+export function deepFreezeValue<T>(value: T): DeepReadonly<T> {
+  if (value === null || typeof value !== "object" || Object.isFrozen(value)) {
+    return value as DeepReadonly<T>;
+  }
+  for (const item of Array.isArray(value)
+    ? value
+    : Object.values(value as object)) {
+    deepFreezeValue(item);
+  }
+  return Object.freeze(value) as DeepReadonly<T>;
 }
 
 /** Validates the JSON data model without relying on DOM structured cloning. */
@@ -179,6 +193,30 @@ export function writeDataPath(
     current = current[segment] as JsonObject;
   }
   current[segments.at(-1) as string] = cloneValue(value);
+}
+
+/** Writes one path with copy-on-write ancestors and shared untouched branches. */
+export function writeDataPathImmutable(
+  data: JsonObject,
+  path: string,
+  value: JsonValue,
+): JsonObject {
+  const segments = splitDataPath(path);
+  function write(current: JsonObject, index: number): JsonObject {
+    const segment = segments[index] as string;
+    if (index === segments.length - 1) {
+      return { ...current, [segment]: cloneValue(value) };
+    }
+    const existing = current[segment];
+    const child =
+      typeof existing === "object" &&
+      existing !== null &&
+      !Array.isArray(existing)
+        ? existing
+        : {};
+    return { ...current, [segment]: write(child, index + 1) };
+  }
+  return write(data, 0);
 }
 
 export function collectBindings(root: UINode): Map<string, DataBinding> {

@@ -1,14 +1,14 @@
 import { assertSafeDeclaration, cloneValue } from "./data.js";
 import { DynamicUIError } from "./errors.js";
 import {
-  assertComponentExtension,
   componentManifestToDefinition,
   parseComponentPackManifest,
 } from "./component-pack.js";
 import {
-  assertMatchesJsonSchema,
   assertValidJsonSchema,
+  compileJsonSchemaValidator,
 } from "./json-schema.js";
+import type { CompiledJsonSchemaValidator } from "./json-schema.js";
 import type {
   ComponentActionDefinition,
   ComponentDefinition,
@@ -17,6 +17,12 @@ import type {
   DataBinding,
   UINode,
 } from "./types.js";
+
+interface RegisteredComponent {
+  definition: ComponentDefinition;
+  propsValidator?: CompiledJsonSchemaValidator;
+  extensionValidators: Map<string, CompiledJsonSchemaValidator>;
+}
 
 function actionName(action: string | ComponentActionDefinition): string {
   return typeof action === "string" ? action : action.name;
@@ -51,7 +57,7 @@ function bindingIsAccepted(
 
 /** In-memory allow-list used at every component and action trust boundary. */
 export class InMemoryComponentRegistry implements ComponentRegistry {
-  readonly #definitions = new Map<string, ComponentDefinition>();
+  readonly #definitions = new Map<string, RegisteredComponent>();
   readonly #packs = new Map<string, ComponentPackManifest>();
 
   register(definition: ComponentDefinition): void {
@@ -81,12 +87,13 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
         );
       }
     }
-    if (definition.propsSchema !== undefined) {
-      assertValidJsonSchema(
-        definition.propsSchema,
-        `Props schema for ${definition.type}`,
-      );
-    }
+    const propsValidator =
+      definition.propsSchema === undefined
+        ? undefined
+        : compileJsonSchemaValidator(
+            definition.propsSchema,
+            `Props schema for ${definition.type}`,
+          );
     if (definition.actionSchema !== undefined) {
       assertValidJsonSchema(
         definition.actionSchema,
@@ -102,7 +109,23 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
         `Fallback "${definition.fallback}" for "${definition.type}" is not registered`,
       );
     }
-    this.#definitions.set(definition.type, cloneValue(definition));
+    const extensionValidators = new Map<string, CompiledJsonSchemaValidator>();
+    for (const [namespace, extension] of Object.entries(
+      definition.extensions ?? {},
+    )) {
+      extensionValidators.set(
+        namespace,
+        compileJsonSchemaValidator(
+          extension.schema,
+          `Extension schema for ${definition.type}.${namespace}`,
+        ),
+      );
+    }
+    this.#definitions.set(definition.type, {
+      definition: cloneValue(definition),
+      ...(propsValidator === undefined ? {} : { propsValidator }),
+      extensionValidators,
+    });
   }
 
   registerPack(input: ComponentPackManifest): void {
@@ -121,7 +144,7 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
     }
     for (const component of manifest.components) {
       const definition = componentManifestToDefinition(component);
-      const existing = this.#definitions.get(definition.type);
+      const existing = this.#definitions.get(definition.type)?.definition;
       if (existing === undefined) {
         this.register(definition);
         continue;
@@ -141,8 +164,10 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
   }
 
   get(type: string): ComponentDefinition | undefined {
-    const definition = this.#definitions.get(type);
-    return definition === undefined ? undefined : cloneValue(definition);
+    const registered = this.#definitions.get(type);
+    return registered === undefined
+      ? undefined
+      : cloneValue(registered.definition);
   }
 
   require(type: string): ComponentDefinition {
@@ -159,6 +184,7 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
 
   list(): ComponentDefinition[] {
     return [...this.#definitions.values()]
+      .map((registered) => registered.definition)
       .sort((left, right) => left.type.localeCompare(right.type))
       .map((definition) => cloneValue(definition));
   }
@@ -174,10 +200,17 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
   }
 
   assertNode(node: UINode): void {
-    const definition = this.require(node.component);
-    if (definition.propsSchema !== undefined) {
-      assertMatchesJsonSchema(
-        definition.propsSchema,
+    const registered = this.#definitions.get(node.component);
+    if (registered === undefined) {
+      throw new DynamicUIError(
+        "UNKNOWN_COMPONENT",
+        `Component "${node.component}" is not registered`,
+        { component: node.component },
+      );
+    }
+    const { definition, propsValidator, extensionValidators } = registered;
+    if (propsValidator !== undefined) {
+      propsValidator.assert(
         node.props,
         `Props for component "${node.component}"`,
       );
@@ -185,12 +218,27 @@ export class InMemoryComponentRegistry implements ComponentRegistry {
     for (const [namespace, extension] of Object.entries(
       node.extensions ?? {},
     )) {
-      assertComponentExtension(
-        definition,
-        namespace,
-        extension.version,
-        extension.value,
-      );
+      const schema = definition.extensions?.[namespace];
+      if (schema === undefined) {
+        throw new DynamicUIError(
+          "INVALID_EXTENSION",
+          `Extension "${namespace}" is not registered for "${definition.type}"`,
+        );
+      }
+      if (schema.version !== extension.version) {
+        throw new DynamicUIError(
+          "INVALID_EXTENSION",
+          `Extension "${namespace}" requires version ${schema.version}, received ${extension.version}`,
+        );
+      }
+      assertSafeDeclaration(extension.value, `extensions.${namespace}.value`);
+      extensionValidators
+        .get(namespace)
+        ?.assert(
+          extension.value,
+          `extensions.${namespace}.value`,
+          "INVALID_EXTENSION",
+        );
     }
     if (
       node.binding !== undefined &&

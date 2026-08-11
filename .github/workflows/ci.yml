@@ -58,6 +58,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Smoke-test performance benchmarks
+        run: pnpm benchmark:smoke
+
       - name: Verify package tarballs
         run: pnpm verify:packages
 

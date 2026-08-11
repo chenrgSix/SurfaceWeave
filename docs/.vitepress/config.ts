@@ -83,6 +83,7 @@ export default defineConfig({
           text: "References",
           items: [
             { text: "Public API", link: "/public-api" },
+            { text: "Performance", link: "/performance" },
             {
               text: "RC.5 release",
               link: "/rc5-release-candidate-summary",
