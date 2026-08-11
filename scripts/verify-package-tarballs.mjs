@@ -791,6 +791,8 @@ document.querySelector("#app").textContent = runtime.listPacks().map((pack) => p
     consumer: `import { ToolToUIRuntime } from "@surfaceweave/agent-tools";
 import { InMemorySurfaceStore, createStandardComponentRegistry } from "@surfaceweave/core";
 import type { ActionIntent, ToolDefinition, ToolSubmissionRequest } from "@surfaceweave/core";
+import { fromOpenApiOperation } from "@surfaceweave/generator";
+import type { OpenApiParameterSource, OpenApiParameterSourceKey } from "@surfaceweave/generator";
 const definition: ToolDefinition = {
   id: "tea.search",
   version: "1.0.0",
@@ -801,6 +803,30 @@ const definition: ToolDefinition = {
   },
   outputSchema: { type: "object" },
 };
+const tenantKey: OpenApiParameterSourceKey = "header:X-Tenant-Id";
+const tenantSource: OpenApiParameterSource = "host";
+const openApiDefinition = fromOpenApiOperation({
+  path: "/tea",
+  method: "get",
+  parameterSources: { [tenantKey]: tenantSource },
+  document: {
+    openapi: "3.1.1",
+    info: { title: "Tea", version: "1.0.0" },
+    paths: {
+      "/tea": {
+        get: {
+          operationId: "tea.openapi.search",
+          parameters: [
+            { name: "query", in: "query", schema: { type: "string" } },
+            { name: "X-Tenant-Id", in: "header", required: true, schema: { type: "string" } },
+          ],
+          responses: { "200": { description: "ok" } },
+        },
+      },
+    },
+  },
+});
+if (JSON.stringify(openApiDefinition.inputSchema).includes("X-Tenant-Id")) throw new Error("host parameter leaked");
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components);
 const runtime = new ToolToUIRuntime(components, store);

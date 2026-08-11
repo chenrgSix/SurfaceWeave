@@ -29,6 +29,43 @@ The placeholder server URL is documentation only. A trusted Host must inject
 the real base URL and authentication configuration. Security schemes must never
 become editable form fields.
 
+## Host-owned parameters
+
+Parameter location is not the same as trust ownership. SurfaceWeave applies a
+conservative default when adapting an operation:
+
+| OpenAPI location | Default source | Generated form |
+| ---------------- | -------------- | -------------- |
+| `path`           | user           | included       |
+| `query`          | user           | included       |
+| `header`         | Host           | omitted        |
+| `cookie`         | Host           | omitted        |
+
+The Host injects tenant, user, organization, authorization, trace, idempotency,
+and signing values when it constructs the real request. Hiding those values in
+a form is insufficient: Host-owned parameters are excluded from the canonical
+Tool Schema and generated form. The Host must not pass context values as
+Surface `initialValues`; Runtime submission projection discards fields absent
+from the canonical Schema before producing `validatedArguments`.
+
+A trusted integration may opt an ordinary business Header into user input:
+
+```ts
+const definition = fromOpenApiOperation({
+  document: dereferencedDocument,
+  path: "/reports",
+  method: "get",
+  parameterSources: {
+    "header:X-Report-Format": "user",
+  },
+});
+```
+
+`Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, `X-API-Key`,
+and every cookie parameter remain Host-owned even when a caller attempts to
+mark them as user-controlled. The OpenAPI document cannot select a context
+source, access credentials, or weaken this boundary.
+
 The fixture passes Redocly's recommended OpenAPI rules:
 
 ```bash

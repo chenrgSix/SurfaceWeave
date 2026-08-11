@@ -57,6 +57,10 @@ The Core root also publicly exports its protocol types, including `Surface`,
 `ComponentPackManifest`, storage/preference records, and registry/store
 interfaces.
 
+The Generator exports `OpenApiParameterLocation`, `OpenApiParameterSource`, and
+`OpenApiParameterSourceKey` for trusted OpenAPI input policy. These types do not
+carry Host context values or execution authority.
+
 Core also exports the optional, framework-neutral `SurfaceViewMode`,
 `SurfaceViewReference`, `SurfaceViewHandle`, and
 `SurfaceRendererDriver<TTarget>` types. `SurfaceViewReference` contains only a

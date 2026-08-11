@@ -31,6 +31,15 @@ schemas but discard URLs and transport authority. Generation supports nested
 objects, arrays, enums, nullable unions, defaults, required/read-only fields,
 common formats, constraints, and practical `oneOf`/`anyOf` fallback.
 
+OpenAPI path and query parameters default to user input. Header and cookie
+parameters default to Host-owned context and are omitted from the canonical
+Tool input Schema and generated form. A trusted Host may explicitly expose a
+non-sensitive business Header through `parameterSources`; authorization, proxy
+authorization, cookies, API keys, and security schemes cannot become
+user-controlled fields. Host context must never be supplied as Surface initial
+values; Tool submission projection also discards fields absent from the
+canonical input Schema before creating `validatedArguments`.
+
 The validated
 [`examples/tea-purchase/openapi.json`](https://github.com/chenrgSix/SurfaceWeave/blob/main/examples/tea-purchase/openapi.json)
 fixture intentionally includes full-document discovery, local references,

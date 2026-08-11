@@ -12,6 +12,8 @@ import type {
 
 import type {
   AgentToolDefinitionInput,
+  OpenApiParameterLocation,
+  OpenApiParameterSource,
   OpenApiToolInput,
   SimpleJsonSchema,
 } from "./types.js";
@@ -182,6 +184,69 @@ function inlineSchema(value: JsonValue | undefined, label: string): JsonSchema {
   return object;
 }
 
+const openApiParameterLocations = new Set<OpenApiParameterLocation>([
+  "path",
+  "query",
+  "header",
+  "cookie",
+]);
+
+const protectedHeaderNames = new Set([
+  "authorization",
+  "proxy-authorization",
+  "cookie",
+  "set-cookie",
+  "x-api-key",
+]);
+
+function openApiParameterLocation(
+  value: JsonValue | undefined,
+  name: string,
+): OpenApiParameterLocation {
+  if (
+    typeof value !== "string" ||
+    !openApiParameterLocations.has(value as OpenApiParameterLocation)
+  ) {
+    throw new DynamicUIError(
+      "INVALID_TOOL_DEFINITION",
+      `OpenAPI parameter "${name}" has an invalid location`,
+    );
+  }
+  return value as OpenApiParameterLocation;
+}
+
+function openApiParameterSource(
+  input: OpenApiToolInput,
+  location: OpenApiParameterLocation,
+  name: string,
+): OpenApiParameterSource {
+  const key = `${location}:${name}` as const;
+  const configured = input.parameterSources?.[key];
+  if (
+    configured !== undefined &&
+    configured !== "user" &&
+    configured !== "host"
+  ) {
+    throw new DynamicUIError(
+      "INVALID_TOOL_DEFINITION",
+      `OpenAPI parameter source for "${key}" must be user or host`,
+    );
+  }
+  const source =
+    configured ??
+    (location === "header" || location === "cookie" ? "host" : "user");
+  if (
+    source === "user" &&
+    (location === "cookie" || protectedHeaderNames.has(name.toLowerCase()))
+  ) {
+    throw new DynamicUIError(
+      "INVALID_TOOL_DEFINITION",
+      `Security-sensitive OpenAPI parameter "${key}" cannot be user-controlled`,
+    );
+  }
+  return source;
+}
+
 /** Converts one dereferenced OpenAPI 3.1 Operation without retaining HTTP execution data. */
 export function fromOpenApiOperation(input: OpenApiToolInput): ToolDefinition {
   const paths = objectValue(input.document.paths, "document.paths");
@@ -210,6 +275,8 @@ export function fromOpenApiOperation(input: OpenApiToolInput): ToolDefinition {
           "OpenAPI parameter name is required",
         );
       }
+      const location = openApiParameterLocation(parameter.in, name);
+      if (openApiParameterSource(input, location, name) === "host") continue;
       properties[name] = inlineSchema(
         parameter.schema,
         `parameter ${name}.schema`,

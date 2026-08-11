@@ -183,6 +183,12 @@ flowchart TD
 
 Agent 可以临时覆盖历史偏好，但必须提供原因，且不能自动改写长期偏好。
 
+OpenAPI 参数位置不等于数据所有权。path/query 默认进入用户表单；header/cookie
+默认由可信 Host 注入并从 Tool input Schema 和生成表单中移除。Host 不得把这些上下文
+作为 Surface initialValues；Runtime 在产生 validatedArguments 前还会按 canonical
+Schema 投影字段。普通业务 Header 只有在宿主显式配置时才能成为用户输入；鉴权、
+Cookie、API Key、租户与签名上下文不得由 OpenAPI 文档自行降级为可编辑字段。
+
 ## 六、组件注册机制
 
 当前标准语义组件包括：

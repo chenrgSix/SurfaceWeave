@@ -109,10 +109,21 @@ export interface AgentToolDefinitionInput {
   version?: string;
 }
 
+export type OpenApiParameterLocation = "path" | "query" | "header" | "cookie";
+export type OpenApiParameterSource = "user" | "host";
+export type OpenApiParameterSourceKey = `${OpenApiParameterLocation}:${string}`;
+
 export interface OpenApiToolInput {
   document: JsonObject;
   path: string;
   method: "get" | "post" | "put" | "patch" | "delete";
+  /**
+   * Trusted Host policy for OpenAPI parameters. Header and cookie parameters
+   * default to Host-owned; path and query parameters default to user input.
+   */
+  parameterSources?: Partial<
+    Record<OpenApiParameterSourceKey, OpenApiParameterSource>
+  >;
 }
 
 export interface GenerateResultSurfaceInput {
