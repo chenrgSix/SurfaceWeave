@@ -281,7 +281,7 @@ export class AgentUIToolRuntime {
       assertOperationsAllowedByHardConstraints(
         current,
         input.operations,
-        this.#constraints.get(input.surfaceId),
+        this.#hardConstraintsFor(input.surfaceId),
         this.#registry,
       );
       return this.#store.applyOperations(
@@ -303,7 +303,7 @@ export class AgentUIToolRuntime {
           id: input.surfaceId,
           revision: current.revision + 1,
         },
-        this.#constraints.get(input.surfaceId),
+        this.#hardConstraintsFor(input.surfaceId),
         current,
       );
       return this.#store.replaceSurface(
@@ -435,6 +435,13 @@ export class AgentUIToolRuntime {
           : {}),
       };
     });
+  }
+
+  #hardConstraintsFor(surfaceId: string): DeveloperHardConstraints | undefined {
+    return (
+      this.#toolRuntime?.getSurfaceHardConstraints(surfaceId) ??
+      this.#constraints.get(surfaceId)
+    );
   }
 
   #requireToolRuntime(): ToolToUIRuntime {

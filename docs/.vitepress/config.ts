@@ -15,7 +15,7 @@ export default defineConfig({
       {
         property: "og:image",
         content:
-          "https://chenrgsix.github.io/SurfaceWeave/assets/tea-purchase-demo.jpg",
+          "https://chenrgsix.github.io/SurfaceWeave/conversation-playground.png",
       },
     ],
   ],
@@ -27,6 +27,7 @@ export default defineConfig({
     siteTitle: "SurfaceWeave",
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
+      { text: "Playground", link: "/playground/", target: "_self" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
         text: "0.1.0-rc.5",
@@ -51,6 +52,19 @@ export default defineConfig({
           text: "Get started",
           items: [
             { text: "Introduction", link: "/guide/getting-started" },
+            {
+              text: "Open live playground",
+              link: "/playground/",
+              target: "_self",
+            },
+            {
+              text: "Conversation playground",
+              link: "/guide/conversation-playground",
+            },
+            {
+              text: "Operations center demo",
+              link: "/guide/operations-center",
+            },
             { text: "Tool-to-UI runtime", link: "/guide/tool-to-ui" },
             {
               text: "OpenAPI to default form",

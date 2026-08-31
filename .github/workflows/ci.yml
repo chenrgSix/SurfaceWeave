@@ -36,6 +36,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # npm 10 can crash while resolving circular optional peers in the clean
+      # Vue/Agentdown consumer. npm/cli#8448 fixes this in npm 11.6.0.
+      - name: Pin npm for clean-consumer verification
+        run: npm install --global npm@11.6.0 --ignore-scripts --no-audit --no-fund
+
       - name: Assert cold checkout
         run: |
           if find packages examples -type d -name dist -print -quit | grep -q .; then

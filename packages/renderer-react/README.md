@@ -38,6 +38,12 @@ In RC.4, `SurfaceRenderer` and the DOM Driver accept an optional
 Action, Dialog, and Confirm bindings show pending/error state and do not emit
 actions while the trusted host gate is active.
 
+Each emitted interaction has a fresh random ActionIntent id, including across
+shared views and remounts. Treat the id as opaque and preserve it when replaying
+the same intent for deduplication; a later click creates a new intent. The
+renderer uses the browser's `crypto.getRandomValues` without requiring HTTPS-only
+`randomUUID`. The ActionIntent wire shape is unchanged.
+
 In RC.4, the default, React Aria, and Ant Design Packs resolve the
 same Semantic LayoutSpec. `safeLayoutStyle` maps portable container values;
 `safeLayoutItemStyle` applies only grid-item `span`. Compact mode safely uses a

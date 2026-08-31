@@ -2,6 +2,7 @@
 
 import {
   InMemorySurfaceStore,
+  InMemoryActionExecutionController,
   componentManifestToDefinition,
   createStandardComponentRegistry,
   standardComponentManifests,
@@ -91,6 +92,63 @@ class MutableActionStateSource implements ActionExecutionStateSource {
 }
 
 describe("SurfaceRenderer", () => {
+  it("executes distinct actions across shared views and remounts without losing replay deduplication", async () => {
+    const registry = createStandardComponentRegistry();
+    const store = new InMemorySurfaceStore(registry);
+    store.createSurface({
+      id: "shared-action",
+      intent: "form",
+      tree: {
+        id: "button",
+        component: "Action",
+        props: { label: "Increment" },
+      },
+      data: {},
+      context: {},
+    });
+    const reactComponents = createStandardReactComponentRegistry(registry);
+    const execute = vi.fn(async (intent: ActionIntent) => ({
+      intentId: intent.id,
+      status: "success" as const,
+    }));
+    const controller = new InMemoryActionExecutionController({ execute });
+    const intents: ActionIntent[] = [];
+    const view = () =>
+      render(
+        <SurfaceRenderer
+          surfaceId="shared-action"
+          store={store}
+          componentRegistry={registry}
+          reactComponents={reactComponents}
+          actionStateSource={controller}
+          onActionIntent={(intent) => {
+            intents.push(intent);
+            void controller.execute(intent);
+          }}
+        />,
+      );
+    const first = view();
+    const second = view();
+    await act(async () => {
+      fireEvent.click(first.container.querySelector("button")!);
+    });
+    await act(async () => {
+      fireEvent.click(second.container.querySelector("button")!);
+    });
+    first.unmount();
+    const remounted = view();
+    await act(async () => {
+      fireEvent.click(remounted.container.querySelector("button")!);
+    });
+    expect(intents).toHaveLength(3);
+    expect(new Set(intents.map((intent) => intent.id)).size).toBe(3);
+    expect(execute).toHaveBeenCalledTimes(3);
+    await act(async () => {
+      await controller.execute(intents[0]!);
+    });
+    expect(execute).toHaveBeenCalledTimes(3);
+  });
+
   it("shares read-only action state across views and honors the host interaction gate", () => {
     const runtime = createFormRuntime();
     runtime.store.applyOperations("purchase", 0, [
@@ -340,7 +398,7 @@ describe("SurfaceRenderer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Longjing" }));
 
     expect(onActionIntent).toHaveBeenCalledWith({
-      id: "teas:tea-cards:select:1",
+      id: expect.stringMatching(/^teas:tea-cards:select:[0-9a-f]{32}$/),
       surfaceId: "teas",
       nodeId: "tea-cards",
       action: "select",

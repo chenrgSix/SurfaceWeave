@@ -10,6 +10,10 @@ hero:
     alt: SurfaceWeave woven surface mark
   actions:
     - theme: brand
+      text: Open live playground
+      link: /playground/
+      target: _self
+    - theme: alt
       text: Get started
       link: /guide/getting-started
     - theme: alt
@@ -45,14 +49,27 @@ npm install @surfaceweave/core@next \
   @surfaceweave/agent-tools@next
 ```
 
-## One Surface, multiple trusted views
+## Say it. Reshape the whole application.
 
-The chat view and the full workspace subscribe to the same `SurfaceStore`, so
+The flagship conversation playground connects fixed dialogue templates or your
+temporarily configured model to a live application. Move navigation to any edge, create a custom palette, generate new cards and grids,
+rebuild the page, open synchronized views, or turn fields into decision cards. Combine changes and undo them without losing the latest user input.
+Use the **Open live playground** button above to try it directly in your browser.
+No Key is needed for fixed templates. Follow the [conversation walkthrough](/guide/conversation-playground) to connect a model, or run `pnpm dev` locally.
+
+Fixed templates are scripted; optional model mode accepts your temporary OpenAI-compatible
+Chat Completions configuration and executes model-authored semantic operations. The site is static: it includes no model proxy or shared API Key. Your provider must
+allow HTTPS browser requests from `https://chenrgsix.github.io`. Business APIs remain simulated. Both the application shell
+and business form are actual Surfaces. All mutations use the SDK; validated semantic color tokens are
+mapped to styles only by trusted local components. Generated card text and metrics
+are presentation content, not authenticated business evidence.
+
+Both embedded business views subscribe to the same `SurfaceStore`, so
 form values and semantic revisions stay synchronized. Renderer bindings are
 replaceable; the wire protocol remains framework independent.
 
 <div class="demo-frame">
-  <img src="./assets/tea-purchase-demo.jpg" alt="SurfaceWeave tea purchase Tool-to-UI example" />
+  <img src="/conversation-playground.png" alt="SurfaceWeave dialogue changes a live application" />
 </div>
 
 ::: warning Experimental release candidate

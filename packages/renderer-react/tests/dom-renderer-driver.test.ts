@@ -219,7 +219,7 @@ describe("createReactDOMRendererDriver", () => {
     ).not.toBeNull();
     fireEvent.click(chatTarget.querySelector("button") as HTMLButtonElement);
     expect(onActionIntent).toHaveBeenCalledWith({
-      id: "teas:tea-cards:select:1",
+      id: expect.stringMatching(/^teas:tea-cards:select:[0-9a-f]{32}$/),
       surfaceId: "teas",
       nodeId: "tea-cards",
       action: "select",

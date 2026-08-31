@@ -1,287 +1,131 @@
 # SurfaceWeave
 
+**让 Agent 改变界面，让用户的输入和业务规则继续成立。**
+
+A protocol-first runtime for agent-generated, tool-driven UI.
+
 [![CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml)
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
+[![Docs & Demo](https://img.shields.io/badge/docs%20%26%20demo-GitHub%20Pages-6655e8.svg)](https://chenrgsix.github.io/SurfaceWeave/)
+[![npm next](https://img.shields.io/npm/v/@surfaceweave/core/next?label=npm%20next)](https://www.npmjs.com/package/@surfaceweave/core)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: RC.5](https://img.shields.io/badge/status-0.1.0--rc.5-orange.svg)
 
-**SurfaceWeave — A protocol-first runtime for agent-generated, tool-driven UI.**
+[在线体验](https://chenrgsix.github.io/SurfaceWeave/playground/) · [使用文档](https://chenrgsix.github.io/SurfaceWeave/) · [快速接入](docs/guide/getting-started.md) · [架构与协议](docs/dynamic-ui-architecture.md)
 
-面向 Agent 动态生成与调整业务 UI 的协议优先运行时。
+SurfaceWeave 把页面描述为可序列化的 **Surface**：组件树、布局、数据绑定和版本。Agent 提出结构化变更，运行时校验并更新状态，可信 Component Pack 渲染界面。真正的业务执行仍由宿主授权。
 
-> **Status:** `0.1.0-rc.5` is published with npm provenance. npm `next`
-> resolves to RC.5, while `latest` intentionally remains on immutable RC.2.
-> Review the [RC.5 release summary](docs/rc5-release-candidate-summary.md)
-> before use.
+因此，应用可以在使用过程中重新组织：选择框变成决策卡，导航迁移，多个视图共享输入，甚至整个页面重建。界面变化可以被核查，不必牺牲数据和执行边界。
 
-JSON Schema and interaction intent produce a trusted declarative `Surface`; business Agents modify it through typed UI tools; renderers subscribe to the same `SurfaceStore`; host applications execute structured `ActionIntent` values.
+[![对话驱动的实际 SurfaceWeave 应用](docs/public/conversation-playground.png)](https://chenrgsix.github.io/SurfaceWeave/playground/)
 
-Milestones 1–6.3 implement the Surface runtime, deterministic Tool Schema generation, Tool invocation lifecycle, Agent tools, preferences, controlled Tauri bridge, language-neutral protocols, generic Renderer Driver, Semantic LayoutSpec, capability handshake, Action state projection, and resource policy. The same semantic Surface can use the default React, React Aria, or Ant Design binding without changing its data. Core has no React, DOM, network-library, component-library, or Tauri dependency.
+## 先看它如何改变一个应用
 
-RC.5 hardens OpenAPI parameter ownership so tenant, authorization, cookie, and
-other Host context stay outside generated forms. The checked-in OpenAPI fixture
-now drives the real tea-purchase Generator, Store, and Renderer acceptance UI.
-Install the release through npm `next`; `latest` remains on RC.2 while RC.5 is
-evaluated.
+打开 **[在线 Playground](https://chenrgsix.github.io/SurfaceWeave/playground/)**，不用安装，也不需要 Key 就能体验固定对话模板。
 
-SurfaceWeave is inspired by the event-stream ideas in AG-UI and the
-declarative component-tree ideas in A2UI, but is not protocol-compatible with
-either project.
+1. 先在工作台写一句备注。
+2. 点击「菜单到顶部」「表单变决策卡」「打开双视图」，观察结构和组件变化。
+3. 在其中一个工作台继续修改输入，另一个视图同步更新。
+4. 点击「撤销上一条」：恢复界面结构，保留最新输入。
 
-## Documentation
+接入自己的临时模型后，可以提出模板以外的要求：
 
-Read the [SurfaceWeave usage guide](https://chenrgsix.github.io/SurfaceWeave/)
-for installation, Tool-to-UI setup, React rendering, Component Packs,
-generic DOM-host mounting, preferences, storage, and Tauri integration. Documentation source lives in
-`docs/`; run `pnpm docs:dev` to preview it locally.
+> 改成天空蓝，把菜单移到右侧。重新设计成晚班指挥台：新增交接说明卡和两张示意指标卡，用双栏排列，保留实际工作台、审批和我的输入。
 
-![Tea purchase Tool-to-UI demo](docs/assets/tea-purchase-demo.jpg)
+模型可以使用自定义颜色令牌、四向导航，以及卡片、文本、指标、Section、Stack、Grid 等注册组件，生成新的页面树。整页重建调用真实的 `replaceSurface`；局部调整使用 `setProps`、`moveNode`、`setLayout` 等语义操作。
 
-## SurfaceWeave in 30 Seconds
+展开对话中的 SDK 回执，可以核对原始参数、实际版本、变更前后的树。模型只返回“已完成”却没有调用工具时，不会被记为执行成功。
 
-1. A business Agent or backend selects a registered Tool and may adjust its
-   generated semantic Surface through typed UI tools.
-2. SurfaceWeave validates and renders the Surface, retains interaction data,
-   and emits structured `ActionIntent` values.
-3. The host-owned executor authorizes side effects, invokes business APIs, and
-   returns a result or the next Surface. SurfaceWeave does not run workflows.
+## SurfaceWeave 负责什么
 
-## Three-Step Quick Start
+| 能力               | 实际机制                                 | 带来的结果                      |
+| ------------------ | ---------------------------------------- | ------------------------------- |
+| 从业务定义生成 UI  | JSON Schema / Tool Definition → Surface  | 表单与结果界面来自契约          |
+| 使用过程中调整界面 | 语义操作与整树替换                       | 可以换布局、分组和可信组件      |
+| 在变化中保留状态   | 独立数据、稳定字段身份与绑定             | 重排和替换不必重新填写表单      |
+| 拒绝不成立的修改   | Schema、硬约束、`baseRevision`、原子批次 | 无效或过期操作不会部分写入      |
+| 多视图与多组件包   | 同一 Store 的订阅、可替换 Renderer 绑定  | 一份 Surface 可在不同视图中呈现 |
+| 守住业务执行边界   | `ActionIntent`、确认快照、Host Executor  | UI 变更不会自动获得业务执行权限 |
+| 保存长期偏好       | 独立偏好运行时、作用域与迁移             | 会话调整和持久设置分别管理      |
+
+```mermaid
+flowchart LR
+  A[Tool Schema / Agent] --> B[Surface 与语义操作]
+  B --> C[校验 · 约束 · 版本]
+  C --> D[Surface Store]
+  D --> E[可信 Renderer / Component Pack]
+  E --> F[用户交互 · ActionIntent]
+  F --> G[宿主授权与业务执行]
+  G --> D
+```
+
+Core 不依赖 React、DOM、Tauri 或模型 SDK。React、React Aria、Ant Design 和桌面能力通过独立包接入。Wire 中传递声明和数据，不传递可执行组件代码。
+
+## Demo 中哪些是真的
+
+- **真实运行时：** 组件注册、Schema 生成、Store、布局变更、版本冲突、硬约束、共享视图、确认与撤销都通过 SurfaceWeave 执行。
+- **两种对话来源：** 模板按钮固定映射，不做 LLM 推理；自由输入在配置模型后才请求用户指定的接口，不会在失败时偷偷回退模板。
+- **模拟业务：** 物流数据、费用估算与 Host 回执是演示数据。生成卡片中的文案和指标也只是展示内容，不是业务证据。
+- **动态范围：** 模型可以组合已注册组件、生成页面树；新的组件行为仍需开发者提供可信实现。它不能生成任意 JavaScript、绕过审批或新增业务执行工具。
+- **状态范围：** 共享发生在同页同一个 Store；不是跨设备协作。当前 Demo 的对话、撤销和临时配置只存在内存中。
+
+页面外壳与业务表单是独立的 Surface。Demo 允许重建页面内容，同时保留可见的导航、容器与主工作台；业务字段、绑定、强制审批和执行权限继续受保护。[完整能力与验收边界](docs/guide/conversation-playground.md)。
+
+## 使用自己的模型
+
+在 Playground 点击「接入模型」，填写支持 **OpenAI 兼容 Chat Completions + function calling** 的接口、模型 ID 和临时 Key。
+
+- 请求直接由浏览器发往你填写的地址。GitHub Pages 只托管静态应用，不提供模型代理、共享 Key 或业务后端。
+- 在线模型接口需要 HTTPS，并允许 `https://chenrgsix.github.io` 来源的 CORS；路径 `/SurfaceWeave/` 不属于 Origin。连接本机 HTTP 模型时建议运行本地 Demo。
+- 请求包含指令、最近对话、页面树与组件说明，不包含表单 `data`。不要把秘密写进对话或页面标题。
+- Key 不写入 localStorage、Cookie、仓库或部署产物。刷新、新会话或断开会清除临时配置；浏览器中的 Key 仍可能被扩展或脚本读取，**只使用可撤销、低额度的测试 Key**。生产接入应使用服务端代理。
+- 每次对话最多 4 轮，每个模型请求最多等待 **5 分钟**，可以手动停止。真实模型质量、额度与协议兼容性取决于你的服务商。
+
+自动化验收使用明确标记的协议响应 fixture，不能代表某个真实模型的推理质量。
+
+## 在本地运行
+
+使用 Node 22 与 pnpm：
 
 ```bash
-nvm use 22
+git clone https://github.com/chenrgSix/SurfaceWeave.git
+cd SurfaceWeave
+corepack enable
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open the Vite URL printed by the final command. The example runs entirely with
-mock Tool results and a mock Host executor.
+默认访问 `http://127.0.0.1:5175/`。启动命令先构建 Demo 依赖的 SDK，不需要预先生成 `dist`。
 
-## Packages
+| 命令                | 用途                                                         |
+| ------------------- | ------------------------------------------------------------ |
+| `pnpm dev`          | 对话 Playground；`?demo=operations` 打开完整供应链流程       |
+| `pnpm dev:tea`      | OpenAPI 与多组件包验收例                                     |
+| `pnpm dev:tauri`    | Tauri 桌面验收例                                             |
+| `pnpm docs:dev`     | 文档开发预览；交互 Demo 单独使用 `pnpm dev`                  |
+| `pnpm docs:build`   | 从源码构建文档与 `/SurfaceWeave/playground/`，并校验静态资源 |
+| `pnpm docs:preview` | 预览包含在线 Demo 的完整部署产物                             |
 
-| Package                            | Responsibility                                                                                   |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `@surfaceweave/core`               | Wire types, Tool/Component registries, Surface and Invocation stores, Operations, and validation |
-| `@surfaceweave/generator`          | Deterministic input/result Surfaces from JSON Schema and canonical Tool Definitions              |
-| `@surfaceweave/agent-tools`        | Tool-to-UI orchestration and portable Agent UI tool definitions                                  |
-| `@surfaceweave/preferences`        | Scoped preference composition, conflict detection, migration, and events                         |
-| `@surfaceweave/react`              | Trusted React implementations and shared Store rendering                                         |
-| `@surfaceweave/protocol`           | Standalone Wire/Layout JSON Schemas and language-neutral Component Pack specifications           |
-| `@surfaceweave/react-aria`         | Accessible React Aria runtime bindings and styles                                                |
-| `@surfaceweave/antd`               | Ant Design runtime bindings and ConfigProvider theme integration                                 |
-| `@surfaceweave/storage`            | LocalStorage, memory, and host-transport persistence adapters                                    |
-| `@surfaceweave/tauri`              | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                |
-| `@surfaceweave/tea-purchase`       | Runnable Vite acceptance example                                                                 |
-| `@surfaceweave/tea-purchase-tauri` | Runnable Tauri 2 desktop acceptance example                                                      |
+## 接入现有项目
 
-## npm Installation
-
-Install only the layers used by the host:
+按需安装包。当前 npm `next` 为 `0.1.0-rc.5`，`latest` 保留在 `0.1.0-rc.2`。在线 Demo 使用仓库源码构建，可能包含尚未发布到 npm 的更新；生产评估请先阅读 [RC.5 说明](docs/rc5-release-candidate-summary.md)。
 
 ```bash
-# Framework-independent Tool-to-UI runtime
-npm install @surfaceweave/core@next @surfaceweave/generator@next @surfaceweave/agent-tools@next
-
-# Existing React application (React is a peer dependency)
-npm install @surfaceweave/react@next
-
-# Generic DOM Driver (add React DOM explicitly)
-npm install @surfaceweave/react@next react-dom
-
-# Choose zero or one optional third-party Pack
-npm install react-aria-components @surfaceweave/react-aria@next
-# or
-npm install antd @surfaceweave/antd@next
-
-# Optional Tauri 2 host adapter
-npm install @surfaceweave/storage@next @surfaceweave/preferences@next @surfaceweave/tauri@next
+npm install @surfaceweave/core@next \
+  @surfaceweave/generator@next \
+  @surfaceweave/agent-tools@next
+# React 应用再添加：
+npm install @surfaceweave/react@next react react-dom
 ```
 
-The Protocol and Core packages never install React, DOM bindings, a Component
-Pack, or Tauri. Installing the default renderer does not install React Aria or
-Ant Design.
-
-Vue, Svelte, Agentdown, and plain DOM hosts do not need dedicated SurfaceWeave
-Adapter packages. Install `@surfaceweave/react@next` with `react-dom`, then
-import `createReactDOMRendererDriver` from `@surfaceweave/react/dom`; the
-trusted host injects the Store, registries, Pack policy, capabilities, and
-ActionIntent handler once, while each mounted view supplies only `surfaceId`
-and mode. The `./dom` entry first appears in RC.3 and is unavailable from the
-older RC.2 release.
-
-## Development
-
-Use Node 22.13 or newer and pnpm 10:
-
-```bash
-nvm use 22
-pnpm install
-pnpm build
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm benchmark
-pnpm benchmark:browser
-pnpm verify:packages
-pnpm verify:release
-pnpm docs:dev
-pnpm docs:build
-pnpm dev
-```
-
-See the [performance guide](./docs/performance.md) for benchmark methodology,
-the RC.5 baseline, and compatibility constraints.
-
-`pnpm dev` starts the tea-purchase flow. Submit the generated search form, select products, fill the purchase form, confirm the side effect, and inspect the result. Switch among `default`, `react-aria`, and `antd`; chat and workspace retain one Surface Store. `pnpm verify:packages` also installs the Tool Runtime from tarballs in a clean consumer.
-
-After installing the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/), validate or run the desktop example with:
-
-```bash
-pnpm check:tauri
-pnpm dev:tauri
-# Release compilation without packaging an installer:
-pnpm build:tauri --no-bundle
-```
-
-The desktop flow reuses the Web Tool Definitions, data model, intents, and mock Host executor while retaining Tauri Store preferences. It supports the default and Ant Design Packs; session form values and Tool results are not persisted.
-
-## Register and Execute Tools
-
-The host registers serializable definitions. The Runtime generates input UI and emits a request after validation and any mandatory confirmation; it never calls the business API.
+下面从 Schema 生成表单，再通过运行时修改布局：
 
 ```ts
 import {
-  AgentUIToolRuntime,
-  ToolToUIRuntime,
-  type ToolExecutionError,
-} from "@surfaceweave/agent-tools";
-import {
-  InMemorySurfaceStore,
   createStandardComponentRegistry,
-  recommendedSurfaceResourcePolicy,
-  type ToolHostExecutor,
-} from "@surfaceweave/core";
-
-const components = createStandardComponentRegistry();
-const store = new InMemorySurfaceStore(components, {
-  resourcePolicy: recommendedSurfaceResourcePolicy,
-});
-const runtime = new ToolToUIRuntime(components, store);
-const hostExecutor: ToolHostExecutor = {
-  async execute(request) {
-    // Perform host authorization and call the registered business API here.
-    return { orderId: `PO-${request.invocationId}` };
-  },
-};
-
-function normalizeError(error: unknown): ToolExecutionError {
-  return {
-    code: "HOST_EXECUTION_FAILED",
-    message: error instanceof Error ? error.message : "Unknown host error",
-    retryable: false,
-  };
-}
-
-runtime.registerTool({
-  id: "orders.create",
-  version: "1.0.0",
-  inputSchema: {
-    type: "object",
-    required: ["buyer"],
-    properties: { buyer: { type: "string" } },
-  },
-  outputSchema: {
-    type: "object",
-    required: ["orderId"],
-    properties: { orderId: { type: "string" } },
-  },
-  annotations: { sideEffect: true, confirmation: "required", retry: "safe" },
-});
-
-const { invocation, surface } = runtime.createToolSurface({
-  toolId: "orders.create",
-  surfaceId: "order-form",
-  initialValues: { buyer: "Ada" },
-});
-
-runtime.onInvocationRequested(async (request) => {
-  try {
-    runtime.markInvocationStarted(request.invocationId);
-    const result = await hostExecutor.execute(request);
-    runtime.resolveInvocation(request.invocationId, result);
-  } catch (error) {
-    runtime.rejectInvocation(request.invocationId, normalizeError(error));
-  }
-});
-
-const agentTools = new AgentUIToolRuntime(
-  components,
-  store,
-  undefined,
-  runtime,
-);
-
-const confirmation = runtime.handleAction({
-  id: "submit-order",
-  surfaceId: surface.id,
-  nodeId: surface.tree.id,
-  action: "tool.submit",
-  input: { invocationId: invocation.id },
-});
-if (confirmation.kind !== "confirmation-required") {
-  throw new Error("Expected side-effect confirmation");
-}
-runtime.handleAction({
-  id: "confirm-order",
-  surfaceId: confirmation.confirmationSurface.id,
-  nodeId: confirmation.confirmationSurface.tree.id,
-  action: "tool.submit",
-  input: { invocationId: invocation.id, confirmed: true },
-});
-void agentTools;
-```
-
-`fromOpenApiOperation` and `fromAgentToolDefinition` convert definitions only; they never retain execution authority. In RC.5, the OpenAPI adapter accepts one host-selected, dereferenced OpenAPI 3.1 operation rather than importing a complete document directly. Header and cookie parameters are Host-owned by default, so tenant, authorization, and session values do not enter the generated form; a trusted Host may explicitly expose only a non-sensitive business Header. The [tea-purchase OpenAPI fixture](examples/tea-purchase/openapi.json) now drives the example's real initial Surface through the public Generator, Store, and React Renderer APIs; it remains the acceptance baseline for the next full-document adapter increment. See [OpenAPI to Default Form](docs/guide/openapi-to-form.md). Renderer actions go through `runtime.handleAction(intent)`. Side-effect confirmation, registered tool/version checks, read-only projection, duplicate submission, idempotency, sensitive event redaction, and retry policy are Runtime invariants.
-
-## Register a Component Pack
-
-Install only the bindings used by the host:
-
-```bash
-npm install @surfaceweave/core@next @surfaceweave/react@next react react-dom
-npm install @surfaceweave/react-aria@next react-aria-components
-# or
-npm install @surfaceweave/antd@next antd
-```
-
-The serializable Manifest and local React bindings are separate. Registering a Pack adds its trusted semantic schemas to Core, while the binding stays in the React package.
-
-```tsx
-import { createStandardComponentRegistry } from "@surfaceweave/core";
-import { createStandardReactComponentRegistry } from "@surfaceweave/react";
-import { createReactAriaComponentPack } from "@surfaceweave/react-aria";
-import "@surfaceweave/react-aria/styles.css";
-
-const components = createStandardComponentRegistry();
-const reactComponents = createStandardReactComponentRegistry(components);
-reactComponents.registerPack(createReactAriaComponentPack({ locale: "en-US" }));
-```
-
-Ant Design accepts host-only `ConfigProvider` options through `createAntDesignComponentPack({ theme, locale })`; those values never enter the Surface or Manifest. See [Component Pack authoring](docs/component-pack-authoring.md) for custom semantic components and fallback.
-
-## Create and Render a Surface
-
-```tsx
-import {
   InMemorySurfaceStore,
-  createStandardComponentRegistry,
   recommendedSurfaceResourcePolicy,
 } from "@surfaceweave/core";
 import { generateSurface } from "@surfaceweave/generator";
-import {
-  SurfaceRenderer,
-  createStandardReactComponentRegistry,
-} from "@surfaceweave/react";
+import { AgentUIToolRuntime } from "@surfaceweave/agent-tools";
 
 const components = createStandardComponentRegistry();
 const store = new InMemorySurfaceStore(components, {
@@ -290,179 +134,74 @@ const store = new InMemorySurfaceStore(components, {
 store.createSurface(
   generateSurface(
     {
-      surfaceId: "profile",
+      surfaceId: "dispatch",
       intent: "form",
       schema: {
         type: "object",
-        properties: { name: { type: "string", title: "Name" } },
+        required: ["destination"],
+        properties: {
+          destination: { type: "string", title: "目的地" },
+          note: { type: "string", title: "备注" },
+        },
       },
-      data: { name: "Ada" },
+      data: { destination: "慕尼黑", note: "保留这条输入" },
     },
     components,
   ),
 );
 
-const reactComponents = createStandardReactComponentRegistry(components);
-
-export function Profile() {
-  return (
-    <SurfaceRenderer
-      surfaceId="profile"
-      store={store}
-      componentRegistry={components}
-      reactComponents={reactComponents}
-      preferredPack="react-aria"
-      enabledPackIds={["react-aria", "default"]}
-      capabilities={["web"]}
-      actionStateSource={toolRuntime.actionStateSource}
-      onActionIntent={(intent) => hostActionExecutor.execute(intent)}
-    />
-  );
-}
-```
-
-## Define Portable Form Layout
-
-Current `main` generates single-column forms by default. Developer soft hints
-may add workspace columns, field spans, and explicit semantic Sections without
-changing bindings or data:
-
-```ts
-const surface = generateSurface(
-  {
-    surfaceId: "purchase",
-    intent: "form",
-    schema: purchaseSchema,
-    data: {},
-    developer: {
-      softHints: {
-        layout: { columns: 2, gap: 16 },
-        groups: {
-          delivery: { title: "Delivery", layout: { columns: 2, gap: 8 } },
-        },
-        fields: {
-          receiver: { group: "delivery" },
-          address: { group: "delivery", layout: { span: 2 } },
-        },
-      },
+const ui = new AgentUIToolRuntime(components, store);
+const current = store.requireSurface("dispatch");
+const result = ui.applyOperations({
+  surfaceId: current.id,
+  baseRevision: current.revision,
+  reason: "将表单调整为双栏",
+  operations: [
+    {
+      type: "setLayout",
+      target: current.tree.id,
+      layout: { columns: 2, gap: 16, modes: { compact: { columns: 1 } } },
     },
-  },
-  components,
-);
-```
-
-Compact views safely use one column. Agent `setLayout` operations accept the
-same JSON-only vocabulary and reject CSS, `className`, DOM, and vendor props.
-See the [Semantic Layout guide](docs/guide/semantic-layout.md).
-
-## Connect Agent Tool Calls
-
-Pass `runtime.definitions()` to the host Agent SDK, then route returned calls through the host-neutral runtime. Invalid arguments and revision conflicts are returned as data.
-
-```ts
-import { AgentUIToolRuntime } from "@surfaceweave/agent-tools";
-
-const runtime = new AgentUIToolRuntime(components, store);
-const definitions = runtime.definitions();
-
-const result = runtime.execute(toolCall.name, JSON.parse(toolCall.arguments));
-if (!result.ok) {
-  console.error(result.error.code, result.error.message);
-}
-```
-
-Call `ui.inspectComponentPacks` to give an Agent the current semantic component schemas, capabilities, fallback, renderer/pack identifiers, and concise `agentGuidance`. The result is JSON-only and never exposes React components or vendor APIs.
-
-In RC.4, construct `AgentUIToolRuntime` with trusted
-`clientCapabilities` options. The same filtered projection powers
-`createSurfaceClientCapabilities` and `ui.inspectComponentPacks`; remote Agent
-arguments can only narrow the host's Pack and terminal-capability allow-list.
-SurfaceWeave returns the JSON snapshot but leaves transport to the host. See
-[Capabilities and Action State](docs/guide/capabilities-action-state.md).
-
-`ui.applyOperations` and `ui.replaceSurface` are session-only overrides: they update the Surface Store but never persist user preferences. Use the separate async preference runtime for confirmed long-term changes.
-
-## Persist and Apply Preferences
-
-Hydrate preferences before creating Surfaces, then pass the service into the Surface tool runtime. Preference operations target `stableId`, not generated node IDs or array indexes.
-
-```ts
-import type { PreferenceDocument } from "@surfaceweave/core";
-import {
-  AgentUIToolRuntime,
-  PreferenceAgentToolRuntime,
-} from "@surfaceweave/agent-tools";
-import {
-  PreferenceRepository,
-  PreferenceService,
-  parsePreferenceDocument,
-} from "@surfaceweave/preferences";
-import { LocalStorageAdapter } from "@surfaceweave/storage";
-
-const adapter = new LocalStorageAdapter<PreferenceDocument>(
-  "dynamic-ui.preferences.v1",
-  parsePreferenceDocument,
-);
-const preferences = new PreferenceService(
-  new PreferenceRepository(adapter),
-  components,
-);
-await preferences.hydrate();
-
-const surfaces = new AgentUIToolRuntime(components, store, preferences);
-const preferenceTools = new PreferenceAgentToolRuntime(preferences);
-```
-
-For remote persistence, inject a host-owned transport into `BackendStorageAdapter`; the SDK never chooses an endpoint, credentials, or `fetch` policy. Long-term writes require `ui.savePreference` with `confirmed: true`. Applicable patches compose deterministically as `global` → `intent` → `tool`; developer hard constraints always win, while soft hints affect only default generation.
-
-Choose persistence by host: `LocalStorageAdapter` for browser-only apps, `TauriPreferenceStorage` for a desktop app's official Store plugin, or `BackendStorageAdapter` for a host-owned service. Only versioned preference documents belong there—never Surface form data or Tool results.
-
-When a schema changes, keep compatible `stableId` values. Supply `schemaRef` and `fieldAliases` during `ui.createSurface` for renamed fields. Aliases create an explicit conflict suggestion—they never silently rewrite durable preferences. Resolve with `ui.migratePreference` or remove with `ui.discardPreference`; subscribe to `preference.conflicted`, `preference.migrated`, and `preference.discarded` events for host UI feedback.
-
-## Handle Actions
-
-Renderer components emit JSON-only `ActionIntent` values. Route them to a host `ActionExecutor` that performs authorization, confirmation, idempotency, and network access; never place functions or source code in an intent.
-
-Tool UI should subscribe to `toolRuntime.actionStateSource`; it projects the
-existing `ToolInvocation` lifecycle rather than creating another authority.
-For non-Tool actions, RC.4 provides the host-owned
-`InMemoryActionExecutionController`. Only `ActionResult.status === "success"`
-marks an action successful. The host alone may temporarily gate a Surface with
-`setInteractionDisabled`; neither an Agent nor Surface data can set that flag.
-
-In Tauri, register semantic host actions and let trusted handlers choose fixed Rust command names:
-
-```ts
-import { createTauriDynamicUIAdapter } from "@surfaceweave/tauri";
-
-const desktop = createTauriDynamicUIAdapter({
-  namespace: "tea-purchase",
-  userId: currentUser.id,
-  capabilities: {
-    platform: "macos",
-    desktop: true,
-    filePicker: false,
-    notifications: false,
-    localStorage: true,
-    nativeCommands: true,
-  },
+  ],
 });
 
-desktop.actionExecutor.register("tea.search", async (input, { invoke }) =>
-  invoke("search_teas", { query: input }),
-);
+if (!result.ok) throw new Error(result.error.message);
+// Surface 树和版本已更新，destination 与 note 数据保持不变。
 ```
 
-The security chain is: trusted component emits an `ActionIntent` → semantic action allow-list validates it → host handler selects a fixed command → Tauri capability authorizes that command → Rust validates the payload. A capability descriptor is UI discovery metadata, not authorization. The example grants only its two application commands and the Store operations it uses; it does not grant shell, filesystem, HTTP, or arbitrary command access, and its CSP permits only bundled assets, IPC, and the local Vite development endpoint.
+使用 [`SurfaceRenderer`](docs/guide/react-renderer.md) 订阅 Store；需要业务提交时接入 [`ToolToUIRuntime`](docs/guide/tool-to-ui.md) 和宿主执行器。模型接入方可以读取公开工具定义，再把工具调用路由至 `AgentUIToolRuntime`。[公开 API](docs/public-api.md) 提供完整接口。
 
-## Peer Dependencies
+## 包与扩展点
 
-The default renderer supports React `>=18.2 <20`; its optional `./dom` entry
-needs React DOM `>=18.2 <20`, while the package root does not load React DOM.
-React Aria additionally needs
-React DOM `>=18.2 <20` and `react-aria-components >=1.20 <2`. Ant Design needs
-React DOM `>=18.2 <20` and `antd >=6.5.3 <7`. These libraries are peers of their
-optional Pack and are not pulled into Core or unrelated consumers. Tauri is a
-separate package and installs only its Tauri 2 API/Store dependencies.
+| 包                                                    | 职责                                                  |
+| ----------------------------------------------------- | ----------------------------------------------------- |
+| `@surfaceweave/core`                                  | Wire 类型、注册表、Store、语义操作、校验与资源策略    |
+| `@surfaceweave/generator`                             | JSON Schema / Tool Definition 到 Surface 的确定性生成 |
+| `@surfaceweave/agent-tools`                           | Tool-to-UI 生命周期与 Agent UI 工具                   |
+| `@surfaceweave/react`                                 | React Renderer 与默认可信组件                         |
+| `@surfaceweave/react-aria` / `@surfaceweave/antd`     | 可选组件包与框架绑定                                  |
+| `@surfaceweave/preferences` / `@surfaceweave/storage` | 偏好作用域、迁移与存储适配器                          |
+| `@surfaceweave/protocol`                              | 语言无关的 Wire / Layout Schema 与组件包契约          |
+| `@surfaceweave/tauri`                                 | 受限桌面桥接与宿主能力适配                            |
 
-See the [public API baseline](docs/public-api.md), [compatibility matrix](docs/npm-compatibility-matrix.md), [release checklist](docs/npm-release-checklist.md), [Trusted Publishing guide](docs/npm-trusted-publishing.md), [Tool-to-UI guide](docs/tool-to-ui-runtime.md), [no-workflow ADR](docs/adr/0001-no-frontend-workflow-engine.md), and [architecture baseline](docs/dynamic-ui-architecture.md).
+[自定义 Component Pack](docs/guide/component-packs.md) · [语义布局](docs/guide/semantic-layout.md) · [偏好与存储](docs/guide/preferences-storage.md) · [OpenAPI 接入](docs/guide/openapi-to-form.md) · [Tauri](docs/guide/tauri.md)
+
+## 验证与贡献
+
+```bash
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm docs:build
+pnpm benchmark:smoke
+pnpm verify:packages
+```
+
+独立安装包校验在 CI 中使用 npm `11.6.0`，避免 npm 10 解析循环 peer dependencies 时的内部崩溃。本地无需修改全局 npm，可用 `npm exec --yes --package=npm@11.6.0 -- node scripts/verify-package-tarballs.mjs` 复现相同检查。
+
+测试覆盖原子失败、过期版本、数据与偏好迁移、共享视图、确认快照、执行约束，以及模型协议和动态页面边界。实际发布状态以 [CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml) 和 [Pages 部署](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/docs.yml) 为准，不把本地测试等同于真实模型或生产系统验收。
+
+仓库结构与开发约定见 [AGENTS.md](AGENTS.md)，安全问题见 [SECURITY.md](SECURITY.md)，性能基线见 [性能文档](docs/performance.md)。
+
+SurfaceWeave 借鉴 AG-UI 的事件流与 A2UI 的声明式组件树思路，但不与它们保持协议兼容。项目使用 [MIT License](LICENSE)。
