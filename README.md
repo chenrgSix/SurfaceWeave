@@ -198,6 +198,8 @@ pnpm benchmark:smoke
 pnpm verify:packages
 ```
 
+独立安装包校验在 CI 中使用 npm `11.6.0`，避免 npm 10 解析循环 peer dependencies 时的内部崩溃。本地无需修改全局 npm，可用 `npm exec --yes --package=npm@11.6.0 -- node scripts/verify-package-tarballs.mjs` 复现相同检查。
+
 测试覆盖原子失败、过期版本、数据与偏好迁移、共享视图、确认快照、执行约束，以及模型协议和动态页面边界。实际发布状态以 [CI](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/ci.yml) 和 [Pages 部署](https://github.com/chenrgSix/SurfaceWeave/actions/workflows/docs.yml) 为准，不把本地测试等同于真实模型或生产系统验收。
 
 仓库结构与开发约定见 [AGENTS.md](AGENTS.md)，安全问题见 [SECURITY.md](SECURITY.md)，性能基线见 [性能文档](docs/performance.md)。
