@@ -46,7 +46,7 @@ Use TypeScript for shared protocols and runtime code. Keep core packages indepen
 
 Vitest is the test runner; jsdom and Testing Library cover React. Name tests `*.test.ts` or `*.test.tsx`. Every bug fix needs a regression test. Test atomic failure, revision conflicts, data and preference migration, scope precedence, durable-write failures, shared views, semantic layout degradation, and ActionIntent safety.
 
-CI pins npm 11.6.0 for clean-consumer verification because npm 10 can crash in circular optional peer resolution (`npm/cli#8448`). Reproduce locally without changing global npm using `npm exec --yes --package=npm@11.6.0 -- node scripts/verify-package-tarballs.mjs`. Keep peer validation enabled; do not bypass it with `--legacy-peer-deps` or `--force`.
+CI and release jobs pin npm 11.6.0 for clean-consumer verification because npm 10 can crash in circular optional peer resolution (`npm/cli#8448`). The OIDC publishing job uses the same npm version. Reproduce locally without changing global npm using `npm exec --yes --package=npm@11.6.0 -- node scripts/verify-package-tarballs.mjs`. Keep peer validation enabled; do not bypass it with `--legacy-peer-deps` or `--force`.
 
 ## Commit & Pull Request Guidelines
 

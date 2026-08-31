@@ -57,6 +57,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Match CI: npm/cli#8448 fixes circular optional peer resolution.
+      - name: Pin npm for clean-consumer verification
+        run: npm install --global npm@11.6.0 --ignore-scripts --no-audit --no-fund
+
       - name: Run release gates
         run: |
           pnpm build
@@ -90,6 +94,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      - name: Pin npm for publishing and Registry consumers
+        run: npm install --global npm@11.6.0 --ignore-scripts --no-audit --no-fund
 
       - name: Require Trusted Publishing-capable npm
         run: |
