@@ -1,5 +1,13 @@
 # npm Release Candidate Checklist
 
+## RC.6 preparation
+
+The source release inventory and exact internal dependencies are prepared at
+`0.1.0-rc.6`. Publish only through the annotated `v0.1.0-rc.6` tag after the
+release gates pass. The intended npm tag is `next`; preserve `latest` at RC.2.
+Registry verification is required before marking the release published. See
+the [RC.6 summary](rc6-release-candidate-summary.md) for scope and compatibility.
+
 ## Published RC.5 baseline
 
 All ten publishable workspace packages are published as `0.1.0-rc.5` with npm
@@ -41,7 +49,7 @@ published release under the previous names.
 - Every package declares MIT, includes an identical `LICENSE`, and records the
   canonical GitHub repository and package directory.
 - Internal package dependencies use the exact release range
-  `0.1.0-rc.5`; the lockfile records the same suite version.
+  `0.1.0-rc.6`; the lockfile records the same suite version.
 - Release metadata fixes the official registry, public access, and `next` tag.
 - The protocol Schema uses the stable URN
   `urn:surfaceweave:schema:dynamic-ui-wire:1.0` and does not depend on domain

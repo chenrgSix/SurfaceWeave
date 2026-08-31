@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/antd",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.6",
   "description": "Ant Design bindings for the SurfaceWeave semantic UI protocol",
   "license": "MIT",
   "type": "module",
@@ -29,8 +29,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "0.1.0-rc.5",
-    "@surfaceweave/react": "0.1.0-rc.5"
+    "@surfaceweave/core": "0.1.0-rc.6",
+    "@surfaceweave/react": "0.1.0-rc.6"
   },
   "peerDependencies": {
     "antd": ">=6.5.3 <7",

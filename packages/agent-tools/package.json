@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/agent-tools",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.6",
   "description": "Framework-agnostic Agent tool definitions and handlers for Dynamic UI",
   "license": "MIT",
   "type": "module",
@@ -29,10 +29,10 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "0.1.0-rc.5",
-    "@surfaceweave/generator": "0.1.0-rc.5",
-    "@surfaceweave/preferences": "0.1.0-rc.5",
-    "@surfaceweave/storage": "0.1.0-rc.5"
+    "@surfaceweave/core": "0.1.0-rc.6",
+    "@surfaceweave/generator": "0.1.0-rc.6",
+    "@surfaceweave/preferences": "0.1.0-rc.6",
+    "@surfaceweave/storage": "0.1.0-rc.6"
   },
   "repository": {
     "type": "git",

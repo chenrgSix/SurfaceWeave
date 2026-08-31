@@ -1,6 +1,6 @@
 {
   "name": "@surfaceweave/preferences",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.6",
   "description": "Structured preference repository and personalization engine",
   "license": "MIT",
   "type": "module",
@@ -29,8 +29,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@surfaceweave/core": "0.1.0-rc.5",
-    "@surfaceweave/storage": "0.1.0-rc.5"
+    "@surfaceweave/core": "0.1.0-rc.6",
+    "@surfaceweave/storage": "0.1.0-rc.6"
   },
   "repository": {
     "type": "git",

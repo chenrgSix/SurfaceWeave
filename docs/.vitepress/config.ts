@@ -33,6 +33,10 @@ export default defineConfig({
         text: "0.1.0-rc.5",
         items: [
           {
+            text: "RC.6 candidate",
+            link: "/rc6-release-candidate-summary",
+          },
+          {
             text: "RC.5 release summary",
             link: "/rc5-release-candidate-summary",
           },
@@ -98,6 +102,10 @@ export default defineConfig({
           items: [
             { text: "Public API", link: "/public-api" },
             { text: "Performance", link: "/performance" },
+            {
+              text: "RC.6 candidate",
+              link: "/rc6-release-candidate-summary",
+            },
             {
               text: "RC.5 release",
               link: "/rc5-release-candidate-summary",
