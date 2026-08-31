@@ -9,18 +9,21 @@ export class PreferenceRepository {
   readonly #adapter: StorageAdapter<PreferenceDocument>;
   #document: PreferenceDocument = { version: 1, patches: [] };
   #hydrated = false;
+  #pending: Promise<void> = Promise.resolve();
 
   constructor(adapter: StorageAdapter<PreferenceDocument>) {
     this.#adapter = adapter;
   }
 
   async hydrate(): Promise<void> {
-    const stored = await this.#adapter.load();
-    this.#document =
-      stored === undefined
-        ? { version: 1, patches: [] }
-        : parsePreferenceDocument(stored);
-    this.#hydrated = true;
+    return this.#enqueue(async () => {
+      const stored = await this.#adapter.load();
+      this.#document =
+        stored === undefined
+          ? { version: 1, patches: [] }
+          : parsePreferenceDocument(stored);
+      this.#hydrated = true;
+    });
   }
 
   isHydrated(): boolean {
@@ -41,31 +44,47 @@ export class PreferenceRepository {
   async upsert(input: PreferencePatch): Promise<PreferencePatch> {
     this.#assertHydrated();
     const patch = parsePreferencePatch(input);
-    const candidate = this.list().filter((item) => item.id !== patch.id);
-    candidate.push(patch);
-    const document: PreferenceDocument = {
-      version: 1,
-      patches: candidate.sort((left, right) => left.id.localeCompare(right.id)),
-    };
-    await this.#adapter.save(document);
-    this.#document = document;
-    return cloneValue(patch);
+    return this.#enqueue(async () => {
+      const candidate = this.list().filter((item) => item.id !== patch.id);
+      candidate.push(patch);
+      const document: PreferenceDocument = {
+        version: 1,
+        patches: candidate.sort((left, right) =>
+          left.id.localeCompare(right.id),
+        ),
+      };
+      await this.#adapter.save(document);
+      this.#document = document;
+      return cloneValue(patch);
+    });
   }
 
   async remove(id: string): Promise<void> {
     this.#assertHydrated();
-    if (!this.#document.patches.some((patch) => patch.id === id)) {
-      throw new DynamicUIError(
-        "PREFERENCE_NOT_FOUND",
-        `Preference "${id}" does not exist`,
-      );
-    }
-    const document: PreferenceDocument = {
-      version: 1,
-      patches: this.#document.patches.filter((patch) => patch.id !== id),
-    };
-    await this.#adapter.save(document);
-    this.#document = document;
+    return this.#enqueue(async () => {
+      if (!this.#document.patches.some((patch) => patch.id === id)) {
+        throw new DynamicUIError(
+          "PREFERENCE_NOT_FOUND",
+          `Preference "${id}" does not exist`,
+        );
+      }
+      const document: PreferenceDocument = {
+        version: 1,
+        patches: this.#document.patches.filter((patch) => patch.id !== id),
+      };
+      await this.#adapter.save(document);
+      this.#document = document;
+    });
+  }
+
+  #enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const result = this.#pending.then(operation);
+    // A failed write rejects its caller without blocking later operations.
+    this.#pending = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   }
 
   #assertHydrated(): void {
