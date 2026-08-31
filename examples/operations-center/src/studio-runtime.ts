@@ -485,15 +485,21 @@ export class StudioRuntime {
             text: reply.content,
           });
         const raw = call.function.arguments;
+        let displayArguments = "[无效参数已省略]";
         try {
+          let args: { surfaceId?: unknown; baseRevision?: unknown };
+          try {
+            args = JSON.parse(raw);
+          } catch {
+            throw new Error("模型工具参数不是有效 JSON，未执行。");
+          }
+          if (config.apiKey && containsCredential(args, config.apiKey)) {
+            displayArguments = "[参数包含凭据，已隐藏]";
+            throw new Error("模型参数包含凭据，已拒绝显示和执行。");
+          }
+          displayArguments = raw;
           if (call.function.name !== modelToolName)
             throw new Error("模型请求了未授权工具；未执行任何业务动作。");
-          if (config.apiKey && raw.includes(config.apiKey))
-            throw new Error("模型参数包含凭据，已拒绝显示和执行。");
-          const args = JSON.parse(raw) as {
-            surfaceId?: unknown;
-            baseRevision?: unknown;
-          };
           if (
             !args ||
             ![PAGE_ID, "incident-recovery"].includes(String(args.surfaceId))
@@ -574,7 +580,7 @@ export class StudioRuntime {
             rejected: true,
             text: `${message} 本批次未应用。${applied ? `此前 ${applied} 个成功批次仍保留，可撤销。` : "页面未因模型回复发生变更。"}`,
             receipt: {
-              arguments: redactModelText(raw, config.apiKey),
+              arguments: redactModelText(displayArguments, config.apiKey),
               status: "rejected",
               result: message,
             },
@@ -766,6 +772,15 @@ export class StudioRuntime {
   #emit() {
     for (const listener of this.#listeners) listener();
   }
+}
+
+function containsCredential(value: unknown, key: string): boolean {
+  if (typeof value === "string") return value.includes(key);
+  if (value && typeof value === "object")
+    return Object.entries(value).some(
+      ([name, child]) => name.includes(key) || containsCredential(child, key),
+    );
+  return false;
 }
 
 function replacement(surface: Surface, tree: UINode) {

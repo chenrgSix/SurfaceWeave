@@ -305,6 +305,41 @@ it("never substitutes templates for provider errors or text-only claims of succe
   }
 });
 
+it("rejects credentials echoed through JSON escapes without storing them in receipts or Surface props", async () => {
+  const value = studio();
+  const argumentsText = JSON.stringify({
+    surfaceId: PAGE_ID,
+    baseRevision: 0,
+    reason: "echo",
+    operations: [
+      {
+        type: "setProps",
+        target: "page-header",
+        props: { title: config.apiKey },
+      },
+    ],
+  }).replace(config.apiKey, "\\u0074est-only-secret");
+  const reply = jsonReply(
+    {
+      tool_calls: [
+        {
+          id: "echo",
+          type: "function",
+          function: { name: "ui_apply_operations", arguments: argumentsText },
+        },
+      ],
+    },
+    "tool_calls",
+  );
+  vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(reply));
+  await value.askModel("echo attempt");
+  expect(value.getSnapshot().changeCount).toBe(0);
+  expect(value.getSnapshot().messages.at(-1)?.receipt?.arguments).toBe(
+    "[参数包含凭据，已隐藏]",
+  );
+  expect(JSON.stringify(value.getSnapshot())).not.toContain("test-only-secret");
+});
+
 it("caps model rounds and records partial completion without hiding earlier successful batches", async () => {
   const value = studio();
   const fetcher = vi
