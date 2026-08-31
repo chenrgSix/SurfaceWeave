@@ -14,7 +14,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-默认地址为 `http://127.0.0.1:5175`。启动命令先构建所需 SDK，页面不需要 API Key 或后端。原茶叶验收例保留为 `pnpm dev:tea`，Tauri 入口不变。
+默认打开[对话式实验室](./conversation-playground)。点击右上角「业务流程案例」，或访问 `http://127.0.0.1:5175/?demo=operations`，进入本页描述的原始指挥台。启动命令先构建所需 SDK，页面不需要 API Key 或后端。原茶叶验收例保留为 `pnpm dev:tea`，Tauri 入口不变。
 
 ## 按这个顺序体验
 

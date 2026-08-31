@@ -35,21 +35,22 @@ for installation, Tool-to-UI setup, React rendering, Component Packs,
 generic DOM-host mounting, preferences, storage, and Tauri integration. Documentation source lives in
 `docs/`; run `pnpm docs:dev` to preview it locally.
 
-![SurfaceWeave operations center](docs/public/operations-center.png)
+![SurfaceWeave conversation playground](docs/public/conversation-playground.png)
 
-## Flagship demo: from incident to action
+## Flagship demo: say it, reshape it
 
-**供应链异常处置指挥台**：一批关键芯片延误，Agent 生成处置工作台，用户核对并执行恢复计划。
+**对话式应用实验室**：左边说一句，右边的整个应用立即改变。十条固定对话模板直接对应真实 SDK 操作，不需要 API Key。
 
-- **界面随任务变化：** 普通表单变成业务方案对比卡，审批区前置，用户刚填的备注保留。
-- **状态真正共享：** 主工作台和紧凑会话视图订阅同一 Surface Store，双向同步输入。
-- **约束可以挑战：** 尝试隐藏强制审批或提交过期 revision，看到真实拒绝与整批回滚。
-- **执行可追溯：** 确认快照 → 模拟宿主失败 → 原幂等键重试 → 结果 Surface 与事件证据。
+- **整页随时改变：** 午夜紫、薄荷绿、暖色简报；主题令牌经过校验，由可信组件统一渲染。
+- **结构随对话迁移：** 左侧菜单移动到顶部、工作台置顶、专注模式、双栏布局，都是实际 Surface 节点操作。
+- **业务组件进化：** 普通选择框变成方案对比卡，审批区前置；所有已输入数据保留。
+- **随时组合与撤销：** 连续叠加模板、打开共享视图、撤销最近变更；恢复结构而非覆盖最新输入。
 
-Run `pnpm dev` and follow the [two-minute walkthrough](docs/guide/operations-center.md).
-The Agent is scripted, logistics data is fictional, and the Host is simulated;
-Surface generation, operations, validation, confirmation, and invocation state use the real SDK.
-No API key or backend is required. This demo does not demonstrate cross-device sync or production authorization.
+Run `pnpm dev` and follow the [conversation walkthrough](docs/guide/conversation-playground.md).
+The dialogue is scripted, logistics data is fictional, and the Host is simulated.
+Both the application shell and business form are real Surfaces. Theme, navigation,
+layout, component replacement, and undo use validated SDK tools; arbitrary chat is not interpreted by a model.
+The [original operations flow](docs/guide/operations-center.md) remains at `?demo=operations` for constraints, confirmation, and retry acceptance.
 
 ## SurfaceWeave in 30 Seconds
 
@@ -69,7 +70,7 @@ pnpm dev
 ```
 
 Open the Vite URL printed by the final command (default: `http://127.0.0.1:5175`).
-The command builds the demo's SDK dependencies before starting the operations center.
+The command builds the demo's SDK dependencies before starting the conversation playground.
 Use `pnpm dev:tea` for the original OpenAPI and multi-pack acceptance flow.
 
 ## Packages
@@ -148,7 +149,7 @@ pnpm dev
 See the [performance guide](./docs/performance.md) for benchmark methodology,
 the RC.5 baseline, and compatibility constraints.
 
-`pnpm dev` starts the operations center. Follow the Copilot steps to generate and restructure a recovery plan, challenge constraints, confirm execution, and recover from a simulated host failure. See [example source and acceptance steps](examples/operations-center/README.md).
+`pnpm dev` starts the conversation playground. Try “午夜紫 → 菜单到顶部 → 表单变决策卡 → 打开双视图 → 变成简报 → 撤销上一条”. Click “业务流程案例” for the original operations center. See [example source and acceptance steps](examples/operations-center/README.md).
 
 `pnpm dev:tea` retains the original tea-purchase flow for OpenAPI import and switching among `default`, `react-aria`, and `antd` packs. `pnpm verify:packages` installs the Tool Runtime from tarballs in a clean consumer.
 

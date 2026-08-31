@@ -1,6 +1,6 @@
 # Operations Center
 
-SurfaceWeave 的旗舰交互 demo：一批关键 MCU 延误，运营人员与 Agent 一起生成、调整、审批并执行供应链恢复计划。
+SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定对话模板，让整页主题、导航位置、布局、业务组件和共享视图随时改变。原始供应链业务流程保留在 `?demo=operations`。
 
 ## Run
 
@@ -12,9 +12,21 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-默认监听 `http://127.0.0.1:5175`。`pnpm dev` 会先构建所需的工作区 SDK。无 API Key、无远程模型、无业务后台、无外部字体或图片请求。重置演示会销毁旧运行时、订阅和未完成的模拟任务；刷新不保留数据。
+默认监听 `http://127.0.0.1:5175`。`pnpm dev` 会先构建所需的工作区 SDK。无 API Key、无远程模型、无业务后台、无外部字体或图片请求。新会话会销毁旧运行时、订阅和未完成的模拟任务；刷新不保留数据。
+
+## 对话式实验室
+
+建议按「午夜紫 → 菜单到顶部 → 表单变决策卡 → 打开双视图 → 变成简报 → 撤销上一条」体验。先填一句备注，再观察它跨变更与撤销保留。
+
+页面外壳与业务表单是两份独立 Surface。`StudioApplication` 等可信业务组件读取受枚举约束的主题令牌；`moveNode` 实际移动导航节点，`setVisibility` 和 `setLayout` 重组工作区。`replaceSurface` 撤销时使用**当前 data**，只恢复之前的结构。
+
+所有模板可以自由组合；未知文字不会被当成模型指令执行。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
+
+新增源文件：`src/studio-runtime.ts` 定义模板和可逆变更；`src/Studio.tsx` 注册整页 React 组件并呈现对话；`src/studio.css` 提供受信任主题映射。详细说明见[对话指南](../../docs/guide/conversation-playground.md)。
 
 ## 两分钟演示
+
+以下步骤针对右上角「业务流程案例」入口。
 
 1. 点击「生成处置工作台」。表单来自 `logistics.recovery.create` 的 JSON Schema，而不是 App 中写死的 JSX 字段。
 2. 修改交接备注，打开「共享会话视图」，从另一侧再改一次。两个 `SurfaceRenderer` 订阅同一 Store；这不代表跨设备协作。
@@ -46,7 +58,7 @@ pnpm dev
 - `tests/demo-runtime.test.ts`：生成与数据保留、整批拒绝、确认失效、幂等重试、重置清理。
 
 ```bash
-pnpm exec vitest run examples/operations-center/tests/demo-runtime.test.ts
+pnpm exec vitest run examples/operations-center/tests
 pnpm --filter @surfaceweave/operations-center build
 ```
 

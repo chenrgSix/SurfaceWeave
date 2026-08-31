@@ -14,7 +14,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: Explore the flagship demo
-      link: /guide/operations-center
+      link: /guide/conversation-playground
     - theme: alt
       text: View on GitHub
       link: https://github.com/chenrgSix/SurfaceWeave
@@ -48,23 +48,24 @@ npm install @surfaceweave/core@next \
   @surfaceweave/agent-tools@next
 ```
 
-## From a supply-chain incident to a safe action
+## Say it. Reshape the whole application.
 
-The flagship operations center turns a delayed shipment into a generated recovery
-workspace. Restructure fields into business comparison cards without losing input,
-challenge mandatory approval and revision checks, then confirm and retry a simulated
-host request. Follow the [interactive demo walkthrough](/guide/operations-center)
-or run `pnpm dev` from the repository.
+The flagship conversation playground pairs fixed dialogue templates with a live
+application. Move the sidebar to the top, switch the whole page to a midnight
+theme, enter focus mode, open synchronized views, or turn fields into decision
+cards. Combine changes and undo them without losing the latest user input.
+Follow the [conversation walkthrough](/guide/conversation-playground) or run `pnpm dev`.
 
-The Agent is scripted and business APIs are simulated. Surface generation, shared
-state, semantic operations, constraints, and confirmation use the actual SDK.
+The Agent is scripted and business APIs are simulated. Both the application shell
+and business form are actual Surfaces. All mutations use the SDK; theme enums are
+mapped to styles only by trusted local components.
 
 The chat view and the full workspace subscribe to the same `SurfaceStore`, so
 form values and semantic revisions stay synchronized. Renderer bindings are
 replaceable; the wire protocol remains framework independent.
 
 <div class="demo-frame">
-  <img src="/operations-center.png" alt="SurfaceWeave supply-chain incident operations center" />
+  <img src="/conversation-playground.png" alt="SurfaceWeave dialogue changes a live application" />
 </div>
 
 ::: warning Experimental release candidate

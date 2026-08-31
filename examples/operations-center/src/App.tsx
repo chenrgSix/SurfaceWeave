@@ -568,7 +568,7 @@ function CommandCenter({
   );
 }
 
-function ConfirmationSheet({
+export function ConfirmationSheet({
   demo,
   surfaceId,
   children,
@@ -631,7 +631,7 @@ function Metric({
     </div>
   );
 }
-function LiveMetrics({
+export function LiveMetrics({
   demo,
   surfaceId,
 }: {
@@ -697,7 +697,7 @@ function Step({
     </li>
   );
 }
-function SupplyRoute() {
+export function SupplyRoute() {
   return (
     <div
       className="supply-route"
