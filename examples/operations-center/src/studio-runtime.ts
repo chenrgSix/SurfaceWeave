@@ -2,7 +2,6 @@ import {
   cloneValue,
   componentManifestToDefinition,
   standardComponentManifests,
-  type ComponentManifest,
   type Surface,
   type UINode,
   type UIOperation,
@@ -18,59 +17,19 @@ import {
 } from "./model-client.js";
 import {
   modelSystemPrompt,
-  modelTool,
+  modelTools,
   modelToolName,
+  replacePageToolName,
   validateModelOperations,
+  validateModelPage,
 } from "./model-policy.js";
 
-export const PAGE_ID = "live-application";
-const enumProp = (...values: string[]) => ({ type: "string", enum: values });
-export const pageManifests: ComponentManifest[] = [
-  {
-    semanticType: "StudioApplication",
-    description:
-      "Trusted application shell with allow-listed theme and navigation variants.",
-    propsSchema: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        theme: enumProp("light", "midnight", "mint", "paper"),
-        navigation: enumProp("side", "top"),
-        density: enumProp("comfortable", "compact"),
-      },
-    },
-  },
-  {
-    semanticType: "StudioHeader",
-    description:
-      "Application heading; model-authored plain text, never markup.",
-    propsSchema: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        title: { type: "string", maxLength: 100 },
-        eyebrow: { type: "string", maxLength: 100 },
-      },
-    },
-  },
-  ...[
-    "StudioNavigation",
-    "StudioBody",
-    "StudioContent",
-    "StudioOverview",
-    "StudioMetrics",
-    "StudioRecovery",
-    "StudioMirror",
-    "StudioActivity",
-  ].map((semanticType): ComponentManifest => ({
-    semanticType,
-    propsSchema: {
-      type: "object",
-      additionalProperties: false,
-      properties: {},
-    },
-  })),
-];
+import {
+  PAGE_ID,
+  pageManifests,
+  pageContentManifests,
+} from "./studio-schema.js";
+export { PAGE_ID, pageManifests } from "./studio-schema.js";
 
 function node(id: string, component: string, children?: UINode[]): UINode {
   return {
@@ -337,7 +296,7 @@ export class StudioRuntime {
     if (!result.ok) {
       this.#message({
         role: "assistant",
-        text: `${result.error.code}: ${result.error.message}`,
+        text: `${result.error.code}: ${result.error.message}${before.id === PAGE_ID ? " 当前页面可能已重建，模板引用的节点已被移除。可继续对话调整，或先点击「恢复页面布局」。" : ""}`,
         rejected: true,
       });
       return;
@@ -458,7 +417,7 @@ export class StudioRuntime {
             },
             ...turns,
           ],
-          [modelTool],
+          modelTools,
           controller.signal,
         );
         if (!current()) return;
@@ -498,7 +457,9 @@ export class StudioRuntime {
             throw new Error("模型参数包含凭据，已拒绝显示和执行。");
           }
           displayArguments = raw;
-          if (call.function.name !== modelToolName)
+          if (
+            ![modelToolName, replacePageToolName].includes(call.function.name)
+          )
             throw new Error("模型请求了未授权工具；未执行任何业务动作。");
           if (
             !args ||
@@ -523,12 +484,20 @@ export class StudioRuntime {
             this.demo.getSnapshot().invocation?.status !== "editing"
           )
             throw new Error("业务正在确认或执行，模型无权修改表单结构。");
-          const input = validateModelOperations(
-            args,
-            before,
-            this.demo.components,
-          );
-          const result = this.demo.agent.applyOperations(input);
+          const rebuilding = call.function.name === replacePageToolName;
+          const input = rebuilding
+            ? undefined
+            : validateModelOperations(args, before, this.demo.components);
+          const pageInput = rebuilding
+            ? validateModelPage(args, before, this.demo.components)
+            : undefined;
+          const result = pageInput
+            ? this.demo.agent.replaceSurface({
+                surfaceId: before.id,
+                baseRevision: pageInput.baseRevision,
+                surface: replacement(before, pageInput.tree),
+              })
+            : this.demo.agent.applyOperations(input!);
           if (!result.ok)
             throw new Error(`${result.error.code}: ${result.error.message}`);
           const outcome = JSON.stringify({
@@ -542,13 +511,15 @@ export class StudioRuntime {
           this.#accepted(
             before,
             result.value,
-            "模型语义操作",
+            rebuilding ? "模型重建页面" : "模型语义操作",
             "SurfaceWeave 已执行模型提出的操作。以下参数、版本和树结构来自实际调用。",
             form,
-            input.operations.map((op) => op.type),
-            input.operations.flatMap((op) =>
-              "target" in op ? [op.target] : op.targets,
-            ),
+            input ? input.operations.map((op) => op.type) : ["replaceSurface"],
+            input
+              ? input.operations.flatMap((op) =>
+                  "target" in op ? [op.target] : op.targets,
+                )
+              : ["application"],
             { arguments: raw, status: "applied", result: outcome },
           );
           applied++;
@@ -628,9 +599,10 @@ export class StudioRuntime {
       }),
       components: [
         ...pageManifests,
+        ...pageContentManifests,
         routeComparisonManifest,
         ...standardComponentManifests.filter((manifest) =>
-          ["Form", "Section", "TextInput", "Checkbox", "ChoiceField"].includes(
+          ["Form", "TextInput", "Checkbox", "ChoiceField"].includes(
             manifest.semanticType,
           ),
         ),
@@ -808,7 +780,7 @@ function pageOperations(
   const theme = (theme: string): UIOperation => ({
     type: "setProps",
     target: "application",
-    props: { theme },
+    props: { theme, palette: {} },
   });
   const show = (target: string, visible: boolean): UIOperation => ({
     type: "setVisibility",

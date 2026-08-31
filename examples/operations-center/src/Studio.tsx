@@ -19,6 +19,7 @@ import { ConfirmationSheet, LiveMetrics, SupplyRoute } from "./App.js";
 import { createDemoReactRegistry } from "./component-pack.js";
 import { Icon } from "./icons.js";
 import { ModelSettings } from "./ModelSettings.js";
+import { pageContentManifests, paletteStyle } from "./studio-schema.js";
 import {
   StudioRuntime,
   conversationTemplates,
@@ -50,7 +51,7 @@ export function Studio() {
   );
 }
 
-function StudioSession({
+export function StudioSession({
   runtime,
   reset,
 }: {
@@ -240,7 +241,7 @@ function StudioSession({
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={
                   state.model
-                    ? "自由描述：标题改成晚班指挥台，指标和工作台双栏…"
+                    ? "自由描述：天空蓝、右侧导航，重建成有新信息卡的指挥台…"
                     : "选择模板，或接入模型自由描述…"
                 }
                 rows={2}
@@ -446,6 +447,7 @@ function Application({ node, children }: RendererComponentProps) {
       data-theme={String(node.props.theme)}
       data-navigation={String(node.props.navigation)}
       data-density={String(node.props.density)}
+      style={paletteStyle(node.props.palette)}
     >
       {children}
     </div>
@@ -522,6 +524,53 @@ function Content({ node, children, mode }: RendererComponentProps) {
     >
       {children}
     </div>
+  );
+}
+function GeneratedContainer({ node, children, mode }: RendererComponentProps) {
+  const card = ["StudioCard", "Section"].includes(node.component);
+  return (
+    <section className={card ? "live-generated-card" : "live-generated-layout"}>
+      {card && (
+        <small className="live-generated-label">
+          生成展示内容{node.props.badge ? ` · ${String(node.props.badge)}` : ""}
+        </small>
+      )}
+      {node.props.title && <h3>{String(node.props.title)}</h3>}
+      {node.props.description && <p>{String(node.props.description)}</p>}
+      <div
+        className="live-generated-children"
+        style={safeLayoutStyle(
+          {
+            gap: 14,
+            ...(node.component === "Grid" ? { columns: 2 } : {}),
+            ...node.layout,
+          },
+          mode,
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+function GeneratedStat({ node }: RendererComponentProps) {
+  return (
+    <section className="live-generated-stat">
+      <small className="live-generated-label">生成展示内容</small>
+      <span>{String(node.props.label ?? "")}</span>
+      <strong>{String(node.props.value ?? "")}</strong>
+      <p>{String(node.props.detail ?? "")}</p>
+    </section>
+  );
+}
+function GeneratedText({ node }: RendererComponentProps) {
+  return <p className="live-generated-text">{String(node.props.text ?? "")}</p>;
+}
+function GeneratedBadge({ node }: RendererComponentProps) {
+  return (
+    <span className="live-generated-badge">
+      {String(node.props.text ?? "")}
+    </span>
   );
 }
 function Overview() {
@@ -707,7 +756,7 @@ const applicationPack: ReactComponentPack = {
     version: "1.0.0",
     rendererKind: "react",
     priority: 50,
-    components: pageManifests,
+    components: [...pageManifests, ...pageContentManifests],
   },
   bindings: {
     StudioApplication: Application,
@@ -720,5 +769,12 @@ const applicationPack: ReactComponentPack = {
     StudioRecovery: PrimaryRecovery,
     StudioMirror: Mirror,
     StudioActivity: Activity,
+    StudioCard: GeneratedContainer,
+    StudioStat: GeneratedStat,
+    Section: GeneratedContainer,
+    Stack: GeneratedContainer,
+    Grid: GeneratedContainer,
+    Text: GeneratedText,
+    Badge: GeneratedBadge,
   },
 };
