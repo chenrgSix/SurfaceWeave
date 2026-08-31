@@ -6,6 +6,8 @@ Architecture decisions and the VitePress usage site live in `docs/`; the languag
 
 The playground's dynamic page tool uses the real SDK `replaceSurface` path; it can regenerate registered display nodes but must preserve the visible shell/workspace identities and the separate business Surface. Custom palettes accept validated semantic hex colors only, never CSS code. Generated card/metric content is presentation, not authenticated business evidence.
 
+The docs site hosts the standalone playground under `/SurfaceWeave/playground/`. Keep VitePress links as full-document navigation (`target="_self"`) so its SPA router does not capture the separate React app. GitHub Pages supplies static files only, no model proxy or shared credentials.
+
 The playground's optional OpenAI-compatible browser client, ephemeral credentials, and model authorization policy belong only to the example. Expose UI operations only, never business execution tools or arbitrary code. Do not persist or log model credentials, and distinguish protocol fixtures from real-model acceptance.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
@@ -25,9 +27,9 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm verify:packages` — run `npm pack` and test isolated clean consumers.
 - `pnpm audit:release` — audit release metadata, package boundaries, and tarball contents without registry access.
 - `pnpm verify:release` — run the release audit and npm publish dry-runs against the official registry.
-- `pnpm docs:dev` — start the VitePress documentation site locally.
-- `pnpm docs:build` — build and validate the GitHub Pages documentation artifact.
-- `pnpm docs:preview` — preview the generated documentation artifact.
+- `pnpm docs:dev` — start documentation-only VitePress development; run `pnpm dev` separately for the interactive app.
+- `pnpm docs:build` — cold-build the demo SDK dependencies, build VitePress and the standalone app at `/SurfaceWeave/playground/`, then validate the combined Pages artifact.
+- `pnpm docs:preview` — preview the combined documentation and playground deployment artifact.
 - `pnpm dev` — build the flagship demo's SDK dependencies, then start the conversation playground at `127.0.0.1:5175`.
 - `pnpm dev:tea` — start the original tea-purchase acceptance example.
 - `pnpm dev:tauri` — start the Tauri 2 desktop example.

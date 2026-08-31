@@ -6,7 +6,9 @@
 
 ## 开始体验
 
-在仓库根目录运行 `pnpm install --frozen-lockfile`，然后 `pnpm dev`。使用 Node 22。默认地址是 `http://127.0.0.1:5175`，无需 API Key 或后台。
+直接打开 <a href="/SurfaceWeave/playground/" target="_self">在线 Playground</a>，固定模板无需 API Key 或后台。它与文档站一起部署在 GitHub Pages，运行真实的浏览器端 SDK。
+
+也可以使用 Node 22，在仓库根目录运行 `pnpm install --frozen-lockfile`，然后 `pnpm dev`。本地默认地址是 `http://127.0.0.1:5175`。
 
 先在右边填写一句交接备注，然后按这个顺序发送：
 
@@ -43,7 +45,8 @@
 
 - 协议是 OpenAI 兼容的 **Chat Completions + function calling**。Base URL 支持 `https://你的服务商/v1` 或完整 `/chat/completions` 地址；不是 Responses API。模型 ID 由使用者填写。
 - Key 通过 `Authorization: Bearer …` 发送到界面显示的精确地址。远程仅允许 HTTPS，本机 `localhost`、`127.0.0.1`、`[::1]` 可以使用 HTTP；无鉴权的本机接口可以不填 Key。
-- 这是浏览器直连，服务商须允许该页面来源的 CORS 以及 `Authorization` / `Content-Type` 请求头。不做隐藏代理、不携带 Cookie、不跟随重定向，也不自动重试。
+- 这是浏览器直连，线上来源是 `https://chenrgsix.github.io`（不包含路径）。服务商须允许该页面来源的 CORS 以及 `Authorization` / `Content-Type` 请求头。不做隐藏代理、不携带 Cookie、不跟随重定向，也不自动重试。
+- GitHub Pages 只托管静态文件，不提供模型代理或共享 Key。本机 HTTP 接口还可能受浏览器本地网络权限限制，建议通过本地 Demo 连接；无需修改浏览器安全策略。
 - 配置只保存在当前页面内存，不写 localStorage、sessionStorage、Cookie 或仓库。**新会话、刷新、断开会清除临时配置**；这不是安全擦除浏览器内存的承诺。
 - 每次发送包含当前页面树、文字标签、组件描述、你的指令及最近 10 条对话；不发送业务表单 `data`。不要在对话或页面标题里填写秘密。
 - 浏览器内存的 Key 仍可被扩展、开发者工具或恶意脚本读取。仅使用可撤销、低额度测试 Key；生产使用服务端代理。[OpenAI 官方密钥说明](https://developers.openai.com/api/reference/overview#authentication)同样要求避免在客户端暴露密钥。
@@ -98,3 +101,11 @@
 自动化测试使用明确的协议响应 fixture 验证页面重建、任意合法配色、四向导航、输入/确认保留、撤销、权限拒绝、取消和错误，不把它当成真实大模型推理验收。真实服务还需要用自己的临时配置检查模型质量、额度与 CORS。
 
 点击右上角「业务流程案例」可以进入[原始供应链指挥台](./operations-center)，检查硬约束、过期写入、确认快照和安全重试。
+
+## 构建与部署到文档站
+
+`pnpm docs:build` 会先构建 Demo 的工作区 SDK，再构建 VitePress，最后以 `/SurfaceWeave/playground/` 为资源基路径生成独立应用，写入 `docs/.vitepress/dist/playground/`。构建会校验首页入口及 Demo 的 JS、CSS、图标路径，避免 GitHub 项目子路径下白屏。
+
+`pnpm docs:preview` 可以预览完整部署产物。`pnpm docs:dev` 仅用于文档开发；需要联调 Demo 时另开 `pnpm dev`。
+
+`.github/workflows/docs.yml` 将文档与 Demo 作为同一 Pages artifact 发布。`main` 上的文档、Demo、SDK 和相关构建配置变化均触发重建；不会打包本地模型凭据或浏览器会话。

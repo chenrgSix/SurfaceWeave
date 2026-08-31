@@ -125,6 +125,14 @@ export function StudioSession({
             <a href="?demo=operations" className="original-demo">
               业务流程案例 <Icon name="arrow" size={13} />
             </a>
+            <a
+              href="https://chenrgsix.github.io/SurfaceWeave/"
+              className="original-demo"
+              target="_blank"
+              rel="noreferrer"
+            >
+              文档 <Icon name="arrow" size={13} />
+            </a>
             <button
               className="studio-new"
               onClick={() => {

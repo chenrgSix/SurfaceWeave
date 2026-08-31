@@ -2,6 +2,8 @@
 
 SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定模板或使用者临时配置的模型，驱动自定义配色、四向导航、布局、业务组件和共享视图变化，也可以用注册的展示组件重建整个页面树。原始供应链业务流程保留在 `?demo=operations`。
 
+直接体验：[在线 Playground](https://chenrgsix.github.io/SurfaceWeave/playground/)。文档站和 Demo 同属一个 Pages 构建产物，页面、脚本和样式使用项目子路径。
+
 ## Run
 
 在仓库根目录运行：
@@ -22,7 +24,7 @@ pnpm dev
 
 模板可以连续组合；模型重建后若所需旧面板被删除，对应模板会拒绝并提示恢复布局，不会偷偷重置。未接入模型时，未知文字不会被猜测执行；接入后输入框调用真实 API，模板按钮仍固定映射。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
 
-点击“接入模型”，配置支持 function calling 的 OpenAI 兼容 Chat Completions 地址、模型 ID 和临时 Key。接口需要 CORS；仅用可撤销、低额度测试 Key，生产应使用服务端代理。Key 仅在本页内存，API 请求包含页面树、标签、组件描述和最近对话，不包含表单 data。模型每次最多四轮，每批一份 Surface、24 操作或一次完整页面树替换；错误/取消不会执行迟到响应或自动回退模板。原始参数与 SDK 前后树可以展开核查。详细风险、权限和真实模型验收边界见[模型接入指南](../../docs/guide/conversation-playground.md#临时接入模型)。
+点击“接入模型”，配置支持 function calling 的 OpenAI 兼容 Chat Completions 地址、模型 ID 和临时 Key。在线 Pages 不提供模型代理或共享 Key；接口需要允许 `https://chenrgsix.github.io` 来源的 CORS，并使用 HTTPS；仅用可撤销、低额度测试 Key，生产应使用服务端代理。Key 仅在本页内存，API 请求包含页面树、标签、组件描述和最近对话，不包含表单 data。模型每次最多四轮，每批一份 Surface、24 操作或一次完整页面树替换；错误/取消不会执行迟到响应或自动回退模板。原始参数与 SDK 前后树可以展开核查。详细风险、权限和真实模型验收边界见[模型接入指南](../../docs/guide/conversation-playground.md#临时接入模型)。
 
 动态重建通过 `ui_replace_page` → `AgentUIToolRuntime.replaceSurface` → Store → Renderer 执行。`StudioCard`、`StudioStat` 与 Text/Badge/Section/Stack/Grid 支持新增展示内容；生成文案和指标明确标记为展示内容，不能伪装业务证据。页面保留五个可见的骨架/工作台节点，限制 150 个节点和 12 层嵌套；业务 Surface 不能被这个工具替换。
 
@@ -69,3 +71,5 @@ pnpm --filter @surfaceweave/operations-center build
 ```
 
 浏览器演示验收与当前实现边界见 [使用指南](../../docs/guide/operations-center.md)。茶叶和 Tauri 验收例保留，分别用 `pnpm dev:tea` 和 `pnpm dev:tauri` 启动。
+
+文档站集成：`pnpm docs:build` 构建 `/SurfaceWeave/playground/`，`pnpm docs:preview` 本地预览完整产物。`pnpm docs:dev` 只运行文档开发服务，不代理此 Demo。

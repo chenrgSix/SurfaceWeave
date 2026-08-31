@@ -27,7 +27,7 @@ export default defineConfig({
     siteTitle: "SurfaceWeave",
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
-      { text: "Demo", link: "/guide/conversation-playground" },
+      { text: "Playground", link: "/playground/", target: "_self" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
         text: "0.1.0-rc.5",
@@ -52,6 +52,11 @@ export default defineConfig({
           text: "Get started",
           items: [
             { text: "Introduction", link: "/guide/getting-started" },
+            {
+              text: "Open live playground",
+              link: "/playground/",
+              target: "_self",
+            },
             {
               text: "Conversation playground",
               link: "/guide/conversation-playground",

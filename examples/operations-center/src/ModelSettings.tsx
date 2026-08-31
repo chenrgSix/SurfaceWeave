@@ -130,6 +130,11 @@ export function ModelSettings({
             localStorage、sessionStorage、Cookie 或仓库。
           </p>
           <p>
+            当前页面来源：<code>{window.location.origin}</code>
+            。服务商需允许此来源。 在线站点不提供 API 代理或共享 Key；本机 HTTP
+            模型建议在本地 Demo 中连接。
+          </p>
+          <p>
             发送内容：你的指令、最近 10
             条对话、页面树、文字标签和组件描述。不发送表单
             data（备注、负责人等输入值），但请勿在对话或页面标题里填写秘密。
