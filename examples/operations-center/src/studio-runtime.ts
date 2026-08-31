@@ -1,12 +1,27 @@
 import {
   cloneValue,
   componentManifestToDefinition,
+  standardComponentManifests,
   type ComponentManifest,
   type Surface,
   type UINode,
   type UIOperation,
 } from "@surfaceweave/core";
 import { OperationsDemo } from "./demo-runtime.js";
+import { routeComparisonManifest } from "./scenario.js";
+import {
+  normalizeModelConfig,
+  redactModelText,
+  requestModel,
+  type ModelConfig,
+  type ModelMessage,
+} from "./model-client.js";
+import {
+  modelSystemPrompt,
+  modelTool,
+  modelToolName,
+  validateModelOperations,
+} from "./model-policy.js";
 
 export const PAGE_ID = "live-application";
 const enumProp = (...values: string[]) => ({ type: "string", enum: values });
@@ -25,10 +40,22 @@ export const pageManifests: ComponentManifest[] = [
       },
     },
   },
+  {
+    semanticType: "StudioHeader",
+    description:
+      "Application heading; model-authored plain text, never markup.",
+    propsSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        title: { type: "string", maxLength: 100 },
+        eyebrow: { type: "string", maxLength: 100 },
+      },
+    },
+  },
   ...[
     "StudioNavigation",
     "StudioBody",
-    "StudioHeader",
     "StudioContent",
     "StudioOverview",
     "StudioMetrics",
@@ -182,6 +209,12 @@ export interface ChatMessage {
   operations?: string[];
   preserved?: boolean;
   rejected?: boolean;
+  source?: "model" | "runtime";
+  receipt?: {
+    arguments: string;
+    status: "applied" | "rejected";
+    result: string;
+  };
 }
 interface UndoEntry {
   before: Surface;
@@ -193,9 +226,12 @@ export interface StudioSnapshot {
   changeCount: number;
   lastChange: string;
   lastTargets: string[];
+  model: { endpoint: string; model: string } | null;
+  modelBusy: boolean;
+  modelRequests: number;
 }
 
-/** No model inference. Fixed chat templates issue real, validated SDK mutations. */
+/** Both scripted and model-authored commands must pass through the real SDK. */
 export class StudioRuntime {
   readonly demo = new OperationsDemo();
   readonly pageId = PAGE_ID;
@@ -203,12 +239,17 @@ export class StudioRuntime {
   readonly #listeners = new Set<() => void>();
   #sequence = 0;
   #disposed = false;
+  #modelConfig: ModelConfig | undefined;
+  #modelController: AbortController | undefined;
   #state: StudioSnapshot = {
     messages: [],
     undoDepth: 0,
     changeCount: 0,
     lastChange: "等待你的第一条指令",
     lastTargets: [],
+    model: null,
+    modelBusy: false,
+    modelRequests: 0,
   };
 
   constructor() {
@@ -228,7 +269,7 @@ export class StudioRuntime {
   };
 
   send(id: TemplateId) {
-    if (this.#disposed) return;
+    if (this.#disposed || this.#state.modelBusy) return;
     const template = conversationTemplates.find(
       (template) => template.id === id,
     );
@@ -332,8 +373,268 @@ export class StudioRuntime {
     });
   }
 
-  undo() {
+  configureModel(input: ModelConfig) {
     if (this.#disposed) return;
+    const config = normalizeModelConfig(input);
+    this.cancelModel();
+    this.#modelConfig = config;
+    this.#state = {
+      ...this.#state,
+      model: { endpoint: config.endpoint, model: config.model },
+    };
+    this.#message({
+      role: "assistant",
+      source: "runtime",
+      text: "临时模型已配置，尚未发送请求。自由输入将调用你配置的接口；固定模板仍可独立体验。Key 仅保存在本页内存，新会话、断开或刷新会清除。",
+    });
+  }
+
+  disconnectModel() {
+    if (this.#disposed) return;
+    this.cancelModel();
+    this.#modelConfig = undefined;
+    this.#state = { ...this.#state, model: null };
+    this.#message({
+      role: "assistant",
+      source: "runtime",
+      text: "模型已断开，临时配置已清除。固定模板仍可使用。",
+    });
+  }
+
+  cancelModel() {
+    const controller = this.#modelController;
+    if (!controller) return;
+    this.#modelController = undefined;
+    controller.abort();
+    this.#state = { ...this.#state, modelBusy: false };
+    if (!this.#disposed)
+      this.#message({
+        role: "assistant",
+        source: "runtime",
+        text: "已停止请求，迟到响应不会再修改页面。已经成功应用的批次仍保留，可以逐条撤销。",
+      });
+  }
+
+  async askModel(text: string) {
+    const config = this.#modelConfig;
+    if (!config || this.#disposed || this.#state.modelBusy || !text.trim())
+      return;
+    const controller = new AbortController();
+    this.#modelController = controller;
+    const current = () =>
+      !this.#disposed &&
+      this.#modelController === controller &&
+      !controller.signal.aborted;
+    const history = this.#state.messages
+      .slice(-10)
+      .map(({ role, text }) => ({ role, text }));
+    this.#state = { ...this.#state, modelBusy: true };
+    this.#message({
+      role: "user",
+      source: "model",
+      text: text.trim().slice(0, 2000),
+    });
+    const turns: ModelMessage[] = [];
+    let applied = 0;
+    try {
+      for (let round = 0; round < 4; round++) {
+        const snapshot = this.modelContext();
+        this.#state = {
+          ...this.#state,
+          modelRequests: this.#state.modelRequests + 1,
+        };
+        this.#emit();
+        const reply = await requestModel(
+          config,
+          [
+            { role: "system", content: modelSystemPrompt },
+            {
+              role: "user",
+              content: JSON.stringify({
+                request: text.trim().slice(0, 2000),
+                recentDialogue: history,
+                current: snapshot,
+              }),
+            },
+            ...turns,
+          ],
+          [modelTool],
+          controller.signal,
+        );
+        if (!current()) return;
+        const call = reply.toolCalls[0];
+        if (!call) {
+          this.#message({
+            role: "assistant",
+            source: "model",
+            text: reply.content,
+          });
+          this.#message({
+            role: "assistant",
+            source: "runtime",
+            text: applied
+              ? `本次实际应用 ${applied} 个批次，见 SDK 回执。`
+              : "模型只返回了文字，没有执行任何界面操作。",
+          });
+          return;
+        }
+        if (reply.content)
+          this.#message({
+            role: "assistant",
+            source: "model",
+            text: reply.content,
+          });
+        const raw = call.function.arguments;
+        try {
+          if (call.function.name !== modelToolName)
+            throw new Error("模型请求了未授权工具；未执行任何业务动作。");
+          if (config.apiKey && raw.includes(config.apiKey))
+            throw new Error("模型参数包含凭据，已拒绝显示和执行。");
+          const args = JSON.parse(raw) as {
+            surfaceId?: unknown;
+            baseRevision?: unknown;
+          };
+          if (
+            !args ||
+            ![PAGE_ID, "incident-recovery"].includes(String(args.surfaceId))
+          )
+            throw new Error("模型只能修改本例页面与业务表单。");
+          const observed = snapshot.surfaces.find(
+            (surface) => surface.id === args.surfaceId,
+          );
+          if (!observed || args.baseRevision !== observed.revision)
+            throw new Error(
+              "REVISION_CONFLICT：模型必须使用请求时的实际版本。",
+            );
+          const before = this.demo.store.requireSurface(observed.id);
+          if (before.revision !== observed.revision)
+            throw new Error(
+              "REVISION_CONFLICT：等待模型时界面或输入已变化，请重新发送。不会自动覆盖新输入。",
+            );
+          const form = this.demo.store.requireSurface("incident-recovery");
+          if (
+            before.id === form.id &&
+            this.demo.getSnapshot().invocation?.status !== "editing"
+          )
+            throw new Error("业务正在确认或执行，模型无权修改表单结构。");
+          const input = validateModelOperations(
+            args,
+            before,
+            this.demo.components,
+          );
+          const result = this.demo.agent.applyOperations(input);
+          if (!result.ok)
+            throw new Error(`${result.error.code}: ${result.error.message}`);
+          const outcome = JSON.stringify({
+            ok: true,
+            surfaceId: before.id,
+            beforeRevision: before.revision,
+            afterRevision: result.value.revision,
+            beforeTree: before.tree,
+            afterTree: result.value.tree,
+          });
+          this.#accepted(
+            before,
+            result.value,
+            "模型语义操作",
+            "SurfaceWeave 已执行模型提出的操作。以下参数、版本和树结构来自实际调用。",
+            form,
+            input.operations.map((op) => op.type),
+            input.operations.flatMap((op) =>
+              "target" in op ? [op.target] : op.targets,
+            ),
+            { arguments: raw, status: "applied", result: outcome },
+          );
+          applied++;
+          turns.push(
+            {
+              role: "assistant",
+              content: reply.content || null,
+              tool_calls: [call],
+            },
+            {
+              role: "tool",
+              tool_call_id: call.id,
+              content: JSON.stringify({
+                ok: true,
+                surfaceId: before.id,
+                revision: result.value.revision,
+                dataPreserved: true,
+              }),
+            },
+          );
+        } catch (error) {
+          const message = redactModelText(
+            error instanceof Error ? error.message : "模型操作被拒绝。",
+            config.apiKey,
+          );
+          this.#message({
+            role: "assistant",
+            source: "runtime",
+            rejected: true,
+            text: `${message} 本批次未应用。${applied ? `此前 ${applied} 个成功批次仍保留，可撤销。` : "页面未因模型回复发生变更。"}`,
+            receipt: {
+              arguments: redactModelText(raw, config.apiKey),
+              status: "rejected",
+              result: message,
+            },
+          });
+          return;
+        }
+      }
+      this.#message({
+        role: "assistant",
+        source: "runtime",
+        text: `达到每次对话 4 轮请求上限，已停止。实际成功 ${applied} 个批次；如需继续请再次发送。`,
+      });
+    } catch (error) {
+      if (current())
+        this.#message({
+          role: "assistant",
+          source: "runtime",
+          rejected: true,
+          text: `${redactModelText(error instanceof Error ? error.message : "模型请求失败。", config.apiKey)}${applied ? `此前 ${applied} 个成功批次仍保留，可撤销。` : "界面未变更。"}`,
+        });
+    } finally {
+      if (current()) {
+        this.#modelController = undefined;
+        this.#state = { ...this.#state, modelBusy: false };
+        this.#emit();
+      }
+    }
+  }
+
+  /** This exact projection is sent externally: structure/labels, never form data or private config. */
+  modelContext() {
+    const sanitize = (tree: UINode): UINode => ({
+      ...tree,
+      props: Object.fromEntries(
+        Object.entries(tree.props).filter(
+          ([key]) => !["invocationId", "submitting"].includes(key),
+        ),
+      ),
+      ...(tree.children ? { children: tree.children.map(sanitize) } : {}),
+    });
+    return {
+      surfaces: [PAGE_ID, "incident-recovery"].map((id) => {
+        const surface = this.demo.store.requireSurface(id);
+        return { id, revision: surface.revision, tree: sanitize(surface.tree) };
+      }),
+      components: [
+        ...pageManifests,
+        routeComparisonManifest,
+        ...standardComponentManifests.filter((manifest) =>
+          ["Form", "Section", "TextInput", "Checkbox", "ChoiceField"].includes(
+            manifest.semanticType,
+          ),
+        ),
+      ],
+      businessStatus: this.demo.getSnapshot().invocation?.status,
+    };
+  }
+
+  undo() {
+    if (this.#disposed || this.#state.modelBusy) return;
     const entry = this.#history.at(-1);
     if (!entry) return;
     this.#message({
@@ -384,6 +685,8 @@ export class StudioRuntime {
 
   dispose() {
     this.#disposed = true;
+    this.cancelModel();
+    this.#modelConfig = undefined;
     this.demo.dispose();
     this.#listeners.clear();
     this.#history.length = 0;
@@ -427,6 +730,7 @@ export class StudioRuntime {
     form: Surface,
     operations: string[],
     targets: string[],
+    receipt?: ChatMessage["receipt"],
   ) {
     this.#history.push({ before, label });
     if (this.#history.length > 40) this.#history.shift();
@@ -446,6 +750,7 @@ export class StudioRuntime {
       revision: `r${before.revision} → r${after.revision}`,
       operations: [...new Set(operations)],
       preserved,
+      ...(receipt ? { source: "runtime", receipt } : {}),
     });
   }
   #message(message: Omit<ChatMessage, "id">) {
@@ -456,6 +761,9 @@ export class StudioRuntime {
         { ...message, id: ++this.#sequence },
       ],
     };
+    this.#emit();
+  }
+  #emit() {
     for (const listener of this.#listeners) listener();
   }
 }
