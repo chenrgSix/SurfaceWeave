@@ -76,7 +76,7 @@ export async function requestModel(
   const abort = () => timeout.abort();
   signal.addEventListener("abort", abort, { once: true });
   if (signal.aborted) timeout.abort();
-  const timer = setTimeout(() => timeout.abort(), 60_000);
+  const timer = setTimeout(() => timeout.abort(), 300_000);
   try {
     if (timeout.signal.aborted)
       throw new ModelRequestError("请求已停止，未应用新的操作。");
@@ -189,7 +189,7 @@ export async function requestModel(
       throw new ModelRequestError(
         signal.aborted
           ? "请求已停止，未应用新的操作。"
-          : "模型请求超过 60 秒，已停止；未自动重试。",
+          : "模型请求超过 5 分钟，已停止；未自动重试。",
       );
     throw new ModelRequestError(
       "无法读取模型接口。请检查网络、HTTPS 和服务商 CORS（需允许本站来源与 Authorization / Content-Type）。没有自动重试或改走模板。",

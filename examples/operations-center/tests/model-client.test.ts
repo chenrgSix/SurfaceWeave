@@ -129,7 +129,11 @@ it("honors caller cancellation and bounds a hanging provider with a timeout", as
   );
   const pending = expect(
     requestModel(config, [], [], signal(), fetcher),
-  ).rejects.toThrow("60 秒");
+  ).rejects.toThrow("5 分钟");
   await vi.advanceTimersByTimeAsync(60_000);
+  expect(fetcher.mock.calls[0]![1]?.signal?.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(239_999);
+  expect(fetcher.mock.calls[0]![1]?.signal?.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
   await pending;
 });
