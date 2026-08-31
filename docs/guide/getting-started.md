@@ -69,4 +69,4 @@ loading state, errors, results, and replacement Surfaces.
 - Review the current [OpenAPI-to-form boundary](./openapi-to-form).
 - Render the Surface with [React](./react-renderer).
 - Select an optional [Component Pack](./component-packs).
-- See the runnable `examples/tea-purchase` source in the repository.
+- Try the [operations center demo](./operations-center), or inspect `examples/operations-center` in the repository. The original `examples/tea-purchase` remains the OpenAPI and multi-pack acceptance baseline.

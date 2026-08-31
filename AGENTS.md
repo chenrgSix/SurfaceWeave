@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Architecture decisions and the VitePress usage site live in `docs/`; the language-neutral Wire and Layout contracts plus JSON Schemas live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`.
+Architecture decisions and the VitePress usage site live in `docs/`; the language-neutral Wire and Layout contracts plus JSON Schemas live in `protocol/`. Framework-independent TypeScript is under `packages/core`; generation, persistence, preferences, and Agent tools use their matching packages. React stays in `packages/renderer-react`; React Aria and Ant Design bindings are isolated in `packages/component-pack-*`. The desktop bridge remains in `packages/tauri`. Runnable acceptance flows are under `examples/`. `examples/operations-center` is the flagship supply-chain demo; its scripted Agent, simulated Host, and trusted business Component Pack stay inside the example. `examples/tea-purchase` remains the OpenAPI and multi-pack acceptance baseline.
 
 Place unit tests in each package's `tests/` directory and renderer assets beside their consuming package. Do not introduce React or host SDK dependencies into Core.
 
@@ -24,7 +24,8 @@ Use Node 22 (`nvm use 22`) and pnpm. Root commands are:
 - `pnpm docs:dev` — start the VitePress documentation site locally.
 - `pnpm docs:build` — build and validate the GitHub Pages documentation artifact.
 - `pnpm docs:preview` — preview the generated documentation artifact.
-- `pnpm dev` — start the tea-purchase example.
+- `pnpm dev` — build the flagship demo's SDK dependencies, then start the operations center at `127.0.0.1:5175`.
+- `pnpm dev:tea` — start the original tea-purchase acceptance example.
 - `pnpm dev:tauri` — start the Tauri 2 desktop example.
 - `pnpm check:tauri` — compile-check the Rust host commands.
 - `pnpm build:tauri` — produce the desktop release binary without broad host capabilities.

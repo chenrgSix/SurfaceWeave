@@ -35,7 +35,21 @@ for installation, Tool-to-UI setup, React rendering, Component Packs,
 generic DOM-host mounting, preferences, storage, and Tauri integration. Documentation source lives in
 `docs/`; run `pnpm docs:dev` to preview it locally.
 
-![Tea purchase Tool-to-UI demo](docs/assets/tea-purchase-demo.jpg)
+![SurfaceWeave operations center](docs/public/operations-center.png)
+
+## Flagship demo: from incident to action
+
+**供应链异常处置指挥台**：一批关键芯片延误，Agent 生成处置工作台，用户核对并执行恢复计划。
+
+- **界面随任务变化：** 普通表单变成业务方案对比卡，审批区前置，用户刚填的备注保留。
+- **状态真正共享：** 主工作台和紧凑会话视图订阅同一 Surface Store，双向同步输入。
+- **约束可以挑战：** 尝试隐藏强制审批或提交过期 revision，看到真实拒绝与整批回滚。
+- **执行可追溯：** 确认快照 → 模拟宿主失败 → 原幂等键重试 → 结果 Surface 与事件证据。
+
+Run `pnpm dev` and follow the [two-minute walkthrough](docs/guide/operations-center.md).
+The Agent is scripted, logistics data is fictional, and the Host is simulated;
+Surface generation, operations, validation, confirmation, and invocation state use the real SDK.
+No API key or backend is required. This demo does not demonstrate cross-device sync or production authorization.
 
 ## SurfaceWeave in 30 Seconds
 
@@ -54,8 +68,9 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open the Vite URL printed by the final command. The example runs entirely with
-mock Tool results and a mock Host executor.
+Open the Vite URL printed by the final command (default: `http://127.0.0.1:5175`).
+The command builds the demo's SDK dependencies before starting the operations center.
+Use `pnpm dev:tea` for the original OpenAPI and multi-pack acceptance flow.
 
 ## Packages
 
@@ -71,6 +86,7 @@ mock Tool results and a mock Host executor.
 | `@surfaceweave/antd`               | Ant Design runtime bindings and ConfigProvider theme integration                                 |
 | `@surfaceweave/storage`            | LocalStorage, memory, and host-transport persistence adapters                                    |
 | `@surfaceweave/tauri`              | Allow-listed Tauri actions, Store-backed preferences, and capability descriptions                |
+| `@surfaceweave/operations-center`  | Flagship supply-chain incident demo with scripted Agent and simulated Host                       |
 | `@surfaceweave/tea-purchase`       | Runnable Vite acceptance example                                                                 |
 | `@surfaceweave/tea-purchase-tauri` | Runnable Tauri 2 desktop acceptance example                                                      |
 
@@ -132,7 +148,9 @@ pnpm dev
 See the [performance guide](./docs/performance.md) for benchmark methodology,
 the RC.5 baseline, and compatibility constraints.
 
-`pnpm dev` starts the tea-purchase flow. Submit the generated search form, select products, fill the purchase form, confirm the side effect, and inspect the result. Switch among `default`, `react-aria`, and `antd`; chat and workspace retain one Surface Store. `pnpm verify:packages` also installs the Tool Runtime from tarballs in a clean consumer.
+`pnpm dev` starts the operations center. Follow the Copilot steps to generate and restructure a recovery plan, challenge constraints, confirm execution, and recover from a simulated host failure. See [example source and acceptance steps](examples/operations-center/README.md).
+
+`pnpm dev:tea` retains the original tea-purchase flow for OpenAPI import and switching among `default`, `react-aria`, and `antd` packs. `pnpm verify:packages` installs the Tool Runtime from tarballs in a clean consumer.
 
 After installing the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/), validate or run the desktop example with:
 

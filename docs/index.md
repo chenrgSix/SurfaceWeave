@@ -13,6 +13,9 @@ hero:
       text: Get started
       link: /guide/getting-started
     - theme: alt
+      text: Explore the flagship demo
+      link: /guide/operations-center
+    - theme: alt
       text: View on GitHub
       link: https://github.com/chenrgSix/SurfaceWeave
 
@@ -45,14 +48,23 @@ npm install @surfaceweave/core@next \
   @surfaceweave/agent-tools@next
 ```
 
-## One Surface, multiple trusted views
+## From a supply-chain incident to a safe action
+
+The flagship operations center turns a delayed shipment into a generated recovery
+workspace. Restructure fields into business comparison cards without losing input,
+challenge mandatory approval and revision checks, then confirm and retry a simulated
+host request. Follow the [interactive demo walkthrough](/guide/operations-center)
+or run `pnpm dev` from the repository.
+
+The Agent is scripted and business APIs are simulated. Surface generation, shared
+state, semantic operations, constraints, and confirmation use the actual SDK.
 
 The chat view and the full workspace subscribe to the same `SurfaceStore`, so
 form values and semantic revisions stay synchronized. Renderer bindings are
 replaceable; the wire protocol remains framework independent.
 
 <div class="demo-frame">
-  <img src="./assets/tea-purchase-demo.jpg" alt="SurfaceWeave tea purchase Tool-to-UI example" />
+  <img src="/operations-center.png" alt="SurfaceWeave supply-chain incident operations center" />
 </div>
 
 ::: warning Experimental release candidate

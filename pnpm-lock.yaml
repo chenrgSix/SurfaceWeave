@@ -39,6 +39,37 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.2)(jsdom@30.0.1)(vite@8.2.0(@types/node@26.1.2))
 
+  examples/operations-center:
+    dependencies:
+      '@surfaceweave/agent-tools':
+        specifier: workspace:*
+        version: link:../../packages/agent-tools
+      '@surfaceweave/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@surfaceweave/react':
+        specifier: workspace:*
+        version: link:../../packages/renderer-react
+      react:
+        specifier: ^19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.4
+        version: 19.2.4(@types/react@19.2.18)
+      '@vitejs/plugin-react':
+        specifier: ^6.0.5
+        version: 6.0.5(vite@8.2.0(@types/node@26.1.2))
+      vite:
+        specifier: ^8.2.0
+        version: 8.2.0(@types/node@26.1.2)
+
   examples/performance-benchmark:
     dependencies:
       '@surfaceweave/core':
