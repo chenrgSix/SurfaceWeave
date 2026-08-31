@@ -76,7 +76,7 @@ export function validateModelOperations(
     if (
       old.component !== current.component &&
       !(
-        id === "route" &&
+        (old.stableId ?? id) === "route" &&
         ["ChoiceField", "RouteComparison"].includes(current.component)
       )
     )

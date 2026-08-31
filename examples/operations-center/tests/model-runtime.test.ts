@@ -48,6 +48,50 @@ const theme = (value = "midnight") => ({
   target: "application",
   props: { theme: value },
 });
+it("accepts registered component changes addressed by stableId and preserves generated node identity", async () => {
+  const value = studio();
+  const before = value.demo.store.requireSurface("incident-recovery");
+  const route = before.tree.children!.find(
+    (node) => node.stableId === "route",
+  )!;
+  expect(route.id).not.toBe("route");
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      operationReply(before.id, before.revision, [
+        {
+          type: "replaceComponent",
+          target: "route",
+          component: "RouteComparison",
+        },
+        {
+          type: "groupNodes",
+          targets: ["owner", "approval"],
+          group: {
+            id: "model-review",
+            component: "Section",
+            props: { title: "模型自定义核对区" },
+          },
+        },
+        { type: "moveNode", target: "model-review", position: "first" },
+      ]),
+    )
+    .mockResolvedValueOnce(completion());
+  vi.stubGlobal("fetch", fetcher);
+  await value.askModel("把方案变成卡片，负责人和审批合并成核对区");
+  const after = value.demo.store.requireSurface(before.id);
+  expect(
+    after.tree.children!.find((node) => node.stableId === "route"),
+  ).toMatchObject({
+    id: route.id,
+    component: "RouteComparison",
+    binding: route.binding,
+  });
+  expect(after.data).toEqual(before.data);
+  expect(value.getSnapshot().changeCount).toBe(1);
+  value.undo();
+  expect(value.demo.store.requireSurface(before.id).tree).toEqual(before.tree);
+});
 afterEach(() => {
   instances.splice(0).forEach((value) => value.dispose());
   vi.unstubAllGlobals();
