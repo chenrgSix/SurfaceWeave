@@ -10,7 +10,6 @@ import {
   PureComponent,
   useCallback,
   useMemo,
-  useRef,
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
@@ -231,7 +230,6 @@ export function SurfaceRenderer({
     model.getSurface,
   );
   const actionExecution = useActionExecution(actionStateSource, surfaceId);
-  const actionSequence = useRef(0);
   const report = useCallback(
     (error: unknown): void => {
       const dynamicError = asDynamicUIError(error);
@@ -245,8 +243,13 @@ export function SurfaceRenderer({
   );
   const nextActionId = useCallback(
     (nodeId: string, action: string): string => {
-      actionSequence.current += 1;
-      return `${surfaceId}:${nodeId}:${action}:${actionSequence.current}`;
+      // Each interaction needs its own identity across views and remounts.
+      // getRandomValues also works on HTTP hosts where randomUUID is unavailable.
+      const nonce = Array.from(
+        globalThis.crypto.getRandomValues(new Uint32Array(4)),
+        (word) => word.toString(16).padStart(8, "0"),
+      ).join("");
+      return `${surfaceId}:${nodeId}:${action}:${nonce}`;
     },
     [surfaceId],
   );
