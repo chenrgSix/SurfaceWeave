@@ -15,6 +15,7 @@ import type {
   ActionError,
   ActionIntent,
   ComponentRegistry,
+  DeveloperHardConstraints,
   JsonObject,
   JsonSchema,
   JsonValue,
@@ -265,6 +266,20 @@ export class ToolToUIRuntime {
 
   inspectInvocation(invocationId: string): ToolInvocation {
     return this.#invocations.require(invocationId);
+  }
+
+  /** Resolves input UI policy through trusted invocation ownership, never Surface context. */
+  getSurfaceHardConstraints(
+    surfaceId: string,
+  ): DeveloperHardConstraints | undefined {
+    const invocationId = this.#surfaceInvocations.get(surfaceId);
+    if (invocationId === undefined) return undefined;
+    const invocation = this.#invocations.require(invocationId);
+    if (invocation.sourceSurfaceId !== surfaceId) return undefined;
+    return cloneValue(
+      this.#tools.require(invocation.toolId, invocation.toolVersion).uiHints
+        ?.hardConstraints,
+    );
   }
 
   getRawResult(invocationId: string): JsonValue | undefined {

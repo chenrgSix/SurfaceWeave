@@ -32,6 +32,122 @@ const createArguments = {
 };
 
 describe("AgentUIToolRuntime", () => {
+  it.each(["host", "agent"])(
+    "preserves registered Tool hard constraints for %s-created Surfaces",
+    (creator) => {
+      const registry = createStandardComponentRegistry();
+      const store = new InMemorySurfaceStore(registry);
+      const toolRuntime = new ToolToUIRuntime(registry, store);
+      toolRuntime.registerTool({
+        id: "order.create",
+        version: "1.0.0",
+        inputSchema: createArguments.schema,
+        uiHints: {
+          hardConstraints: {
+            fields: {
+              buyer: {
+                component: "TextInput",
+                visible: true,
+                locked: ["visibility"],
+              },
+            },
+          },
+        },
+      });
+      const input = {
+        toolId: "order.create",
+        surfaceId: "order",
+        initialValues: createArguments.data,
+      };
+      if (creator === "host") {
+        toolRuntime.createToolSurface(input);
+      } else {
+        const creatorRuntime = new AgentUIToolRuntime(
+          registry,
+          store,
+          undefined,
+          toolRuntime,
+        );
+        expect(creatorRuntime.execute("ui.createToolSurface", input).ok).toBe(
+          true,
+        );
+      }
+      // A fresh Agent runtime must recover authority from ToolInvocation,
+      // not from its own creation history or Agent-writable Surface context.
+      const agent = new AgentUIToolRuntime(
+        registry,
+        store,
+        undefined,
+        toolRuntime,
+      );
+      const before = store.requireSurface("order");
+      const rejected = agent.execute("ui.applyOperations", {
+        surfaceId: "order",
+        baseRevision: 0,
+        reason: "Hide the locked buyer",
+        operations: [
+          { type: "setVisibility", target: "buyer", visible: false },
+        ],
+      });
+      expect(rejected).toMatchObject({
+        ok: false,
+        error: { code: "HARD_CONSTRAINT_VIOLATION" },
+      });
+      expect(
+        agent.execute("ui.replaceSurface", {
+          surfaceId: "order",
+          baseRevision: 0,
+          surface: {
+            intent: "form",
+            tree: { ...before.tree, children: [] },
+            data: before.data,
+            context: {},
+          },
+        }),
+      ).toMatchObject({
+        ok: false,
+        error: { code: "HARD_CONSTRAINT_VIOLATION" },
+      });
+      expect(store.requireSurface("order")).toEqual(before);
+
+      expect(
+        agent.execute("ui.replaceSurface", {
+          surfaceId: "order",
+          baseRevision: 0,
+          surface: {
+            intent: "form",
+            tree: before.tree,
+            data: before.data,
+            context: { toolId: "forged-tool" },
+          },
+        }).ok,
+      ).toBe(true);
+      expect(
+        agent.execute("ui.applyOperations", {
+          surfaceId: "order",
+          baseRevision: 1,
+          reason: "Try hiding after changing context",
+          operations: [
+            { type: "setVisibility", target: "buyer", visible: false },
+          ],
+        }),
+      ).toMatchObject({
+        ok: false,
+        error: { code: "HARD_CONSTRAINT_VIOLATION" },
+      });
+      expect(
+        agent.execute("ui.applyOperations", {
+          surfaceId: "order",
+          baseRevision: 1,
+          reason: "Change an unlocked label",
+          operations: [
+            { type: "setProps", target: "buyer", props: { label: "Customer" } },
+          ],
+        }),
+      ).toMatchObject({ ok: true, value: { revision: 2 } });
+    },
+  );
+
   it("publishes framework-agnostic definitions for all required tools", () => {
     expect(surfaceToolDefinitions.map((definition) => definition.name)).toEqual(
       [

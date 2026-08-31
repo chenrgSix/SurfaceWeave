@@ -3,6 +3,12 @@
 Framework-independent Agent UI tool definitions and the Tool-to-UI orchestration
 boundary. The host remains responsible for executing business tools.
 
+`AgentUIToolRuntime` enforces registered Tool hard constraints on both
+`ui.applyOperations` and `ui.replaceSurface`, including input Surfaces created
+directly by the host. `ToolToUIRuntime.getSurfaceHardConstraints(surfaceId)`
+returns a defensive policy snapshot resolved through invocation ownership;
+changing Surface context cannot change that policy.
+
 ```sh
 npm install @surfaceweave/core@next @surfaceweave/generator@next @surfaceweave/agent-tools@next
 ```
