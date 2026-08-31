@@ -30,6 +30,21 @@ idempotent teardown, subscription release, and production bundling. Agentdown,
 Vue, React, and React DOM remain consumer dependencies and do not appear in
 Core or unrelated release packages.
 
+## RC.6 verification
+
+RC.6 retains the package and peer boundaries above while adding Core immutable
+observation exports and React node subscriptions. It also fixes Tool constraint
+and confirmation enforcement, Host retry restrictions, multi-view Action IDs,
+and concurrent preference writes. Wire Protocol stays at `1.0`.
+
+All ten RC.6 tarballs pass the eleven local consumer fixtures; the release
+workflow also passes all ten Registry consumer fixtures, including React DOM
+Driver and Vue/Agentdown. An independent installation of all ten packages
+verifies official Registry resolution and passes `npm audit signatures`.
+The conversation playground and model client remain private example code.
+See the [RC.6 release summary](rc6-release-candidate-summary.md) for evidence
+and acceptance limits.
+
 ## RC.5 verification
 
 RC.5 preserves every package entry point, peer range, and dependency boundary
@@ -44,7 +59,10 @@ opted into user control. The existing eleven-consumer suite continues to prove
 React-root isolation, independent Pack installation, DOM Driver lifecycle,
 Vue/Agentdown integration, Tool Runtime usage, and Tauri bundling.
 
-## Pack Isolation Evidence
+## Earlier Pack Isolation Evidence
+
+The sizes below are historical measurements, not RC.6 bundle measurements.
+RC.6 consumer tests continue to check independent Pack installation.
 
 Each Vite build used tarballs in a clean project where unselected Packs were not
 installed:

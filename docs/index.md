@@ -73,8 +73,8 @@ replaceable; the wire protocol remains framework independent.
 </div>
 
 ::: warning Experimental release candidate
-`0.1.0-rc.5` is published with npm provenance. npm `@next` resolves to RC.5;
+`0.1.0-rc.6` is published with npm provenance. npm `@next` resolves to RC.6;
 `latest` intentionally remains on immutable RC.2. Review the
-[RC.5 release summary](/rc5-release-candidate-summary) and
+[RC.6 release summary](/rc6-release-candidate-summary) and
 [compatibility matrix](/npm-compatibility-matrix) before production use.
 :::

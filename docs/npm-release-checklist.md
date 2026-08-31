@@ -1,17 +1,9 @@
 # npm Release Candidate Checklist
 
-## RC.6 preparation
+## Published RC.6 baseline
 
-The source release inventory and exact internal dependencies are prepared at
-`0.1.0-rc.6`. Publish only through the annotated `v0.1.0-rc.6` tag after the
-release gates pass. The intended npm tag is `next`; preserve `latest` at RC.2.
-Registry verification is required before marking the release published. See
-the [RC.6 summary](rc6-release-candidate-summary.md) for scope and compatibility.
-
-## Published RC.5 baseline
-
-All ten publishable workspace packages are published as `0.1.0-rc.5` with npm
-provenance. The official npm Registry resolves `next` to RC.5 and intentionally
+All ten publishable workspace packages are published as `0.1.0-rc.6` with npm
+provenance. The official npm Registry resolves `next` to RC.6 and intentionally
 keeps `latest` on the immutable RC.2 release. The wire protocol remains `1.0`;
 npm package versions do not change Tool or Component Pack manifest versions.
 
@@ -19,16 +11,16 @@ npm package versions do not change Tool or Component Pack manifest versions.
 
 | Package                     | Published | Current public dist-tags             |
 | --------------------------- | --------: | ------------------------------------ |
-| `@surfaceweave/protocol`    |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/core`        |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/storage`     |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/preferences` |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/generator`   |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/agent-tools` |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react`       |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/react-aria`  |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/antd`        |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
-| `@surfaceweave/tauri`       |      RC.5 | `next` → RC.5, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/protocol`    |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/core`        |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/storage`     |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/preferences` |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/generator`   |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/agent-tools` |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react`       |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/react-aria`  |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/antd`        |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
+| `@surfaceweave/tauri`       |      RC.6 | `next` → RC.6, `latest` → 0.1.0-rc.2 |
 
 ## Package Name Migration
 
@@ -69,13 +61,14 @@ published release under the previous names.
 
 ## Trusted Publishing Status
 
-`0.1.0-rc.1` was published manually. RC.2 through RC.5 prove the protected OIDC
+`0.1.0-rc.1` was published manually. RC.2 through RC.6 use the OIDC
 workflow documented in [npm Trusted Publishing](npm-trusted-publishing.md): all
 ten packages expose verified provenance for the same tag, release commit, and
 workflow run. Future releases must continue to:
 
 - keep the same trusted publisher boundary for all ten packages;
-- require review through the `npm-release` GitHub Environment;
+- require review through the `npm-release` GitHub Environment (see the current
+  configuration gap in the Trusted Publishing document);
 - avoid restoring token-based publishing after OIDC verification;
 - explicitly approve the exact version and annotated Git tag.
 

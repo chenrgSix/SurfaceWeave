@@ -30,10 +30,10 @@ export default defineConfig({
       { text: "Playground", link: "/playground/", target: "_self" },
       { text: "Architecture", link: "/dynamic-ui-architecture" },
       {
-        text: "0.1.0-rc.5",
+        text: "0.1.0-rc.6",
         items: [
           {
-            text: "RC.6 candidate",
+            text: "RC.6 release summary",
             link: "/rc6-release-candidate-summary",
           },
           {
@@ -103,7 +103,7 @@ export default defineConfig({
             { text: "Public API", link: "/public-api" },
             { text: "Performance", link: "/performance" },
             {
-              text: "RC.6 candidate",
+              text: "RC.6 release summary",
               link: "/rc6-release-candidate-summary",
             },
             {

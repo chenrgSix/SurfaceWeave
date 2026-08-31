@@ -4,11 +4,21 @@ SurfaceWeave releases should use GitHub Actions OIDC rather than a long-lived
 npm automation token. The release workflow is `.github/workflows/release.yml`;
 it does not run on branches or manual dispatches.
 
-RC.2 through RC.5 successfully used this path for all ten packages. The latest
-published provenance ties RC.5 to `refs/tags/v0.1.0-rc.5`, commit
-`dc8e8349adfed0c933b197435959fca0f5862efc`, and the protected
-[release workflow](https://github.com/chenrgSix/SurfaceWeave/actions/runs/31466776694).
-npm `next` resolves to RC.5; `latest` intentionally remains on RC.2.
+RC.2 through RC.6 successfully used this path for all ten packages. The latest
+published provenance ties RC.6 to `refs/tags/v0.1.0-rc.6`, commit
+`5c1e070018306827dbe5b9435b323ef57be08cd1`, and the
+[release workflow](https://github.com/chenrgSix/SurfaceWeave/actions/runs/33385003085).
+npm `next` resolves to RC.6; `latest` intentionally remains on RC.2.
+
+## Observed environment review status
+
+At RC.6 publication on 2026-08-31, the GitHub API reported
+`protection_rules: []` for `npm-release`. The environment binds the npm OIDC
+identity, but currently does not pause for required reviewer approval. RC.6
+was explicitly authorized by the repository owner before its tag was pushed;
+no environment permissions or protection settings were changed. The required
+reviewer configuration described below remains outstanding and must not be
+reported as a verified GitHub approval gate.
 
 ## One-time Owner Setup
 
@@ -23,9 +33,10 @@ npm `next` resolves to RC.5; `latest` intentionally remains on RC.2.
    package if the npm organization policy permits it.
 
 Trusted Publishing requires npm `11.5.1` or newer on a GitHub-hosted runner.
-The publish job uses Node 24 without dependency caching, requests only
-`contents: read` and `id-token: write`, and relies on the protected environment
-for human approval. Public packages published from a public repository receive
+The publish job uses Node 24 and pinned npm 11.6.0 without dependency caching, requests only
+`contents: read` and `id-token: write`, and binds publishing to the
+`npm-release` environment. Required-reviewer approval depends on the outstanding
+environment configuration described above. Public packages published from a public repository receive
 npm provenance automatically; the workflow also passes `--provenance`.
 
 Official references: [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/),

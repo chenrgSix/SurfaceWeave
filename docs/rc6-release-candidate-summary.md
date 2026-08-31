@@ -2,10 +2,13 @@
 
 ## Status
 
-SurfaceWeave `0.1.0-rc.6` is prepared for all ten public packages. Publication
-targets npm `next`; `latest` remains on immutable `0.1.0-rc.2`. Until Registry
-verification completes, the published baseline is RC.5. Source commits and a
-successful documentation deployment do not by themselves establish npm delivery.
+SurfaceWeave `0.1.0-rc.6` is published for all ten public packages. npm `next`
+resolves to RC.6; `latest` remains on immutable `0.1.0-rc.2`. The annotated
+`v0.1.0-rc.6` tag fixes the source at
+`5c1e070018306827dbe5b9435b323ef57be08cd1`.
+The [successful OIDC release workflow](https://github.com/chenrgSix/SurfaceWeave/actions/runs/33385003085),
+[GitHub prerelease](https://github.com/chenrgSix/SurfaceWeave/releases/tag/v0.1.0-rc.6),
+Registry metadata, and provenance identify the same source boundary.
 
 ## Runtime changes since RC.5
 
@@ -61,7 +64,35 @@ Both release verification and publication pin npm `11.6.0`, matching CI and
 retaining peer dependency checks. This avoids npm 10's circular optional-peer
 resolution crash without weakening consumer validation.
 
-## Installation after publication
+## Recorded release acceptance
+
+Verified on 2026-08-31:
+
+- Build, strict typecheck, lint, 50 Vitest files / 243 tests, documentation
+  artifact checks, ten package tarballs / eleven clean consumers, package
+  metadata audit, and ten npm publish dry-runs pass locally. macOS Tauri check
+  and release build pass with a clean target directory.
+- The exact tagged GitHub source passes the release gates, including Linux
+  Tauri check and release build. Publication and all ten Registry consumer
+  fixtures pass in the same workflow.
+- Independent downloads verify all ten official tarballs, SHA-512 integrity,
+  SHA-1 shasum, MIT licenses, manifests, exact internal versions, and `gitHead`.
+- All ten SLSA provenance statements bind the tarball digest to the RC.6 tag,
+  release commit, repository, and `.github/workflows/release.yml` run above.
+- A separate project installs all ten RC.6 packages solely from the official
+  Registry. `npm audit signatures` verifies 94 package signatures and 19
+  attestations, including the ten RC.6 packages.
+- `latest` remains RC.2 for every package. The recorded RC.2 and RC.5 artifact
+  integrities and source commits are unchanged.
+
+GitHub required-reviewer protection is not configured on the current
+`npm-release` environment; no permission settings were changed for this
+owner-authorized release. This is an outstanding administrative configuration,
+not a verified approval gate. See [Trusted Publishing](npm-trusted-publishing.md).
+Native compilation does not replace physical desktop acceptance, and no
+real-model quality or production business integration is certified here.
+
+## Installation
 
 ```bash
 npm install @surfaceweave/core@next \

@@ -106,7 +106,7 @@ pnpm dev
 
 ## 接入现有项目
 
-按需安装包。当前 npm `next` 为 `0.1.0-rc.5`，`latest` 保留在 `0.1.0-rc.2`。在线 Demo 使用仓库源码构建，可能包含尚未发布到 npm 的更新；生产评估请先阅读 [RC.5 说明](docs/rc5-release-candidate-summary.md)。
+按需安装包。当前 npm `next` 为 `0.1.0-rc.6`，`latest` 保留在 `0.1.0-rc.2`。在线 Demo 使用仓库源码构建，可能包含尚未发布到 npm 的更新；生产评估请先阅读 [RC.6 说明](docs/rc6-release-candidate-summary.md)。
 
 ```bash
 npm install @surfaceweave/core@next \
