@@ -229,6 +229,7 @@ export class ToolToUIRuntime {
   readonly #lastRequests = new Map<string, ToolSubmissionRequest>();
   readonly #pendingOutcomes = new Map<string, ToolActionOutcome>();
   readonly #confirmations = new Map<string, PendingConfirmation>();
+  readonly #retryableFailures = new Set<string>();
   readonly #actionMetadata = new Map<string, ToolActionProjectionMetadata>();
   readonly #actionListeners = new Map<
     string,
@@ -452,6 +453,7 @@ export class ToolToUIRuntime {
           "cancelled",
         );
         this.#confirmations.delete(invocation.id);
+        this.#retryableFailures.delete(invocation.id);
         if (wasSubmitting) {
           this.#setSubmitting(invocation.sourceSurfaceId, false);
         }
@@ -574,6 +576,8 @@ export class ToolToUIRuntime {
       error: actionError,
       resultSurfaceId: resultSurface.id,
     });
+    if (retryable) this.#retryableFailures.add(invocationId);
+    else this.#retryableFailures.delete(invocationId);
     this.#settleAction(invocationId);
     this.#pendingOutcomes.delete(invocationId);
     this.#setSubmitting(invocation.sourceSurfaceId, false);
@@ -781,7 +785,8 @@ export class ToolToUIRuntime {
     );
     if (
       invocation.status !== "error" ||
-      definition.annotations?.retry !== "safe"
+      definition.annotations?.retry !== "safe" ||
+      !this.#retryableFailures.has(invocation.id)
     ) {
       throw new DynamicUIError(
         "TOOL_RETRY_NOT_ALLOWED",
@@ -835,6 +840,7 @@ export class ToolToUIRuntime {
     );
     this.#confirmations.delete(invocationId);
     this.#setSubmitting(invocation.sourceSurfaceId, true);
+    this.#retryableFailures.delete(invocationId);
     const sequence = this.#nextSequence();
     const request: ToolSubmissionRequest = {
       invocationId: invocation.id,
@@ -1119,6 +1125,7 @@ export class ToolToUIRuntime {
     this.#lastRequests.delete(invocationId);
     this.#pendingOutcomes.delete(invocationId);
     this.#confirmations.delete(invocationId);
+    this.#retryableFailures.delete(invocationId);
     const metadata = this.#actionMetadata.get(invocationId);
     if (metadata !== undefined) {
       this.#actionMetadata.delete(invocationId);
@@ -1137,6 +1144,7 @@ export class ToolToUIRuntime {
     this.#lastRequests.clear();
     this.#pendingOutcomes.clear();
     this.#confirmations.clear();
+    this.#retryableFailures.clear();
     this.#actionMetadata.clear();
     this.#actionListeners.clear();
     this.#interactionDisabled.clear();

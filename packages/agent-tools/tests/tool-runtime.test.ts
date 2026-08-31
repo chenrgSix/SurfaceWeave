@@ -511,6 +511,69 @@ describe("ToolToUIRuntime", () => {
     ).toThrow(/Read-only field/);
   });
 
+  it.each([
+    { policy: "safe", retryable: false, allowed: false },
+    { policy: "safe", retryable: true, allowed: true },
+    { policy: "safe", retryable: undefined, allowed: true },
+    { policy: "never", retryable: true, allowed: false },
+  ] as const)(
+    "enforces retry policy $policy and host failure retryable=$retryable",
+    ({ policy, retryable, allowed }) => {
+      const components = createStandardComponentRegistry();
+      const surfaces = new InMemorySurfaceStore(components);
+      const runtime = new ToolToUIRuntime(components, surfaces);
+      runtime.registerTool({
+        id: "safe.read",
+        version: "1.0.0",
+        inputSchema: { type: "object" },
+        annotations: { retry: policy },
+      });
+      const requested = vi.fn();
+      runtime.onInvocationRequested(requested);
+      const { invocation, surface } = runtime.createToolSurface({
+        toolId: "safe.read",
+        surfaceId: "retry-policy",
+      });
+      runtime.handleAction(action(surface, "tool.submit", invocation.id));
+      const failed = runtime.rejectInvocation(invocation.id, {
+        code: "HOST_FAILURE",
+        message: "Host rejected the request",
+        ...(retryable === undefined ? {} : { retryable }),
+      });
+      const before = surfaces.requireSurface(surface.id);
+      if (allowed) {
+        expect(
+          runtime.handleAction(action(surface, "tool.retry", invocation.id)),
+        ).toMatchObject({
+          kind: "invocation-requested",
+          invocation: { attempt: 2 },
+          request: { idempotencyKey: failed.lastIdempotencyKey },
+        });
+        // Eligibility is attached to the latest failure, not permanently to the Tool.
+        runtime.rejectInvocation(invocation.id, {
+          code: "PERMANENT",
+          message: "Stop retrying",
+          retryable: false,
+        });
+        expect(() =>
+          runtime.handleAction(action(surface, "tool.retry", invocation.id)),
+        ).toThrowError(
+          expect.objectContaining({ code: "TOOL_RETRY_NOT_ALLOWED" }),
+        );
+        expect(requested).toHaveBeenCalledTimes(2);
+      } else {
+        expect(() =>
+          runtime.handleAction(action(surface, "tool.retry", invocation.id)),
+        ).toThrowError(
+          expect.objectContaining({ code: "TOOL_RETRY_NOT_ALLOWED" }),
+        );
+        expect(runtime.inspectInvocation(invocation.id)).toEqual(failed);
+        expect(surfaces.requireSurface(surface.id)).toEqual(before);
+        expect(requested).toHaveBeenCalledOnce();
+      }
+    },
+  );
+
   it("retries only safe failures with the same idempotency key", () => {
     const { runtime, surfaces } = runtimeFixture();
     const created = runtime.createToolSurface({
