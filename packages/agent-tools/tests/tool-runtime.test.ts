@@ -2,6 +2,7 @@ import {
   InMemorySurfaceStore,
   createStandardComponentRegistry,
   type ActionIntent,
+  type Surface,
   type ToolRuntimeEvent,
   type ToolSubmissionRequest,
 } from "@surfaceweave/core";
@@ -10,15 +11,17 @@ import { describe, expect, it, vi } from "vitest";
 import { ToolToUIRuntime } from "../src/index.js";
 
 function action(
-  surfaceId: string,
+  surface: string | Surface,
   actionName: string,
   invocationId: string,
   extra: Record<string, string | boolean> = {},
 ): ActionIntent {
+  const surfaceId = typeof surface === "string" ? surface : surface.id;
   return {
     id: `${invocationId}-${actionName}`,
     surfaceId,
-    nodeId: `${surfaceId}--root`,
+    nodeId:
+      typeof surface === "string" ? `${surfaceId}--root` : surface.tree.id,
     action: actionName,
     input: { invocationId, ...extra },
   };
@@ -53,6 +56,151 @@ function runtimeFixture() {
 }
 
 describe("ToolToUIRuntime", () => {
+  it("requires the active confirmation Surface before accepting confirmed input", () => {
+    const { runtime } = runtimeFixture();
+    const requested = vi.fn();
+    runtime.onInvocationRequested(requested);
+    const { invocation, surface } = runtime.createToolSurface({
+      toolId: "order.create",
+      surfaceId: "confirmation-owner",
+      initialValues: { buyer: "Ada", password: "secret", tenant: "north" },
+    });
+    const forged = action(surface.id, "tool.submit", invocation.id, {
+      confirmed: true,
+    });
+    expect(() => runtime.handleAction(forged)).toThrowError(
+      expect.objectContaining({ code: "TOOL_CONFIRMATION_REQUIRED" }),
+    );
+    expect(runtime.inspectInvocation(invocation.id).status).toBe("editing");
+    const pending = runtime.handleAction(
+      action(surface.id, "tool.submit", invocation.id),
+    );
+    expect(pending.kind).toBe("confirmation-required");
+    if (pending.kind !== "confirmation-required")
+      throw new Error("Expected confirmation");
+    expect(() =>
+      runtime.handleAction({
+        ...action(pending.confirmationSurface, "tool.submit", invocation.id, {
+          confirmed: true,
+        }),
+        nodeId: "unrelated-node",
+      }),
+    ).toThrowError(
+      expect.objectContaining({ code: "TOOL_CONFIRMATION_REQUIRED" }),
+    );
+    expect(() => runtime.handleAction(forged)).toThrowError(
+      expect.objectContaining({ code: "TOOL_CONFIRMATION_REQUIRED" }),
+    );
+    expect(requested).not.toHaveBeenCalled();
+  });
+
+  it.each(["data", "operations", "replacement", "confirmation", "readOnly"])(
+    "invalidates confirmation after a %s change and rejects old confirmation replay",
+    (change) => {
+      const { runtime, surfaces } = runtimeFixture();
+      const requested = vi.fn();
+      runtime.onInvocationRequested(requested);
+      const { invocation, surface } = runtime.createToolSurface({
+        toolId: "order.create",
+        surfaceId: "confirmation-drift",
+        initialValues: { buyer: "Ada", password: "secret", tenant: "north" },
+      });
+      const pending = runtime.handleAction(
+        action(surface.id, "tool.submit", invocation.id),
+      );
+      if (pending.kind !== "confirmation-required")
+        throw new Error("Expected confirmation");
+      // Repeated proposals for the same revision share the active confirmation.
+      expect(
+        runtime.handleAction(action(surface.id, "tool.submit", invocation.id)),
+      ).toEqual(pending);
+      const oldConfirm = action(
+        pending.confirmationSurface,
+        "tool.submit",
+        invocation.id,
+        { confirmed: true },
+      );
+      if (change === "replacement") {
+        surfaces.replaceSurface(surface.id, 0, {
+          intent: surface.intent,
+          tree: surface.tree,
+          data: surface.data,
+          context: {},
+        });
+      } else if (change === "operations") {
+        surfaces.applyOperations(surface.id, 0, [
+          {
+            type: "setProps",
+            target: "buyer",
+            props: { label: "Customer" },
+          },
+        ]);
+      } else if (change === "confirmation") {
+        surfaces.applyOperations(pending.confirmationSurface.id, 0, [
+          {
+            type: "setProps",
+            target: pending.confirmationSurface.tree.id,
+            props: { message: "Changed confirmation" },
+          },
+        ]);
+      } else {
+        surfaces.updateData(surface.id, 0, [
+          {
+            path: change === "readOnly" ? "tenant" : "buyer",
+            value: change === "readOnly" ? "south" : "Bob",
+          },
+        ]);
+      }
+      expect(() => runtime.handleAction(oldConfirm)).toThrowError(
+        expect.objectContaining({ code: "TOOL_CONFIRMATION_REQUIRED" }),
+      );
+      expect(requested).not.toHaveBeenCalled();
+      expect(runtime.inspectInvocation(invocation.id).status).toBe("editing");
+      if (change === "readOnly") {
+        expect(() =>
+          runtime.handleAction(
+            action(surface.id, "tool.submit", invocation.id),
+          ),
+        ).toThrow(/Read-only field/);
+        return;
+      }
+      const next = runtime.handleAction(
+        action(surface.id, "tool.submit", invocation.id),
+      );
+      if (next.kind !== "confirmation-required")
+        throw new Error("Expected fresh confirmation");
+      expect(next.confirmationSurface.id).not.toBe(
+        pending.confirmationSurface.id,
+      );
+      expect(() => runtime.handleAction(oldConfirm)).toThrowError(
+        expect.objectContaining({ code: "TOOL_CONFIRMATION_REQUIRED" }),
+      );
+      const outcome = runtime.handleAction(
+        action(next.confirmationSurface, "tool.submit", invocation.id, {
+          confirmed: true,
+        }),
+      );
+      expect(outcome).toMatchObject({
+        kind: "invocation-requested",
+        request: {
+          validatedArguments: {
+            buyer: change === "data" ? "Bob" : "Ada",
+            password: "secret",
+          },
+        },
+      });
+      expect(requested).toHaveBeenCalledOnce();
+      expect(
+        runtime.handleAction(
+          action(next.confirmationSurface, "tool.submit", invocation.id, {
+            confirmed: true,
+          }),
+        ),
+      ).toEqual(outcome);
+      expect(requested).toHaveBeenCalledOnce();
+    },
+  );
+
   it("preflights duplicate invocation ids without leaving an orphan Surface", () => {
     const { runtime, surfaces } = runtimeFixture();
     runtime.createToolSurface({
@@ -227,7 +375,7 @@ describe("ToolToUIRuntime", () => {
     });
 
     const submitted = runtime.handleAction(
-      action(confirmation!.id, "tool.submit", invocation.id, {
+      action(confirmation!, "tool.submit", invocation.id, {
         confirmed: true,
       }),
     );
@@ -377,7 +525,7 @@ describe("ToolToUIRuntime", () => {
       throw new Error("confirmation expected");
     const submitted = runtime.handleAction(
       action(
-        confirmation.confirmationSurface.id,
+        confirmation.confirmationSurface,
         "tool.submit",
         created.invocation.id,
         { confirmed: true },
@@ -443,7 +591,7 @@ describe("ToolToUIRuntime", () => {
       throw new Error("confirmation expected");
     const submitted = runtime.handleAction(
       action(
-        confirmation.confirmationSurface.id,
+        confirmation.confirmationSurface,
         "tool.submit",
         created.invocation.id,
         { confirmed: true },
@@ -454,7 +602,7 @@ describe("ToolToUIRuntime", () => {
 
     const cancelled = runtime.handleAction(
       action(
-        confirmation.confirmationSurface.id,
+        confirmation.confirmationSurface,
         "tool.cancel",
         created.invocation.id,
       ),

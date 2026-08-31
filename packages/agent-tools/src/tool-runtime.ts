@@ -204,6 +204,13 @@ interface ToolActionProjectionMetadata {
   settledAt?: number;
 }
 
+interface PendingConfirmation {
+  surfaceId: string;
+  surfaceRevision: number;
+  sourceRevision: number;
+  argumentsValue: JsonObject;
+}
+
 /** Coordinates Tool Surfaces and host requests without executing business APIs. */
 export class ToolToUIRuntime {
   readonly #components: ComponentRegistry;
@@ -221,6 +228,7 @@ export class ToolToUIRuntime {
   readonly #rawResults = new Map<string, JsonValue>();
   readonly #lastRequests = new Map<string, ToolSubmissionRequest>();
   readonly #pendingOutcomes = new Map<string, ToolActionOutcome>();
+  readonly #confirmations = new Map<string, PendingConfirmation>();
   readonly #actionMetadata = new Map<string, ToolActionProjectionMetadata>();
   readonly #actionListeners = new Map<
     string,
@@ -232,6 +240,7 @@ export class ToolToUIRuntime {
   readonly #actionStateSource: ActionExecutionStateSource;
   #sequence = 0;
   #invocationSequence = 0;
+  #confirmationSequence = 0;
 
   constructor(
     components: ComponentRegistry,
@@ -380,6 +389,9 @@ export class ToolToUIRuntime {
     }
     this.#initialReadOnly.set(invocation.id, readOnly);
     const unsubscribe = this.#surfaces.subscribe(surface.id, (event) => {
+      if (this.#confirmations.has(invocation.id)) {
+        this.#invalidateConfirmation(invocation.id);
+      }
       if (event.type === "surface.dataChanged") {
         this.#publish(invocation.id, "tool.inputChanged", {
           surfaceId: surface.id,
@@ -439,6 +451,7 @@ export class ToolToUIRuntime {
           invocation.id,
           "cancelled",
         );
+        this.#confirmations.delete(invocation.id);
         if (wasSubmitting) {
           this.#setSubmitting(invocation.sourceSurfaceId, false);
         }
@@ -450,6 +463,7 @@ export class ToolToUIRuntime {
       }
       case "tool.edit": {
         const editing = this.#invocations.transition(invocation.id, "editing");
+        this.#confirmations.delete(invocation.id);
         return { kind: "state-changed", invocation: editing };
       }
       case "tool.retry":
@@ -680,22 +694,70 @@ export class ToolToUIRuntime {
       invocation.toolId,
       invocation.toolVersion,
     );
-    const argumentsValue =
-      invocation.status === "awaiting-confirmation"
-        ? this.#validatedArguments(invocation)
-        : this.#validate(invocation);
     const confirmationRequired =
       definition.annotations?.sideEffect === true ||
       definition.annotations?.confirmation === "required";
-    if (confirmationRequired && !confirmed) {
+    let current = invocation;
+    let confirmation = this.#confirmations.get(invocation.id);
+    if (
+      confirmation !== undefined &&
+      (this.#surfaces.requireSurface(current.sourceSurfaceId).revision !==
+        confirmation.sourceRevision ||
+        this.#surfaces.requireSurface(confirmation.surfaceId).revision !==
+          confirmation.surfaceRevision)
+    ) {
+      this.#invalidateConfirmation(invocation.id);
+      current = this.#invocations.require(invocation.id);
+      confirmation = undefined;
+    }
+    if (confirmationRequired && confirmed) {
+      if (
+        current.status !== "awaiting-confirmation" ||
+        confirmation === undefined ||
+        intent.surfaceId !== confirmation.surfaceId ||
+        intent.nodeId !==
+          this.#surfaces.requireSurface(confirmation.surfaceId).tree.id
+      ) {
+        throw new DynamicUIError(
+          "TOOL_CONFIRMATION_REQUIRED",
+          "Submit through the active confirmation Surface for the current input",
+        );
+      }
+      return this.#request(
+        current.id,
+        confirmation.argumentsValue,
+        false,
+        intent,
+      );
+    }
+    if (confirmationRequired && confirmation !== undefined) {
+      return {
+        kind: "confirmation-required",
+        invocation: current,
+        confirmationSurface: this.#surfaces.requireSurface(
+          confirmation.surfaceId,
+        ),
+      };
+    }
+    const argumentsValue = this.#validate(current);
+    if (confirmationRequired) {
+      const sourceRevision = this.#surfaces.requireSurface(
+        current.sourceSurfaceId,
+      ).revision;
+      const confirmationSurface = this.#confirmationSurface(
+        current,
+        argumentsValue,
+      );
       const awaiting = this.#invocations.transition(
         invocation.id,
         "awaiting-confirmation",
       );
-      const confirmationSurface = this.#confirmationSurface(
-        awaiting,
-        argumentsValue,
-      );
+      this.#confirmations.set(invocation.id, {
+        surfaceId: confirmationSurface.id,
+        surfaceRevision: confirmationSurface.revision,
+        sourceRevision,
+        argumentsValue: cloneValue(argumentsValue),
+      });
       this.#publish(invocation.id, "tool.confirmationRequested", {
         surfaceId: confirmationSurface.id,
         redactedArguments: redactArguments(
@@ -742,28 +804,13 @@ export class ToolToUIRuntime {
     );
   }
 
-  #validatedArguments(invocation: ToolInvocation): JsonObject {
-    const definition = this.#tools.require(
-      invocation.toolId,
-      invocation.toolVersion,
-    );
-    const surface = this.#surfaces.requireSurface(invocation.sourceSurfaceId);
-    const projected = projectArguments(
-      definition.inputSchema,
-      surface.data,
-      true,
-    );
-    assertMatchesJsonSchema(
-      definition.inputSchema,
-      projected,
-      `Arguments for ${definition.id}`,
-      "TOOL_INPUT_INVALID",
-    );
-    return projectArguments(
-      definition.inputSchema,
-      surface.data,
-      false,
-    ) as JsonObject;
+  #invalidateConfirmation(invocationId: string): void {
+    this.#confirmations.delete(invocationId);
+    if (
+      this.#invocations.require(invocationId).status === "awaiting-confirmation"
+    ) {
+      this.#invocations.transition(invocationId, "editing");
+    }
   }
 
   #request(
@@ -786,6 +833,7 @@ export class ToolToUIRuntime {
         lastIdempotencyKey: idempotencyKey,
       },
     );
+    this.#confirmations.delete(invocationId);
     this.#setSubmitting(invocation.sourceSurfaceId, true);
     const sequence = this.#nextSequence();
     const request: ToolSubmissionRequest = {
@@ -839,9 +887,12 @@ export class ToolToUIRuntime {
     invocation: ToolInvocation,
     argumentsValue: JsonObject,
   ): Surface {
-    const surfaceId = `${invocation.sourceSurfaceId}--confirmation`;
-    const existing = this.#surfaces.getSurface(surfaceId);
-    if (existing !== undefined) return existing;
+    const prefix = `${invocation.sourceSurfaceId}--confirmation`;
+    let surfaceId = prefix;
+    while (this.#surfaces.getSurface(surfaceId) !== undefined) {
+      this.#confirmationSequence += 1;
+      surfaceId = `${prefix}-${this.#confirmationSequence}`;
+    }
     const definition = this.#tools.require(
       invocation.toolId,
       invocation.toolVersion,
@@ -1067,6 +1118,7 @@ export class ToolToUIRuntime {
     this.#rawResults.delete(invocationId);
     this.#lastRequests.delete(invocationId);
     this.#pendingOutcomes.delete(invocationId);
+    this.#confirmations.delete(invocationId);
     const metadata = this.#actionMetadata.get(invocationId);
     if (metadata !== undefined) {
       this.#actionMetadata.delete(invocationId);
@@ -1084,6 +1136,7 @@ export class ToolToUIRuntime {
     this.#rawResults.clear();
     this.#lastRequests.clear();
     this.#pendingOutcomes.clear();
+    this.#confirmations.clear();
     this.#actionMetadata.clear();
     this.#actionListeners.clear();
     this.#interactionDisabled.clear();

@@ -59,6 +59,13 @@ Side-effecting tools always require confirmation. Submitting disables the Form
 and pending duplicate submissions coalesce to the same outcome; the Host
 request is emitted once. Safe retry reuses the original normalized input and
 idempotency key while increasing `attempt`.
+Confirmation is bound to an internal validated argument snapshot and the input
+and confirmation Surface revisions. Any change to either Surface requires a new
+confirmation. Hosts must submit `confirmed: true` from the active confirmation
+Surface and its root node; a flag on the original form or an old confirmation is
+rejected with `TOOL_CONFIRMATION_REQUIRED`. Repeated proposals for an unchanged
+input share the same confirmation; renewed confirmations have distinct Surface
+ids. No Wire, Surface, UIOperation, or ActionIntent fields change.
 Read-only fields are checked and omitted from submission. Sensitive paths are
 redacted in events; only the Host request carries validated values.
 
