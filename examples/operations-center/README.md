@@ -1,6 +1,6 @@
 # Operations Center
 
-SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定模板或使用者临时配置的模型，驱动整页主题、导航位置、布局、业务组件和共享视图变化。原始供应链业务流程保留在 `?demo=operations`。
+SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定模板或使用者临时配置的模型，驱动自定义配色、四向导航、布局、业务组件和共享视图变化，也可以用注册的展示组件重建整个页面树。原始供应链业务流程保留在 `?demo=operations`。
 
 ## Run
 
@@ -18,13 +18,15 @@ pnpm dev
 
 建议按「午夜紫 → 菜单到顶部 → 表单变决策卡 → 打开双视图 → 变成简报 → 撤销上一条」体验。先填一句备注，再观察它跨变更与撤销保留。
 
-页面外壳与业务表单是两份独立 Surface。`StudioApplication` 等可信业务组件读取受枚举约束的主题令牌；`moveNode` 实际移动导航节点，`setVisibility` 和 `setLayout` 重组工作区。`replaceSurface` 撤销时使用**当前 data**，只恢复之前的结构。
+页面外壳与业务表单是两份独立 Surface。`StudioApplication` 接受四个主题预设与任意合法六位颜色令牌；`moveNode` 实际移动导航节点，`setVisibility` 和 `setLayout` 重组工作区。`replaceSurface` 撤销时使用**当前 data**，只恢复之前的结构。
 
-所有模板可以自由组合。未接入模型时，未知文字不会被猜测执行；接入后输入框调用真实 API，模板按钮仍固定映射。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
+模板可以连续组合；模型重建后若所需旧面板被删除，对应模板会拒绝并提示恢复布局，不会偷偷重置。未接入模型时，未知文字不会被猜测执行；接入后输入框调用真实 API，模板按钮仍固定映射。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
 
-点击“接入模型”，配置支持 function calling 的 OpenAI 兼容 Chat Completions 地址、模型 ID 和临时 Key。接口需要 CORS；仅用可撤销、低额度测试 Key，生产应使用服务端代理。Key 仅在本页内存，API 请求包含页面树、标签、组件描述和最近对话，不包含表单 data。模型每次最多四轮，每批一份 Surface、24 操作；错误/取消不会执行迟到响应或自动回退模板。原始参数与 SDK 前后树可以展开核查。详细风险、权限和真实模型验收边界见[模型接入指南](../../docs/guide/conversation-playground.md#临时接入模型)。
+点击“接入模型”，配置支持 function calling 的 OpenAI 兼容 Chat Completions 地址、模型 ID 和临时 Key。接口需要 CORS；仅用可撤销、低额度测试 Key，生产应使用服务端代理。Key 仅在本页内存，API 请求包含页面树、标签、组件描述和最近对话，不包含表单 data。模型每次最多四轮，每批一份 Surface、24 操作或一次完整页面树替换；错误/取消不会执行迟到响应或自动回退模板。原始参数与 SDK 前后树可以展开核查。详细风险、权限和真实模型验收边界见[模型接入指南](../../docs/guide/conversation-playground.md#临时接入模型)。
 
-新增源文件：`src/studio-runtime.ts` 定义模板和可逆变更；`src/Studio.tsx` 注册整页 React 组件并呈现对话；`src/studio.css` 提供受信任主题映射。详细说明见[对话指南](../../docs/guide/conversation-playground.md)。
+动态重建通过 `ui_replace_page` → `AgentUIToolRuntime.replaceSurface` → Store → Renderer 执行。`StudioCard`、`StudioStat` 与 Text/Badge/Section/Stack/Grid 支持新增展示内容；生成文案和指标明确标记为展示内容，不能伪装业务证据。页面保留五个可见的骨架/工作台节点，限制 150 个节点和 12 层嵌套；业务 Surface 不能被这个工具替换。
+
+新增源文件：`src/studio-runtime.ts` 定义模板和可逆变更；`src/Studio.tsx` 注册整页 React 组件并呈现对话；`src/studio-schema.ts` 声明动态颜色与展示组件能力；`src/studio.css` 提供受信任主题映射。详细说明见[对话指南](../../docs/guide/conversation-playground.md)。
 
 模型接入保持在示例内：`model-client.ts` 处理临时浏览器协议；`model-policy.ts` 复用 SDK 工具 schema 并限制宿主授权；`ModelSettings.tsx` 提供配置与发送范围提示。无新增 Core 依赖或协议变更。
 
