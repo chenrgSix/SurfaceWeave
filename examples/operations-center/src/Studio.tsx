@@ -18,6 +18,7 @@ import {
 import { ConfirmationSheet, LiveMetrics, SupplyRoute } from "./App.js";
 import { createDemoReactRegistry } from "./component-pack.js";
 import { Icon } from "./icons.js";
+import { ModelSettings } from "./ModelSettings.js";
 import {
   StudioRuntime,
   conversationTemplates,
@@ -72,6 +73,7 @@ function StudioSession({
   const [draft, setDraft] = useState("");
   const [mobileTab, setMobileTab] = useState("chat");
   const [phone, setPhone] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const chatScroll = useRef<HTMLDivElement>(null);
   const canvasScroll = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -88,9 +90,13 @@ function StudioSession({
       runtime.getSnapshot().changeCount > before ? "preview" : "chat",
     );
   };
-  const submit = (text: string) => {
-    showResponse(() => runtime.submitText(text));
+  const submit = async (text: string) => {
+    if (state.modelBusy || !text.trim()) return;
     setDraft("");
+    if (state.model) {
+      setMobileTab("chat");
+      await runtime.askModel(text);
+    } else showResponse(() => runtime.submitText(text));
   };
 
   return (
@@ -105,8 +111,16 @@ function StudioSession({
           </a>
           <div className="studio-header-right">
             <span className="studio-session-tag">
-              <i /> 预设对话 · 真实运行时
+              <i />{" "}
+              {state.model ? "模型驱动 · SDK 执行" : "预设对话 · 真实运行时"}
             </span>
+            <button
+              className={`studio-model-button ${state.model ? "configured" : ""}`}
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Icon name="spark" size={14} />{" "}
+              {state.model ? "模型配置" : "接入模型"}
+            </button>
             <a href="?demo=operations" className="original-demo">
               业务流程案例 <Icon name="arrow" size={13} />
             </a>
@@ -116,9 +130,10 @@ function StudioSession({
                 setDraft("");
                 setPhone(false);
                 setMobileTab("chat");
+                setSettingsOpen(false);
                 reset();
               }}
-              title="清空会话与演示数据"
+              title="清空会话、演示数据与临时模型配置"
             >
               <Icon name="refresh" size={14} /> 新会话
             </button>
@@ -150,6 +165,17 @@ function StudioSession({
               </div>
               <span className="chat-live-dot" />
             </div>
+            <div className="model-mode-bar">
+              <span>
+                <i className={state.model ? "configured" : ""} />
+                {state.model
+                  ? `${state.model.model} · 已配置`
+                  : "模板模式 · 无远程请求"}
+              </span>
+              <button onClick={() => setSettingsOpen(true)}>
+                {state.model ? "管理" : "试试真实模型"}
+              </button>
+            </div>
             <div
               className="chat-thread"
               ref={chatScroll}
@@ -160,10 +186,21 @@ function StudioSession({
               {state.messages.map((message) => (
                 <Message key={message.id} message={message} />
               ))}
+              {state.modelBusy && (
+                <div className="model-working" role="status">
+                  <span />
+                  模型正在规划语义操作…
+                  <button onClick={() => runtime.cancelModel()}>
+                    停止请求
+                  </button>
+                </div>
+              )}
             </div>
             <div className="template-shelf">
               <div className="template-heading">
-                <span>试着这样说</span>
+                <span>
+                  {state.model ? "固定模板 · 不调用模型" : "试着这样说"}
+                </span>
                 <span>
                   点击即发送 <Icon name="arrow" size={11} />
                 </span>
@@ -174,6 +211,7 @@ function StudioSession({
                     key={template.id}
                     className={`template-pill template-${template.id}`}
                     title={template.prompt}
+                    disabled={state.modelBusy}
                     onClick={() =>
                       showResponse(() => runtime.send(template.id))
                     }
@@ -189,7 +227,7 @@ function StudioSession({
               className="chat-composer"
               onSubmit={(event) => {
                 event.preventDefault();
-                submit(draft);
+                void submit(draft);
               }}
             >
               <label className="sr-only" htmlFor="studio-message">
@@ -198,9 +236,13 @@ function StudioSession({
               <textarea
                 id="studio-message"
                 value={draft}
-                maxLength={300}
+                maxLength={state.model ? 2000 : 300}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder="选择模板，或输入模板原句…"
+                placeholder={
+                  state.model
+                    ? "自由描述：标题改成晚班指挥台，指标和工作台双栏…"
+                    : "选择模板，或接入模型自由描述…"
+                }
                 rows={2}
                 onKeyDown={(event) => {
                   if (
@@ -209,17 +251,20 @@ function StudioSession({
                     !event.nativeEvent.isComposing
                   ) {
                     event.preventDefault();
-                    submit(draft);
+                    void submit(draft);
                   }
                 }}
               />
               <div>
                 <span>
-                  <Icon name="code" size={12} /> 预设映射，无远程模型
+                  <Icon name="code" size={12} />{" "}
+                  {state.model
+                    ? `${state.modelRequests} 次模型请求 · 输入调用 API`
+                    : "预设映射，无远程模型"}
                 </span>
                 <button
                   type="submit"
-                  disabled={!draft.trim()}
+                  disabled={!draft.trim() || state.modelBusy}
                   aria-label="发送指令"
                 >
                   <Icon name="arrow" size={16} />
@@ -227,7 +272,9 @@ function StudioSession({
               </div>
             </form>
             <p className="chat-disclaimer">
-              主题与导航变更也通过 Surface 操作执行
+              {state.model
+                ? "模型只生成语义操作，不执行代码或提交业务"
+                : "主题与导航变更也通过 Surface 操作执行"}
             </p>
           </aside>
           <section className="studio-preview" aria-label="实时应用预览">
@@ -295,7 +342,7 @@ function StudioSession({
               </div>
               <button
                 className="undo-button"
-                disabled={!state.undoDepth}
+                disabled={!state.undoDepth || state.modelBusy}
                 onClick={() => runtime.undo()}
               >
                 <Icon name="refresh" size={14} /> 撤销上一条
@@ -313,6 +360,12 @@ function StudioSession({
             </div>
           </section>
         </div>
+        {settingsOpen && (
+          <ModelSettings
+            runtime={runtime}
+            close={() => setSettingsOpen(false)}
+          />
+        )}
         {demoState.confirmationId && (
           <ConfirmationSheet
             demo={runtime.demo}
@@ -334,7 +387,12 @@ function Message({ message }: { message: ChatMessage }) {
       <div className="message-author">
         {message.role === "assistant" ? (
           <>
-            <Icon name="spark" size={12} /> SurfaceWeave
+            <Icon name="spark" size={12} />{" "}
+            {message.source === "model"
+              ? "模型回复 · 非执行凭证"
+              : message.source === "runtime"
+                ? "SurfaceWeave 运行时"
+                : "SurfaceWeave · 预设"}
           </>
         ) : (
           <>
@@ -357,8 +415,28 @@ function Message({ message }: { message: ChatMessage }) {
           </div>
         </div>
       )}
+      {message.receipt && (
+        <details className="model-receipt">
+          <summary>
+            {message.receipt.status === "applied"
+              ? "核查实际操作与 SDK 结果"
+              : "核查被拒绝的模型操作"}
+          </summary>
+          <strong>模型原始参数</strong>
+          <pre>{formatJson(message.receipt.arguments)}</pre>
+          <strong>实际结果 / 前后 Surface 树</strong>
+          <pre>{formatJson(message.receipt.result)}</pre>
+        </details>
+      )}
     </article>
   );
+}
+function formatJson(value: string) {
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
 }
 
 function Application({ node, children }: RendererComponentProps) {
@@ -422,14 +500,12 @@ function Navigation() {
     </nav>
   );
 }
-function Header() {
+function Header({ node }: RendererComponentProps) {
   return (
     <header className="live-header">
       <div>
-        <p>
-          WORKSPACE <span>/</span> INCIDENT-0842
-        </p>
-        <h2>让每一次中断，都有解。</h2>
+        <p>{String(node.props.eyebrow ?? "WORKSPACE / INCIDENT-0842")}</p>
+        <h2>{String(node.props.title ?? "让每一次中断，都有解。")}</h2>
       </div>
       <span className="live-environment">
         <i /> 演示环境

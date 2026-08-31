@@ -50,17 +50,18 @@ npm install @surfaceweave/core@next \
 
 ## Say it. Reshape the whole application.
 
-The flagship conversation playground pairs fixed dialogue templates with a live
-application. Move the sidebar to the top, switch the whole page to a midnight
+The flagship conversation playground connects fixed dialogue templates or your
+temporarily configured model to a live application. Move the sidebar to the top, switch the whole page to a midnight
 theme, enter focus mode, open synchronized views, or turn fields into decision
 cards. Combine changes and undo them without losing the latest user input.
 Follow the [conversation walkthrough](/guide/conversation-playground) or run `pnpm dev`.
 
-The Agent is scripted and business APIs are simulated. Both the application shell
+Fixed templates are scripted; optional model mode accepts your temporary OpenAI-compatible
+Chat Completions configuration and executes model-authored semantic operations. Business APIs remain simulated. Both the application shell
 and business form are actual Surfaces. All mutations use the SDK; theme enums are
 mapped to styles only by trusted local components.
 
-The chat view and the full workspace subscribe to the same `SurfaceStore`, so
+Both embedded business views subscribe to the same `SurfaceStore`, so
 form values and semantic revisions stay synchronized. Renderer bindings are
 replaceable; the wire protocol remains framework independent.
 

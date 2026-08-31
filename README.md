@@ -39,17 +39,20 @@ generic DOM-host mounting, preferences, storage, and Tauri integration. Document
 
 ## Flagship demo: say it, reshape it
 
-**对话式应用实验室**：左边说一句，右边的整个应用立即改变。十条固定对话模板直接对应真实 SDK 操作，不需要 API Key。
+**对话式应用实验室**：左边说一句，右边的应用随语义操作改变。十条固定模板无需 API Key；也可以点击“接入模型”，临时配置 OpenAI 兼容接口，让模型自己生成操作。
 
 - **整页随时改变：** 午夜紫、薄荷绿、暖色简报；主题令牌经过校验，由可信组件统一渲染。
 - **结构随对话迁移：** 左侧菜单移动到顶部、工作台置顶、专注模式、双栏布局，都是实际 Surface 节点操作。
 - **业务组件进化：** 普通选择框变成方案对比卡，审批区前置；所有已输入数据保留。
 - **随时组合与撤销：** 连续叠加模板、打开共享视图、撤销最近变更；恢复结构而非覆盖最新输入。
+- **真实模型可核查：** 自由描述标题、布局和组件组合，查看模型原始工具参数、SDK 结果与前后 Surface 树。模型文字不冒充执行成功。
 
 Run `pnpm dev` and follow the [conversation walkthrough](docs/guide/conversation-playground.md).
-The dialogue is scripted, logistics data is fictional, and the Host is simulated.
+Template buttons are scripted; optional browser-only model mode uses your temporary
+OpenAI-compatible Chat Completions endpoint with function calling. Logistics data is fictional and the Host is simulated.
 Both the application shell and business form are real Surfaces. Theme, navigation,
-layout, component replacement, and undo use validated SDK tools; arbitrary chat is not interpreted by a model.
+layout, component replacement, and undo use validated SDK tools. Model operations cannot submit business actions or execute arbitrary code.
+Credentials stay in page memory only; refresh, a new session or disconnect clears them. Browser keys remain exposed to extensions/scripts: use a disposable, low-budget key and a CORS-enabled endpoint. Production integrations should use a server-side proxy. See the guide for data disclosure, request limits and verification boundaries.
 The [original operations flow](docs/guide/operations-center.md) remains at `?demo=operations` for constraints, confirmation, and retry acceptance.
 
 ## SurfaceWeave in 30 Seconds

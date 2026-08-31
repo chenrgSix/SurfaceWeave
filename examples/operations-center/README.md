@@ -1,6 +1,6 @@
 # Operations Center
 
-SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定对话模板，让整页主题、导航位置、布局、业务组件和共享视图随时改变。原始供应链业务流程保留在 `?demo=operations`。
+SurfaceWeave 的旗舰交互 demo 默认是**对话式应用实验室**：十条固定模板或使用者临时配置的模型，驱动整页主题、导航位置、布局、业务组件和共享视图变化。原始供应链业务流程保留在 `?demo=operations`。
 
 ## Run
 
@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-默认监听 `http://127.0.0.1:5175`。`pnpm dev` 会先构建所需的工作区 SDK。无 API Key、无远程模型、无业务后台、无外部字体或图片请求。新会话会销毁旧运行时、订阅和未完成的模拟任务；刷新不保留数据。
+默认监听 `http://127.0.0.1:5175`。`pnpm dev` 会先构建所需的工作区 SDK。默认不需要 Key 或后台，没有外部字体或图片请求。可选模型模式才会请求使用者填写的接口。新会话会销毁旧运行时、订阅和未完成的模拟任务，并中止模型请求、清除临时 Key；刷新不保留数据和配置。
 
 ## 对话式实验室
 
@@ -20,9 +20,13 @@ pnpm dev
 
 页面外壳与业务表单是两份独立 Surface。`StudioApplication` 等可信业务组件读取受枚举约束的主题令牌；`moveNode` 实际移动导航节点，`setVisibility` 和 `setLayout` 重组工作区。`replaceSurface` 撤销时使用**当前 data**，只恢复之前的结构。
 
-所有模板可以自由组合；未知文字不会被当成模型指令执行。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
+所有模板可以自由组合。未接入模型时，未知文字不会被猜测执行；接入后输入框调用真实 API，模板按钮仍固定映射。撤销最多保留 40 步、对话最多 80 条，都只保存在当前会话内存。业务确认期间不能重组或撤销表单结构，页面外壳变更不改确认参数。
+
+点击“接入模型”，配置支持 function calling 的 OpenAI 兼容 Chat Completions 地址、模型 ID 和临时 Key。接口需要 CORS；仅用可撤销、低额度测试 Key，生产应使用服务端代理。Key 仅在本页内存，API 请求包含页面树、标签、组件描述和最近对话，不包含表单 data。模型每次最多四轮，每批一份 Surface、24 操作；错误/取消不会执行迟到响应或自动回退模板。原始参数与 SDK 前后树可以展开核查。详细风险、权限和真实模型验收边界见[模型接入指南](../../docs/guide/conversation-playground.md#临时接入模型)。
 
 新增源文件：`src/studio-runtime.ts` 定义模板和可逆变更；`src/Studio.tsx` 注册整页 React 组件并呈现对话；`src/studio.css` 提供受信任主题映射。详细说明见[对话指南](../../docs/guide/conversation-playground.md)。
+
+模型接入保持在示例内：`model-client.ts` 处理临时浏览器协议；`model-policy.ts` 复用 SDK 工具 schema 并限制宿主授权；`ModelSettings.tsx` 提供配置与发送范围提示。无新增 Core 依赖或协议变更。
 
 ## 两分钟演示
 
